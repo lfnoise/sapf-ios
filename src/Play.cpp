@@ -27,6 +27,52 @@ const int kMaxChannels = 32;
 
 struct AUPlayer* gAllPlayers = nullptr;
 
+// Each player writes a mono mix of its output into its own ring buffer so that
+// a front end can display what is playing. One writer per tap, so no locking.
+const int kMaxScopeTaps = 64;
+
+struct ScopeTap
+{
+	std::atomic<bool> inUse{false};
+	std::atomic<uint64_t> writePos{0};
+	float buf[kScopeBufferSize];
+};
+
+static ScopeTap gScopeTaps[kMaxScopeTaps];
+
+static ScopeTap* claimScopeTap()
+{
+	for (int i = 0; i < kMaxScopeTaps; ++i) {
+		ScopeTap& tap = gScopeTaps[i];
+		bool expected = false;
+		if (tap.inUse.compare_exchange_strong(expected, true)) {
+			tap.writePos.store(0);
+			return &tap;
+		}
+	}
+	return nullptr;
+}
+
+int getScopeSamples(float* out, int n)
+{
+	n = std::min(n, kScopeBufferSize);
+	memset(out, 0, n * sizeof(float));
+	int numActive = 0;
+	for (int i = 0; i < kMaxScopeTaps; ++i) {
+		ScopeTap& tap = gScopeTaps[i];
+		if (!tap.inUse.load(std::memory_order_acquire)) continue;
+		++numActive;
+		uint64_t end = tap.writePos.load(std::memory_order_acquire);
+		int avail = (int)std::min<uint64_t>(end, n);
+		float* dst = out + n - avail;
+		uint64_t pos = end - avail;
+		for (int j = 0; j < avail; ++j) {
+			dst[j] += tap.buf[(pos + j) & (kScopeBufferSize - 1)];
+		}
+	}
+	return numActive;
+}
+
 
 
 struct AUPlayer
@@ -36,6 +82,7 @@ struct AUPlayer
 	{ 
 		gAllPlayers = this; 
 		if (next) next->prev = this; 
+		scopeTap = claimScopeTap();
 	}
 	
 	~AUPlayer() {
@@ -46,10 +93,9 @@ struct AUPlayer
 		
 		if (xaf) {
 			ExtAudioFileDispose(xaf);
-			char cmd[1100];
-			snprintf(cmd, 1100, "open \"%s\"", path.c_str());
-			system(cmd);
+			openFileExternally(path.c_str());
 		}
+		if (scopeTap) scopeTap->inUse.store(false, std::memory_order_release);
 	}
 	
 	Thread th;
@@ -62,7 +108,7 @@ struct AUPlayer
 	ZIn in[kMaxChannels];
 	ExtAudioFileRef xaf = nullptr;
 	std::string path;
-	
+	ScopeTap* scopeTap = nullptr;
 };
 
 static void stopPlayer(AUPlayer* player)
@@ -174,6 +220,23 @@ static void recordPlayer(AUPlayer* player, int inNumberFrames, AudioBufferList c
 	if (err) printf("ExtAudioFileWriteAsync err %d\n", (int)err);
 }
 
+static void tapPlayer(AUPlayer* player, int inNumberFrames, AudioBufferList const* inData)
+{
+	ScopeTap* tap = player->scopeTap;
+	if (!tap) return;
+
+	int numChannels = std::min((int)inData->mNumberBuffers, player->numChannels);
+	uint64_t pos = tap->writePos.load(std::memory_order_relaxed);
+	for (int i = 0; i < inNumberFrames; ++i) {
+		float sum = 0.f;
+		for (int j = 0; j < numChannels; ++j) {
+			sum += ((const float*)inData->mBuffers[j].mData)[i];
+		}
+		tap->buf[(pos + i) & (kScopeBufferSize - 1)] = sum;
+	}
+	tap->writePos.store(pos + inNumberFrames, std::memory_order_release);
+}
+
 static OSStatus inputCallback(	void *							inRefCon,
 						AudioUnitRenderActionFlags *	ioActionFlags,
 						const AudioTimeStamp *			inTimeStamp,
@@ -186,6 +249,7 @@ static OSStatus inputCallback(	void *							inRefCon,
 		
 	bool done = fillBufferList(player, inNumberFrames, ioData);
 	recordPlayer(player, inNumberFrames, ioData);
+	tapPlayer(player, inNumberFrames, ioData);
 
 	if (done) {
 		player->done = true;
@@ -217,7 +281,11 @@ static AudioComponentInstance openAU(UInt32 inType, UInt32 inSubtype, UInt32 inM
 static OSStatus createGraph(AUPlayer* player)
 {
     OSStatus err = noErr;
+#if TARGET_OS_IPHONE
+	AudioComponentInstance outputUnit = openAU(kAudioUnitType_Output, kAudioUnitSubType_RemoteIO, kAudioUnitManufacturer_Apple);
+#else
 	AudioComponentInstance outputUnit = openAU('auou', 'def ', 'appl');
+#endif
 	if (!outputUnit) {
 		post("open output unit failed\n");
 		return 'fail';

@@ -231,6 +231,7 @@ static const char* promptString(EditLine *e)
 void Thread::getLine()
 {	
 	if (fromString) return;
+#if USE_LIBEDIT
 	switch (parsingWhat) {
 		default: case parsingWords : el_set(el, EL_PROMPT, &prompt); break;
 		case parsingString : el_set(el, EL_PROMPT, &promptString); break;
@@ -240,11 +241,16 @@ void Thread::getLine()
 		case parsingEnvir : el_set(el, EL_PROMPT, &promptCurlyBracket); break;
 	}
 	line = el_gets(el, &linelen);
+#else
+	line = NULL;
+#endif
 	linepos = 0;
 	if (!line || strncmp(line, "quit", 4)==0 || strncmp(line, "..", 2)==0) { line = NULL; throw errUserQuit; }
 	if (linelen > 0) {
+#if USE_LIBEDIT
 		history(myhistory, &ev, H_ENTER, line);
 		history(myhistory, &ev, H_SAVE, historyfilename);
+#endif
 		if (logfilename) {
 			FILE* logfile = fopen(logfilename, "a");
 			logTimestamp(logfile);

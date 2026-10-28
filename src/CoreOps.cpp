@@ -1127,12 +1127,8 @@ static void helpall_(Thread& th, Prim* prim)
 
 static void prelude_(Thread& th, Prim* prim)
 {
-    static const size_t cmdMaxLen = 2048;
-	char cmd[cmdMaxLen];
-	
 	if (vm.prelude_file) {
-		snprintf(cmd, cmdMaxLen, "open %s\n", vm.prelude_file);
-		system(cmd);
+		openFileExternally(vm.prelude_file);
 	} else {
 		printf("no prelude file.\n");
 	}
@@ -1140,13 +1136,9 @@ static void prelude_(Thread& th, Prim* prim)
 
 static void examples_(Thread& th, Prim* prim)
 {
-    static const size_t cmdMaxLen = 2048;
-	char cmd[cmdMaxLen];
-	
 	const char* examples_file = getenv("SAPF_EXAMPLES");
 	if (examples_file) {
-		snprintf(cmd, cmdMaxLen, "open %s\n", examples_file);
-		system(cmd);
+		openFileExternally(examples_file);
 	} else {
 		printf("no examples file.\n");
 	}
@@ -1154,13 +1146,9 @@ static void examples_(Thread& th, Prim* prim)
 
 static void readme_(Thread& th, Prim* prim)
 {
-    static const size_t cmdMaxLen = 2048;
-	char cmd[cmdMaxLen];
-	
 	const char* readme_file = getenv("SAPF_README");
 	if (readme_file) {
-		snprintf(cmd, cmdMaxLen, "open %s\n", readme_file);
-		system(cmd);
+		openFileExternally(readme_file);
 	} else {
 		printf("no readme file.\n");
 	}
@@ -1168,12 +1156,8 @@ static void readme_(Thread& th, Prim* prim)
 
 static void logfile_(Thread& th, Prim* prim)
 {
-    static const size_t cmdMaxLen = 2048;
-	char cmd[cmdMaxLen];
-	
 	if (vm.log_file) {
-		snprintf(cmd, cmdMaxLen, "open %s\n", vm.log_file);
-		system(cmd);
+		openFileExternally(vm.log_file);
 	} else {
 		printf("no log file.\n");
 	}

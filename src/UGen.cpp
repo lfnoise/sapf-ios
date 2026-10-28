@@ -4302,12 +4302,24 @@ static void ifold_(Thread& th, Prim* prim)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if !TARGET_OS_IPHONE
 #include <Carbon/Carbon.h>
+#endif
 
 struct MouseUGenGlobalState {
 	float mouseX, mouseY;
 	bool mouseButton;
 } gMouseUGenGlobals;
+
+#if TARGET_OS_IPHONE
+// There is no mouse to poll on iOS. The app reports touch positions here instead.
+void setMouseUGenState(float x, float y, bool button)
+{
+	gMouseUGenGlobals.mouseX = x;
+	gMouseUGenGlobals.mouseY = y;
+	gMouseUGenGlobals.mouseButton = button;
+}
+#else
 
 static void* gstate_update_func(void* arg)
 {
@@ -4330,6 +4342,7 @@ static void* gstate_update_func(void* arg)
 
 	return 0;
 }
+#endif
 
 Z gMouseLagTime = .1;
 Z gMouseLagMul = log001 / gMouseLagTime;
@@ -4541,8 +4554,10 @@ void AddUGenOps()
 	s_dt = getsym("dt");
 	s_out = getsym("out");
 
+#if !TARGET_OS_IPHONE
 	pthread_t mouseListenThread;
 	pthread_create (&mouseListenThread, nullptr, gstate_update_func, (void*)0);
+#endif
 
 	vm.addBifHelp("\n*** unit generators ***");
 	vm.defmcx("*+", 3, madd_, "(a b c --> out) multiply add. a b * c +");

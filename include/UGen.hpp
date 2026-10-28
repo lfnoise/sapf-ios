@@ -829,5 +829,10 @@ struct NFourInputUGen : public Gen
 
 void AddUGenOps();
 
+#if TARGET_OS_IPHONE
+// x and y are normalized 0..1 (y = 1 at the top). Drives mousex, mousey, etc.
+void setMouseUGenState(float x, float y, bool button);
+#endif
+
 #endif
 

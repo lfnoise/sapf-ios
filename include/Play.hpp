@@ -22,3 +22,10 @@ void recordWithAudioUnit(Thread& th, V& v, Arg filename);
 void stopPlaying();
 void stopPlayingIfDone();
 
+// Size of the per-player ring buffers used for displaying output. Must be a power of two.
+const int kScopeBufferSize = 16384;
+
+// Fills out with the most recent n frames (n <= kScopeBufferSize) of the mono sum of
+// everything currently playing. Returns the number of active players. Safe from any thread.
+int getScopeSamples(float* out, int n);
+

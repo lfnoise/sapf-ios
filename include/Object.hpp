@@ -31,8 +31,20 @@
 #include <pthread.h>
 #include "RCObj.hpp"
 #include <os/lock.h>
+#include <TargetConditionals.h>
 
 void post(const char* fmt, ...);
+
+// If set, post() sends its output here instead of stdout. Used by GUI front ends.
+extern void (*gPostHook)(const char* str, size_t len);
+
+// Opens a file in the appropriate viewer. On macOS this uses the 'open' command.
+// If gOpenFileHook is set, it is called instead (e.g. iOS, where there is no 'open').
+extern void (*gOpenFileHook)(const char* path);
+void openFileExternally(const char* path);
+
+// Directory for files that aren't given a name. $SAPF_TMPDIR if set, otherwise /tmp.
+const char* sapfTempDir();
 
 #define COLLECT_MINFO 1
 

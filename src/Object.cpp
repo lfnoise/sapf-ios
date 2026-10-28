@@ -22,11 +22,49 @@
 #include <algorithm>
 #include <cstdarg>
 
+void (*gPostHook)(const char* str, size_t len) = nullptr;
+void (*gOpenFileHook)(const char* path) = nullptr;
+
 void post(const char* fmt, ...)
 {
     va_list vargs;
     va_start(vargs, fmt);
-    vprintf(fmt, vargs);
+    if (gPostHook) {
+        char buf[1024];
+        va_list vargs2;
+        va_copy(vargs2, vargs);
+        int n = vsnprintf(buf, sizeof(buf), fmt, vargs);
+        if (n >= (int)sizeof(buf)) {
+            std::string big(n, '\0');
+            vsnprintf(&big[0], n + 1, fmt, vargs2);
+            gPostHook(big.c_str(), n);
+        } else if (n > 0) {
+            gPostHook(buf, n);
+        }
+        va_end(vargs2);
+    } else {
+        vprintf(fmt, vargs);
+    }
+    va_end(vargs);
+}
+
+const char* sapfTempDir()
+{
+	const char* dir = getenv("SAPF_TMPDIR");
+	return dir && strlen(dir) ? dir : "/tmp";
+}
+
+void openFileExternally(const char* path)
+{
+	if (gOpenFileHook) {
+		gOpenFileHook(path);
+		return;
+	}
+#if !TARGET_OS_IPHONE
+	char cmd[1100];
+	snprintf(cmd, 1100, "open \"%s\"", path);
+	system(cmd);
+#endif
 }
 
 void zprintf(std::string& out, const char* fmt, ...)

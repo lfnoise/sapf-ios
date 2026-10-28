@@ -24,7 +24,11 @@
 #include <sys/time.h>
 #include <atomic>
 
+#if TARGET_OS_IPHONE
+#define USE_LIBEDIT 0
+#else
 #define USE_LIBEDIT 1
+#endif
 
 #if USE_LIBEDIT
 #include <histedit.h>

@@ -5692,11 +5692,11 @@ static void sgram_(Thread& th, Prim* prim)
 	char path[1024];
 	if (filename.isString()) {
 		const char* sgramDir = getenv("SAPF_SPECTROGRAMS");
-		if (!sgramDir || strlen(sgramDir)==0) sgramDir = "/tmp";
+		if (!sgramDir || strlen(sgramDir)==0) sgramDir = sapfTempDir();
 		snprintf(path, 1024, "%s/%s-%d.jpg", sgramDir, ((String*)filename.o())->s, (int)floor(dBfloor + .5));
 	} else {
 		int32_t count = ++gSpectrogramFileCount;
-		snprintf(path, 1024, "/tmp/sapf-%s-%04d.jpg", gSessionTime, count);
+		snprintf(path, 1024, "%s/sapf-%s-%04d.jpg", sapfTempDir(), gSessionTime, count);
 	}
 
 
@@ -5706,11 +5706,7 @@ static void sgram_(Thread& th, Prim* prim)
 	double* z = array->z();
 	spectrogram((int)n, z, 3200, 11, path, -dBfloor);
 	
-	{
-		char cmd[1100];
-		snprintf(cmd, 1100, "open \"%s\"", path);
-		system(cmd);
-	}
+	openFileExternally(path);
 	
 }
 

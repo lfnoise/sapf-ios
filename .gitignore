@@ -24,3 +24,5 @@ xcshareddata/
 *.xccheckout
 *.moved-aside
 *.xcuserstate
+ios/Sapf.xcodeproj/xcuserdata/
+ios/Sapf.xcodeproj/project.xcworkspace/xcuserdata/

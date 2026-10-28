@@ -1,0 +1,808 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		06BB8523F2D58F0D16D9A227 /* Play.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 293BE9FF29B7ECCED997A51E /* Play.cpp */; };
+		0B5554014B2644791EFADF74 /* Parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D91C5A1DAA53B98BC985360F /* Parser.cpp */; };
+		0B95794630CDC5D8DA24B8BC /* dsp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D89B631E673317B56AC7026 /* dsp.cpp */; };
+		1E45D3A07492E51A550FA608 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE4D3EE07AED09F2828ECE92 /* ContentView.swift */; };
+		1E4843FD394097659BC8732B /* ConsoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 513FEB9762C8C278297F1738 /* ConsoleView.swift */; };
+		2048EF2140FCDC818E71D009 /* FilterUGens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0334BDA7EEB0C5DB559B9746 /* FilterUGens.cpp */; };
+		35E0B51E0FBA65EC3E45EDC7 /* MathFuns.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1C5FBFA44168F1E48A8A0FB5 /* MathFuns.cpp */; };
+		385C6F05F8951680C1886271 /* MathOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3AC4493E36DB9B72BF0647CB /* MathOps.cpp */; };
+		40D9A8C172D68B9C1297688C /* SetOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D9DF91C75A1585A1C772E2B /* SetOps.cpp */; };
+		43C548D29D6BD1E660A0BC6D /* makeImage.mm in Sources */ = {isa = PBXBuildFile; fileRef = 608F82B5CCACF3DBEA3F1E0F /* makeImage.mm */; };
+		4A29451F15ED7AC99F6A8A5C /* AudioAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F822B7BC53BE2CA24352B15A /* AudioAnalyzer.swift */; };
+		547004C82E66B6FD9DE02457 /* SyntaxHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96751E64B8528F124FB891E1 /* SyntaxHighlighter.swift */; };
+		574D97C9D2CABCADC1E6FCC0 /* CodeTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AE5DC6ECD843BFC45FD040 /* CodeTextView.swift */; };
+		620A064C7D123FFC724581FF /* DelayUGens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C208B113157519FE26786869 /* DelayUGens.cpp */; };
+		6241AD6342A9E8A8726F0363 /* StreamOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 821F1BBAC013B51225D8F4BB /* StreamOps.cpp */; };
+		6485D606503623FAD430CBE5 /* VM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 02146E57E956FD1F42F9D826 /* VM.cpp */; };
+		67A396EB3409F4D65F35B438 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2B37D0CDC57A546FA7CCA326 /* Assets.xcassets */; };
+		687815492AB0ED9E666EBE6D /* Object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C95C5552EE7FD6D4D5EFDB8 /* Object.cpp */; };
+		6B8EABDF48B87E69011909D3 /* UGen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0F564A4AD88B309317B033B /* UGen.cpp */; };
+		7138E2AA5308BB603D36E26F /* SapfApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151FC912DBB0F272B92A8A57 /* SapfApp.swift */; };
+		7488A9EB380FB08A160C4364 /* SapfLexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B6F3B23AF7FEF5C090A6C3 /* SapfLexer.swift */; };
+		7A504924303F9717D05239D9 /* Midi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 36D5CA3EE23DD34C1A4114AE /* Midi.cpp */; };
+		7E0A46A30749987061FA2BD1 /* SoundFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 795A4E03C878FFC2ECBDA947 /* SoundFiles.cpp */; };
+		7E839961ACF7EEBA35536790 /* CoreOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8021F6A0F32B639B14EFF5AA /* CoreOps.cpp */; };
+		7F6245E69BE7E6F95A92BA12 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5EB561D4CD100A7AF6766A6C /* Opcode.cpp */; };
+		8272FB50D0DCC213E3229EB2 /* sapf-prelude.txt in Resources */ = {isa = PBXBuildFile; fileRef = A28D8E94F2DC121F543CDDC5 /* sapf-prelude.txt */; };
+		8A5298B9CF9BDBC2928351CC /* MultichannelExpansion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 54CAF3E47EE2B7774237108D /* MultichannelExpansion.cpp */; };
+		903A1EC107CD77A4FF88DF21 /* symbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EAD6BC1B5970F58A9DF303E4 /* symbol.cpp */; };
+		A374F35F01E416F2963B61FD /* elapsedTime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1B9ED634932196EF5E2079F8 /* elapsedTime.cpp */; };
+		A5782E8032ECCD2234DAA9F1 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = DFA64A1972849D075AA0DD2A /* README.txt */; };
+		A6ECF7A13EE9AC655C24F3BE /* SapfEngine.mm in Sources */ = {isa = PBXBuildFile; fileRef = 20C8CEDEBFF09443EC47D7A8 /* SapfEngine.mm */; };
+		A810BDD1C456A393922A43B3 /* sapf-examples.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0F2D4EDD68E8670E9B182277 /* sapf-examples.txt */; };
+		AB388488FABFA9B2D2BD05AA /* OscilUGens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C6AAF2725DC4A435895399E /* OscilUGens.cpp */; };
+		AD86DE3F2F5F9B521B3F993B /* HelpTooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9A12981AEC854DDD36271B7 /* HelpTooltipView.swift */; };
+		AD99BD67468FD8DD7052D068 /* Types.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 19CE6FFB0B1BE86EB269680C /* Types.cpp */; };
+		AF51B64E68501CC3238DE4F8 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49CFF3E6FF98951F78D5911C /* AppModel.swift */; };
+		B6CB0E9928138E3649B33E06 /* Spectrogram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CABE6216FA6E7D48C044103 /* Spectrogram.cpp */; };
+		BE0FBD94C59C4B466CE0BB57 /* ErrorCodes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26756B1D06615BE248B5080C /* ErrorCodes.cpp */; };
+		BE7EB6D82513C174F827ACA9 /* RCObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F1B4FCA0DA25A90DBDED44 /* RCObj.cpp */; };
+		BFC9088FB3ECB0D96E50EE37 /* CodeStructureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D4C9BEC521C269544F7BD0 /* CodeStructureTests.swift */; };
+		C6ED5F9A65BA0D9CA45F2ED5 /* primes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1D41B415B98598963C0FFCF /* primes.cpp */; };
+		D3856DFACB4465E3C99852B6 /* CodeStructure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA53D41B7A206F5809CF762 /* CodeStructure.swift */; };
+		D8A4806343D8DFB7DD200106 /* ScopeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E535ED0367D33204B74A564F /* ScopeViews.swift */; };
+		E2F013DF7AB676C4CA8B4720 /* RandomOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B3BEA51089005A8C714B9CB /* RandomOps.cpp */; };
+		E984904EEF25B5D6E2DF1BFE /* sapf-bif-examples.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3DFD313251A61C2EBBB99444 /* sapf-bif-examples.txt */; };
+		FA583553BEDC890A7BB5C879 /* SapfUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B979B684DF9A299D7505335E /* SapfUITests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A83AE9B79AF49C59CD60AAC5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1E39EF1C2AD4E77BD4BB1FA4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 991A6F2A5660441A61133A07;
+			remoteInfo = Sapf;
+		};
+		CF5B94E9E3691FFA0F42A0E7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1E39EF1C2AD4E77BD4BB1FA4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 991A6F2A5660441A61133A07;
+			remoteInfo = Sapf;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		02146E57E956FD1F42F9D826 /* VM.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = VM.cpp; sourceTree = "<group>"; };
+		0334BDA7EEB0C5DB559B9746 /* FilterUGens.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = FilterUGens.cpp; sourceTree = "<group>"; };
+		076BF3F0A3E099A1E94695E8 /* primes.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = primes.hpp; sourceTree = "<group>"; };
+		0DEE7673B6C021E3EF009AA0 /* rc_ptr.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = rc_ptr.hpp; sourceTree = "<group>"; };
+		0F2D4EDD68E8670E9B182277 /* sapf-examples.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "sapf-examples.txt"; sourceTree = "<group>"; };
+		12849BCD4C909A52918A3E33 /* VM.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VM.hpp; sourceTree = "<group>"; };
+		14F896C0BCC51BFF662C8C27 /* MathFuns.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MathFuns.hpp; sourceTree = "<group>"; };
+		151FC912DBB0F272B92A8A57 /* SapfApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SapfApp.swift; sourceTree = "<group>"; };
+		169CF6FC8855EFE461CDF523 /* SapfUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SapfUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		188D96C63503653BCD692DB1 /* makeImage.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = makeImage.hpp; sourceTree = "<group>"; };
+		19CE6FFB0B1BE86EB269680C /* Types.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Types.cpp; sourceTree = "<group>"; };
+		1B9ED634932196EF5E2079F8 /* elapsedTime.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = elapsedTime.cpp; sourceTree = "<group>"; };
+		1C5FBFA44168F1E48A8A0FB5 /* MathFuns.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MathFuns.cpp; sourceTree = "<group>"; };
+		20C8CEDEBFF09443EC47D7A8 /* SapfEngine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SapfEngine.mm; sourceTree = "<group>"; };
+		23AE5DC6ECD843BFC45FD040 /* CodeTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeTextView.swift; sourceTree = "<group>"; };
+		26756B1D06615BE248B5080C /* ErrorCodes.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ErrorCodes.cpp; sourceTree = "<group>"; };
+		2899920686D2811137A31B21 /* Midi.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Midi.hpp; sourceTree = "<group>"; };
+		293BE9FF29B7ECCED997A51E /* Play.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Play.cpp; sourceTree = "<group>"; };
+		2B37D0CDC57A546FA7CCA326 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2C6AAF2725DC4A435895399E /* OscilUGens.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = OscilUGens.cpp; sourceTree = "<group>"; };
+		2F2AEC033EB803C4D1CB1943 /* Opcode.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Opcode.hpp; sourceTree = "<group>"; };
+		3450A3AF73BE0B2C54A26B39 /* Parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Parser.hpp; sourceTree = "<group>"; };
+		3484B306C34A3420D5E32135 /* rgen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = rgen.hpp; sourceTree = "<group>"; };
+		36D5CA3EE23DD34C1A4114AE /* Midi.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Midi.cpp; sourceTree = "<group>"; };
+		3AC4493E36DB9B72BF0647CB /* MathOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MathOps.cpp; sourceTree = "<group>"; };
+		3D8493C74876AE16A4973EAD /* MultichannelExpansion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MultichannelExpansion.hpp; sourceTree = "<group>"; };
+		3DFD313251A61C2EBBB99444 /* sapf-bif-examples.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "sapf-bif-examples.txt"; sourceTree = "<group>"; };
+		3FA2FE56EB2F918D12DD2FDE /* RCObj.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = RCObj.hpp; sourceTree = "<group>"; };
+		45209641164FCB7D7615E15A /* SapfTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SapfTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		49CFF3E6FF98951F78D5911C /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		4CABE6216FA6E7D48C044103 /* Spectrogram.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Spectrogram.cpp; sourceTree = "<group>"; };
+		4D74EB3BBBECF58B06B89489 /* Hash.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Hash.hpp; sourceTree = "<group>"; };
+		4E77C31BE29B26F5EE0F51BF /* DelayUGens.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DelayUGens.hpp; sourceTree = "<group>"; };
+		5024AD23347364A1E5C043F9 /* Spectrogram.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Spectrogram.hpp; sourceTree = "<group>"; };
+		513FEB9762C8C278297F1738 /* ConsoleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleView.swift; sourceTree = "<group>"; };
+		54CAF3E47EE2B7774237108D /* MultichannelExpansion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MultichannelExpansion.cpp; sourceTree = "<group>"; };
+		5D9DF91C75A1585A1C772E2B /* SetOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SetOps.cpp; sourceTree = "<group>"; };
+		5EB561D4CD100A7AF6766A6C /* Opcode.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Opcode.cpp; sourceTree = "<group>"; };
+		608F82B5CCACF3DBEA3F1E0F /* makeImage.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = makeImage.mm; sourceTree = "<group>"; };
+		7342A3E20BDDD0C09B5A73FD /* FilterUGens.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = FilterUGens.hpp; sourceTree = "<group>"; };
+		795A4E03C878FFC2ECBDA947 /* SoundFiles.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SoundFiles.cpp; sourceTree = "<group>"; };
+		7C95C5552EE7FD6D4D5EFDB8 /* Object.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Object.cpp; sourceTree = "<group>"; };
+		8021F6A0F32B639B14EFF5AA /* CoreOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CoreOps.cpp; sourceTree = "<group>"; };
+		821F1BBAC013B51225D8F4BB /* StreamOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StreamOps.cpp; sourceTree = "<group>"; };
+		83261EFC5AB36D58EDBF65F9 /* ErrorCodes.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ErrorCodes.hpp; sourceTree = "<group>"; };
+		84D4C9BEC521C269544F7BD0 /* CodeStructureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeStructureTests.swift; sourceTree = "<group>"; };
+		8795E10514BB0735D17C01CE /* Sapf-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Sapf-Bridging-Header.h"; sourceTree = "<group>"; };
+		8BA53D41B7A206F5809CF762 /* CodeStructure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeStructure.swift; sourceTree = "<group>"; };
+		8D89B631E673317B56AC7026 /* dsp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = dsp.cpp; sourceTree = "<group>"; };
+		92F1B4FCA0DA25A90DBDED44 /* RCObj.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RCObj.cpp; sourceTree = "<group>"; };
+		96751E64B8528F124FB891E1 /* SyntaxHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntaxHighlighter.swift; sourceTree = "<group>"; };
+		9B3BEA51089005A8C714B9CB /* RandomOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RandomOps.cpp; sourceTree = "<group>"; };
+		A11B6A86437920CA23BCFE5D /* dsp.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dsp.hpp; sourceTree = "<group>"; };
+		A1D41B415B98598963C0FFCF /* primes.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = primes.cpp; sourceTree = "<group>"; };
+		A28D8E94F2DC121F543CDDC5 /* sapf-prelude.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "sapf-prelude.txt"; sourceTree = "<group>"; };
+		A3B6F3B23AF7FEF5C090A6C3 /* SapfLexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SapfLexer.swift; sourceTree = "<group>"; };
+		A695D8E5B31656870846AFC5 /* symbol.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = symbol.hpp; sourceTree = "<group>"; };
+		AADF8E44C780388FD25FE4C9 /* Sapf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sapf.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B41F1BD028B7CC36FCAF1D1E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B90454F3C0C12F795349BBF5 /* UGen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = UGen.hpp; sourceTree = "<group>"; };
+		B979B684DF9A299D7505335E /* SapfUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SapfUITests.swift; sourceTree = "<group>"; };
+		B994B9CB9B89ECE9EA10340C /* elapsedTime.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = elapsedTime.hpp; sourceTree = "<group>"; };
+		BDAD64FC5F5E87B7FB9D249D /* MathOps.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MathOps.hpp; sourceTree = "<group>"; };
+		C208B113157519FE26786869 /* DelayUGens.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DelayUGens.cpp; sourceTree = "<group>"; };
+		C27451AAEC4D950302E332E2 /* clz.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = clz.hpp; sourceTree = "<group>"; };
+		CF68A7B767DB1E700C054A62 /* SapfEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SapfEngine.h; sourceTree = "<group>"; };
+		D91C5A1DAA53B98BC985360F /* Parser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Parser.cpp; sourceTree = "<group>"; };
+		DE4D3EE07AED09F2828ECE92 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		DFA64A1972849D075AA0DD2A /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
+		E535ED0367D33204B74A564F /* ScopeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScopeViews.swift; sourceTree = "<group>"; };
+		E5A353C2D978D525FB020333 /* Play.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Play.hpp; sourceTree = "<group>"; };
+		E9A12981AEC854DDD36271B7 /* HelpTooltipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpTooltipView.swift; sourceTree = "<group>"; };
+		EAD6BC1B5970F58A9DF303E4 /* symbol.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = symbol.cpp; sourceTree = "<group>"; };
+		F0F564A4AD88B309317B033B /* UGen.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UGen.cpp; sourceTree = "<group>"; };
+		F4CC4791869CFDA3BB74C812 /* Types.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Types.hpp; sourceTree = "<group>"; };
+		F4E58CDEFEAEA02169E6E1A7 /* OscilUGens.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = OscilUGens.hpp; sourceTree = "<group>"; };
+		F822B7BC53BE2CA24352B15A /* AudioAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioAnalyzer.swift; sourceTree = "<group>"; };
+		F9CA24B6BBFD17BC269B5D49 /* Object.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Object.hpp; sourceTree = "<group>"; };
+		FF629C01B4290BEE94468AB6 /* SoundFiles.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SoundFiles.hpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		155D409E5DCC98B74E4BE57C /* App */ = {
+			isa = PBXGroup;
+			children = (
+				49CFF3E6FF98951F78D5911C /* AppModel.swift */,
+				151FC912DBB0F272B92A8A57 /* SapfApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		19964D1C25002CBC6BA1F3A2 /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				8BA53D41B7A206F5809CF762 /* CodeStructure.swift */,
+				23AE5DC6ECD843BFC45FD040 /* CodeTextView.swift */,
+				E9A12981AEC854DDD36271B7 /* HelpTooltipView.swift */,
+				A3B6F3B23AF7FEF5C090A6C3 /* SapfLexer.swift */,
+				96751E64B8528F124FB891E1 /* SyntaxHighlighter.swift */,
+			);
+			path = Editor;
+			sourceTree = "<group>";
+		};
+		3362358F83E564D858D20E25 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				8021F6A0F32B639B14EFF5AA /* CoreOps.cpp */,
+				C208B113157519FE26786869 /* DelayUGens.cpp */,
+				8D89B631E673317B56AC7026 /* dsp.cpp */,
+				1B9ED634932196EF5E2079F8 /* elapsedTime.cpp */,
+				26756B1D06615BE248B5080C /* ErrorCodes.cpp */,
+				0334BDA7EEB0C5DB559B9746 /* FilterUGens.cpp */,
+				608F82B5CCACF3DBEA3F1E0F /* makeImage.mm */,
+				1C5FBFA44168F1E48A8A0FB5 /* MathFuns.cpp */,
+				3AC4493E36DB9B72BF0647CB /* MathOps.cpp */,
+				36D5CA3EE23DD34C1A4114AE /* Midi.cpp */,
+				54CAF3E47EE2B7774237108D /* MultichannelExpansion.cpp */,
+				7C95C5552EE7FD6D4D5EFDB8 /* Object.cpp */,
+				5EB561D4CD100A7AF6766A6C /* Opcode.cpp */,
+				2C6AAF2725DC4A435895399E /* OscilUGens.cpp */,
+				D91C5A1DAA53B98BC985360F /* Parser.cpp */,
+				293BE9FF29B7ECCED997A51E /* Play.cpp */,
+				A1D41B415B98598963C0FFCF /* primes.cpp */,
+				9B3BEA51089005A8C714B9CB /* RandomOps.cpp */,
+				92F1B4FCA0DA25A90DBDED44 /* RCObj.cpp */,
+				5D9DF91C75A1585A1C772E2B /* SetOps.cpp */,
+				795A4E03C878FFC2ECBDA947 /* SoundFiles.cpp */,
+				4CABE6216FA6E7D48C044103 /* Spectrogram.cpp */,
+				821F1BBAC013B51225D8F4BB /* StreamOps.cpp */,
+				EAD6BC1B5970F58A9DF303E4 /* symbol.cpp */,
+				19CE6FFB0B1BE86EB269680C /* Types.cpp */,
+				F0F564A4AD88B309317B033B /* UGen.cpp */,
+				02146E57E956FD1F42F9D826 /* VM.cpp */,
+			);
+			name = src;
+			path = ../src;
+			sourceTree = "<group>";
+		};
+		4323A5F7D1CC47B834D98B9A /* Visuals */ = {
+			isa = PBXGroup;
+			children = (
+				F822B7BC53BE2CA24352B15A /* AudioAnalyzer.swift */,
+				E535ED0367D33204B74A564F /* ScopeViews.swift */,
+			);
+			path = Visuals;
+			sourceTree = "<group>";
+		};
+		47C1F1F2483B73D30AC66B0E /* SapfUITests */ = {
+			isa = PBXGroup;
+			children = (
+				B979B684DF9A299D7505335E /* SapfUITests.swift */,
+			);
+			path = SapfUITests;
+			sourceTree = "<group>";
+		};
+		5E77F517D06CEF27700E9C9F /* include */ = {
+			isa = PBXGroup;
+			children = (
+				C27451AAEC4D950302E332E2 /* clz.hpp */,
+				4E77C31BE29B26F5EE0F51BF /* DelayUGens.hpp */,
+				A11B6A86437920CA23BCFE5D /* dsp.hpp */,
+				B994B9CB9B89ECE9EA10340C /* elapsedTime.hpp */,
+				83261EFC5AB36D58EDBF65F9 /* ErrorCodes.hpp */,
+				7342A3E20BDDD0C09B5A73FD /* FilterUGens.hpp */,
+				4D74EB3BBBECF58B06B89489 /* Hash.hpp */,
+				188D96C63503653BCD692DB1 /* makeImage.hpp */,
+				14F896C0BCC51BFF662C8C27 /* MathFuns.hpp */,
+				BDAD64FC5F5E87B7FB9D249D /* MathOps.hpp */,
+				2899920686D2811137A31B21 /* Midi.hpp */,
+				3D8493C74876AE16A4973EAD /* MultichannelExpansion.hpp */,
+				F9CA24B6BBFD17BC269B5D49 /* Object.hpp */,
+				2F2AEC033EB803C4D1CB1943 /* Opcode.hpp */,
+				F4E58CDEFEAEA02169E6E1A7 /* OscilUGens.hpp */,
+				3450A3AF73BE0B2C54A26B39 /* Parser.hpp */,
+				E5A353C2D978D525FB020333 /* Play.hpp */,
+				076BF3F0A3E099A1E94695E8 /* primes.hpp */,
+				0DEE7673B6C021E3EF009AA0 /* rc_ptr.hpp */,
+				3FA2FE56EB2F918D12DD2FDE /* RCObj.hpp */,
+				3484B306C34A3420D5E32135 /* rgen.hpp */,
+				FF629C01B4290BEE94468AB6 /* SoundFiles.hpp */,
+				5024AD23347364A1E5C043F9 /* Spectrogram.hpp */,
+				A695D8E5B31656870846AFC5 /* symbol.hpp */,
+				F4CC4791869CFDA3BB74C812 /* Types.hpp */,
+				B90454F3C0C12F795349BBF5 /* UGen.hpp */,
+				12849BCD4C909A52918A3E33 /* VM.hpp */,
+			);
+			name = include;
+			path = ../include;
+			sourceTree = "<group>";
+		};
+		758D19CBCE07AB09D66B9C9D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AADF8E44C780388FD25FE4C9 /* Sapf.app */,
+				45209641164FCB7D7615E15A /* SapfTests.xctest */,
+				169CF6FC8855EFE461CDF523 /* SapfUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		80005AB6767DB4F535E9DD1E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				513FEB9762C8C278297F1738 /* ConsoleView.swift */,
+				DE4D3EE07AED09F2828ECE92 /* ContentView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		8BAF69B37020212B92486093 /* sapf */ = {
+			isa = PBXGroup;
+			children = (
+				DFA64A1972849D075AA0DD2A /* README.txt */,
+				3DFD313251A61C2EBBB99444 /* sapf-bif-examples.txt */,
+				0F2D4EDD68E8670E9B182277 /* sapf-examples.txt */,
+				A28D8E94F2DC121F543CDDC5 /* sapf-prelude.txt */,
+			);
+			name = sapf;
+			path = ..;
+			sourceTree = "<group>";
+		};
+		939E22F99074B60F58BBE6B2 = {
+			isa = PBXGroup;
+			children = (
+				5E77F517D06CEF27700E9C9F /* include */,
+				D15CAB7410DFF93A5E340B27 /* Sapf */,
+				8BAF69B37020212B92486093 /* sapf */,
+				F1D1F08FE168BC2546CD65ED /* SapfTests */,
+				47C1F1F2483B73D30AC66B0E /* SapfUITests */,
+				3362358F83E564D858D20E25 /* src */,
+				758D19CBCE07AB09D66B9C9D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D15CAB7410DFF93A5E340B27 /* Sapf */ = {
+			isa = PBXGroup;
+			children = (
+				155D409E5DCC98B74E4BE57C /* App */,
+				19964D1C25002CBC6BA1F3A2 /* Editor */,
+				FBF03F8396FD72A6327D4593 /* Engine */,
+				80005AB6767DB4F535E9DD1E /* Views */,
+				4323A5F7D1CC47B834D98B9A /* Visuals */,
+				2B37D0CDC57A546FA7CCA326 /* Assets.xcassets */,
+				B41F1BD028B7CC36FCAF1D1E /* Info.plist */,
+			);
+			path = Sapf;
+			sourceTree = "<group>";
+		};
+		F1D1F08FE168BC2546CD65ED /* SapfTests */ = {
+			isa = PBXGroup;
+			children = (
+				84D4C9BEC521C269544F7BD0 /* CodeStructureTests.swift */,
+			);
+			path = SapfTests;
+			sourceTree = "<group>";
+		};
+		FBF03F8396FD72A6327D4593 /* Engine */ = {
+			isa = PBXGroup;
+			children = (
+				8795E10514BB0735D17C01CE /* Sapf-Bridging-Header.h */,
+				CF68A7B767DB1E700C054A62 /* SapfEngine.h */,
+				20C8CEDEBFF09443EC47D7A8 /* SapfEngine.mm */,
+			);
+			path = Engine;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		991A6F2A5660441A61133A07 /* Sapf */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 92FF2743AC4D9D1475C8449E /* Build configuration list for PBXNativeTarget "Sapf" */;
+			buildPhases = (
+				0C0BE0A0027AF94B00EE4581 /* Sources */,
+				FE216F591191A5F7406589AB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Sapf;
+			packageProductDependencies = (
+			);
+			productName = Sapf;
+			productReference = AADF8E44C780388FD25FE4C9 /* Sapf.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A2EB9BFFA1AA089969D076DD /* SapfUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 54AEC35C1EE39A41ABF5379D /* Build configuration list for PBXNativeTarget "SapfUITests" */;
+			buildPhases = (
+				D6791DD4203636D90FBA0E76 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				931C844984F8A59FB7716C79 /* PBXTargetDependency */,
+			);
+			name = SapfUITests;
+			packageProductDependencies = (
+			);
+			productName = SapfUITests;
+			productReference = 169CF6FC8855EFE461CDF523 /* SapfUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		B5BDC5ECF62E6DE788B9969C /* SapfTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 734154D806E9828F46137916 /* Build configuration list for PBXNativeTarget "SapfTests" */;
+			buildPhases = (
+				E281B1DDF8A32998B2623233 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8D37FBD3545B162CA3F8D34D /* PBXTargetDependency */,
+			);
+			name = SapfTests;
+			packageProductDependencies = (
+			);
+			productName = SapfTests;
+			productReference = 45209641164FCB7D7615E15A /* SapfTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1E39EF1C2AD4E77BD4BB1FA4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					991A6F2A5660441A61133A07 = {
+						ProvisioningStyle = Automatic;
+					};
+					A2EB9BFFA1AA089969D076DD = {
+						TestTargetID = 991A6F2A5660441A61133A07;
+					};
+				};
+			};
+			buildConfigurationList = BDF8E05FD45C39429912D37B /* Build configuration list for PBXProject "Sapf" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 939E22F99074B60F58BBE6B2;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 758D19CBCE07AB09D66B9C9D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				991A6F2A5660441A61133A07 /* Sapf */,
+				A2EB9BFFA1AA089969D076DD /* SapfUITests */,
+				B5BDC5ECF62E6DE788B9969C /* SapfTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FE216F591191A5F7406589AB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				67A396EB3409F4D65F35B438 /* Assets.xcassets in Resources */,
+				A5782E8032ECCD2234DAA9F1 /* README.txt in Resources */,
+				E984904EEF25B5D6E2DF1BFE /* sapf-bif-examples.txt in Resources */,
+				A810BDD1C456A393922A43B3 /* sapf-examples.txt in Resources */,
+				8272FB50D0DCC213E3229EB2 /* sapf-prelude.txt in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0C0BE0A0027AF94B00EE4581 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF51B64E68501CC3238DE4F8 /* AppModel.swift in Sources */,
+				4A29451F15ED7AC99F6A8A5C /* AudioAnalyzer.swift in Sources */,
+				D3856DFACB4465E3C99852B6 /* CodeStructure.swift in Sources */,
+				574D97C9D2CABCADC1E6FCC0 /* CodeTextView.swift in Sources */,
+				1E4843FD394097659BC8732B /* ConsoleView.swift in Sources */,
+				1E45D3A07492E51A550FA608 /* ContentView.swift in Sources */,
+				7E839961ACF7EEBA35536790 /* CoreOps.cpp in Sources */,
+				620A064C7D123FFC724581FF /* DelayUGens.cpp in Sources */,
+				BE0FBD94C59C4B466CE0BB57 /* ErrorCodes.cpp in Sources */,
+				2048EF2140FCDC818E71D009 /* FilterUGens.cpp in Sources */,
+				AD86DE3F2F5F9B521B3F993B /* HelpTooltipView.swift in Sources */,
+				35E0B51E0FBA65EC3E45EDC7 /* MathFuns.cpp in Sources */,
+				385C6F05F8951680C1886271 /* MathOps.cpp in Sources */,
+				7A504924303F9717D05239D9 /* Midi.cpp in Sources */,
+				8A5298B9CF9BDBC2928351CC /* MultichannelExpansion.cpp in Sources */,
+				687815492AB0ED9E666EBE6D /* Object.cpp in Sources */,
+				7F6245E69BE7E6F95A92BA12 /* Opcode.cpp in Sources */,
+				AB388488FABFA9B2D2BD05AA /* OscilUGens.cpp in Sources */,
+				0B5554014B2644791EFADF74 /* Parser.cpp in Sources */,
+				06BB8523F2D58F0D16D9A227 /* Play.cpp in Sources */,
+				BE7EB6D82513C174F827ACA9 /* RCObj.cpp in Sources */,
+				E2F013DF7AB676C4CA8B4720 /* RandomOps.cpp in Sources */,
+				7138E2AA5308BB603D36E26F /* SapfApp.swift in Sources */,
+				A6ECF7A13EE9AC655C24F3BE /* SapfEngine.mm in Sources */,
+				7488A9EB380FB08A160C4364 /* SapfLexer.swift in Sources */,
+				D8A4806343D8DFB7DD200106 /* ScopeViews.swift in Sources */,
+				40D9A8C172D68B9C1297688C /* SetOps.cpp in Sources */,
+				7E0A46A30749987061FA2BD1 /* SoundFiles.cpp in Sources */,
+				B6CB0E9928138E3649B33E06 /* Spectrogram.cpp in Sources */,
+				6241AD6342A9E8A8726F0363 /* StreamOps.cpp in Sources */,
+				547004C82E66B6FD9DE02457 /* SyntaxHighlighter.swift in Sources */,
+				AD99BD67468FD8DD7052D068 /* Types.cpp in Sources */,
+				6B8EABDF48B87E69011909D3 /* UGen.cpp in Sources */,
+				6485D606503623FAD430CBE5 /* VM.cpp in Sources */,
+				0B95794630CDC5D8DA24B8BC /* dsp.cpp in Sources */,
+				A374F35F01E416F2963B61FD /* elapsedTime.cpp in Sources */,
+				43C548D29D6BD1E660A0BC6D /* makeImage.mm in Sources */,
+				C6ED5F9A65BA0D9CA45F2ED5 /* primes.cpp in Sources */,
+				903A1EC107CD77A4FF88DF21 /* symbol.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D6791DD4203636D90FBA0E76 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA583553BEDC890A7BB5C879 /* SapfUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E281B1DDF8A32998B2623233 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BFC9088FB3ECB0D96E50EE37 /* CodeStructureTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8D37FBD3545B162CA3F8D34D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 991A6F2A5660441A61133A07 /* Sapf */;
+			targetProxy = CF5B94E9E3691FFA0F42A0E7 /* PBXContainerItemProxy */;
+		};
+		931C844984F8A59FB7716C79 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 991A6F2A5660441A61133A07 /* Sapf */;
+			targetProxy = A83AE9B79AF49C59CD60AAC5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1255721C6A59DD6E98906323 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sapf.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sapf";
+			};
+			name = Debug;
+		};
+		4F30516DB7EAC04D261BDD28 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Sapf;
+			};
+			name = Debug;
+		};
+		4F829D5DA1F213482ABE5BA6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../include";
+				INFOPLIST_FILE = Sapf/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf;
+				PRODUCT_NAME = Sapf;
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "Sapf/Engine/Sapf-Bridging-Header.h";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WARNING_CFLAGS = "-Wno-shorten-64-to-32 -Wno-comma -Wno-unused-variable -Wno-deprecated-declarations";
+			};
+			name = Release;
+		};
+		556B392C96567BC33042AA48 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Sapf;
+			};
+			name = Release;
+		};
+		7E09F159080D4477CC6F29F4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.22;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9D956BA65E7298C1B3005AF9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.22;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A2F01F754BC8422B0FC93F84 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../include";
+				INFOPLIST_FILE = Sapf/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf;
+				PRODUCT_NAME = Sapf;
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "Sapf/Engine/Sapf-Bridging-Header.h";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WARNING_CFLAGS = "-Wno-shorten-64-to-32 -Wno-comma -Wno-unused-variable -Wno-deprecated-declarations";
+			};
+			name = Debug;
+		};
+		B8B1F4AC371C6D2CF293FD8A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sapf.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sapf";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		54AEC35C1EE39A41ABF5379D /* Build configuration list for PBXNativeTarget "SapfUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4F30516DB7EAC04D261BDD28 /* Debug */,
+				556B392C96567BC33042AA48 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		734154D806E9828F46137916 /* Build configuration list for PBXNativeTarget "SapfTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1255721C6A59DD6E98906323 /* Debug */,
+				B8B1F4AC371C6D2CF293FD8A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		92FF2743AC4D9D1475C8449E /* Build configuration list for PBXNativeTarget "Sapf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A2F01F754BC8422B0FC93F84 /* Debug */,
+				4F829D5DA1F213482ABE5BA6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BDF8E05FD45C39429912D37B /* Build configuration list for PBXProject "Sapf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E09F159080D4477CC6F29F4 /* Debug */,
+				9D956BA65E7298C1B3005AF9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1E39EF1C2AD4E77BD4BB1FA4 /* Project object */;
+}

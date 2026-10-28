@@ -315,11 +315,11 @@ void makeRecordingPath(Arg filename, char* path, int len)
 {
 	if (filename.isString()) {
 		const char* recDir = getenv("SAPF_RECORDINGS");
-		if (!recDir || strlen(recDir)==0) recDir = "/tmp";
+		if (!recDir || strlen(recDir)==0) recDir = sapfTempDir();
 		snprintf(path, len, "%s/%s.wav", recDir, ((String*)filename.o())->s);
 	} else {
 		int32_t count = ++gFileCount;
-		snprintf(path, len, "/tmp/sapf-%s-%04d.wav", gSessionTime, count);
+		snprintf(path, len, "%s/sapf-%s-%04d.wav", sapfTempDir(), gSessionTime, count);
 	}
 }
 
@@ -401,8 +401,6 @@ void sfwrite(Thread& th, V& v, Arg filename, bool openIt)
 	ExtAudioFileDispose(xaf);
 	
 	if (openIt) {
-		char cmd[1100];
-		snprintf(cmd, 1100, "open \"%s\"", path);
-		system(cmd);
+		openFileExternally(path);
 	}
 }
