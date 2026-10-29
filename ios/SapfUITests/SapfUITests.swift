@@ -64,8 +64,7 @@ final class SapfUITests: XCTestCase {
     func testRunShowsOutputAndVisuals() {
         _ = newDocument(with: "300 1000 xmousex 0 sinosc .2 * play\n1 2 +")
         app.buttons["Hide keyboard"].firstMatch.tap()
-        app.textViews.firstMatch.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 20, dy: 22)).tap()
-        app.buttons["Run"].firstMatch.tap()
+        app.buttons["Run block"].firstMatch.tap()
         // On a phone the panels collapse to a small waveform while typing.
         screenshot("running-keyboard")
         if app.buttons["Hide keyboard"].isHittable { app.buttons["Hide keyboard"].firstMatch.tap() }
@@ -90,15 +89,43 @@ final class SapfUITests: XCTestCase {
         app.buttons["Stop"].firstMatch.tap()
     }
 
+    func testReadingModeKeepsKeyboardAway() {
+        _ = newDocument(with: "440 0 sinosc .2 * play")
+        app.buttons["Hide keyboard"].firstMatch.tap()
+        // Tapping text while reading shows help but doesn't bring the keyboard back.
+        app.textViews.firstMatch.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 39 + 8.4 * 8, dy: 22)).tap()
+        sleep(1)
+        XCTAssertFalse(app.keyboards.firstMatch.exists, "no keyboard while reading")
+        app.buttons["Edit"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2), "Edit brings up the keyboard")
+    }
+
+    func testPanelStaysAboveKeyboardAfterRotating() {
+        _ = newDocument(with: "440 0 sinosc .2 * play")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        sleep(2)
+        XCUIDevice.shared.orientation = .portrait
+        sleep(2)
+        screenshot("keyboard-after-rotation")
+        let accessory = app.buttons["Hide keyboard"].firstMatch
+        XCTAssertTrue(accessory.exists)
+        let scopes = app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Waveform'")).allElementsBoundByIndex
+        XCTAssertFalse(scopes.isEmpty, "a waveform is showing")
+        for scope in scopes {
+            XCTAssertLessThanOrEqual(scope.frame.maxY, accessory.frame.minY, "waveform is above the keyboard's accessory bar")
+        }
+    }
+
     /// Plays something busy and captures every layout, for checking screen size handling by eye.
     func testLayouts() {
         let device = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
         _ = newDocument(with: "((.4 0 lfsaw) 2 * ([8 7.23] 0 lfsaw) .25 * 9.667 + + exp2) 0 sinosc .04 * .2 0 4 combn play")
-        app.buttons["Run"].firstMatch.tap()
+        app.buttons["Run block"].firstMatch.tap()
         if app.buttons["Hide keyboard"].isHittable { app.buttons["Hide keyboard"].firstMatch.tap() }
         if app.buttons["Scope"].exists { app.buttons["Scope"].tap() }
         sleep(2)
         screenshot("\(device)-portrait")
+        XCTAssertTrue(app.navigationBars.buttons["Stop"].isHittable, "Stop is right on the toolbar, not in an overflow menu")
         XCUIDevice.shared.orientation = .landscapeLeft
         sleep(2)
         screenshot("\(device)-landscape")

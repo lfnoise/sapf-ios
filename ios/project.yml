@@ -6,7 +6,7 @@
 
 name: Sapf
 options:
-  bundleIdPrefix: com.lfnoise
+  bundleIdPrefix: com.audiosynth
   deploymentTarget:
     iOS: "16.0"
   groupSortPosition: top
@@ -18,6 +18,7 @@ settings:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.1.22"
     CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: 9KC49MZKRM
 
 targets:
   Sapf:
@@ -40,7 +41,7 @@ targets:
         buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lfnoise.sapf
+        PRODUCT_BUNDLE_IDENTIFIER: com.audiosynth.sapf
         PRODUCT_NAME: Sapf
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_OBJC_BRIDGING_HEADER: Sapf/Engine/Sapf-Bridging-Header.h
@@ -83,7 +84,7 @@ targets:
       - target: Sapf
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lfnoise.sapf.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: com.audiosynth.sapf.uitests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: Sapf
 
@@ -96,7 +97,7 @@ targets:
       - target: Sapf
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lfnoise.sapf.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.audiosynth.sapf.tests
         GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/Sapf.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sapf
         BUNDLE_LOADER: $(TEST_HOST)

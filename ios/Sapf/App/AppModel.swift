@@ -99,7 +99,12 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     @Published private(set) var currentDocument: URL = DocumentStore.scratch
     @Published private(set) var isBusy = false
     @Published var previewURL: URL?
-    @Published var keyboardVisible = false
+    /// The on-screen keyboard's frame in screen coordinates, or nil when it's hidden.
+    @Published private(set) var keyboardFrame: CGRect?
+    /// Whether the editor brings up the keyboard. When off, taps only show help and pick the block to run.
+    @Published var isEditing: Bool {
+        didSet { editor.isEditable = isEditing }
+    }
 
     @Published var showsHelpOnTap: Bool {
         didSet {
@@ -130,17 +135,44 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         showsHelpOnTap = defaults.object(forKey: "helpOnTap") as? Bool ?? true
         editorFontSize = defaults.object(forKey: "editorFontSize") as? Double
             ?? (UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14)
+        // On a phone the keyboard covers most of the screen, so start out reading.
+        isEditing = UIDevice.current.userInterfaceIdiom == .pad
 
         editor.actions = self
         editor.fontSize = editorFontSize
         editor.showsHelpOnTap = showsHelpOnTap
+        editor.isEditable = isEditing
 
-        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.keyboardVisible = true }
+        // The layout makes room for the keyboard itself: SwiftUI's own keyboard avoidance can leave
+        // the bottom panel under the accessory bar after rotating.
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillChangeFrameNotification, object: nil, queue: .main) { [weak self] note in
+            let frame = (note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue
+            let duration = note.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
+            Task { @MainActor in
+                withAnimation(.easeOut(duration: duration)) { self?.keyboardFrame = frame }
+            }
         }
-        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.keyboardVisible = false }
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { [weak self] note in
+            let duration = note.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
+            Task { @MainActor in
+                withAnimation(.easeOut(duration: duration)) { self?.keyboardFrame = nil }
+            }
         }
+    }
+
+    /// How far the keyboard reaches above a view's bottom edge, given in window coordinates.
+    func keyboardOverlap(bottom: CGFloat) -> CGFloat {
+        guard let screenFrame = keyboardFrame, !screenFrame.isEmpty else { return 0 }
+        var frame = screenFrame
+        if let window = editor.window {
+            frame = window.convert(screenFrame, from: window.screen.coordinateSpace)
+        }
+        return max(0, bottom - frame.minY)
+    }
+
+    func startEditing() {
+        isEditing = true
+        editor.becomeFirstResponder()
     }
 
     func start() {
@@ -209,6 +241,8 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         let url = DocumentStore.newDocumentURL()
         try? "".write(to: url, atomically: true, encoding: .utf8)
         load(url)
+        // Editable, but not focused: focusing from the Documents menu's action loses out to the menu closing.
+        isEditing = true
     }
 
     var canRestoreCurrent: Bool { DocumentStore.bundledResource(for: currentDocument) != nil }
@@ -270,4 +304,5 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     func codeTextView(_ view: CodeTextView, evaluate code: String) { evaluate(code) }
     func codeTextViewStop(_ view: CodeTextView) { stop() }
     func codeTextViewDidChangeText(_ view: CodeTextView) { scheduleSave() }
+    func codeTextViewDidEndEditing(_ view: CodeTextView) { isEditing = false }
 }

@@ -406,10 +406,15 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					991A6F2A5660441A61133A07 = {
+						DevelopmentTeam = 9KC49MZKRM;
 						ProvisioningStyle = Automatic;
 					};
 					A2EB9BFFA1AA089969D076DD = {
+						DevelopmentTeam = 9KC49MZKRM;
 						TestTargetID = 991A6F2A5660441A61133A07;
+					};
+					B5BDC5ECF62E6DE788B9969C = {
+						DevelopmentTeam = 9KC49MZKRM;
 					};
 				};
 			};
@@ -538,7 +543,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.audiosynth.sapf.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sapf.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sapf";
@@ -555,7 +560,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.audiosynth.sapf.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Sapf;
@@ -575,7 +580,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf;
+				PRODUCT_BUNDLE_IDENTIFIER = com.audiosynth.sapf;
 				PRODUCT_NAME = Sapf;
 				SDKROOT = iphoneos;
 				SWIFT_OBJC_BRIDGING_HEADER = "Sapf/Engine/Sapf-Bridging-Header.h";
@@ -594,7 +599,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.audiosynth.sapf.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Sapf;
@@ -637,6 +642,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 9KC49MZKRM;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -702,6 +708,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 9KC49MZKRM;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -737,7 +744,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf;
+				PRODUCT_BUNDLE_IDENTIFIER = com.audiosynth.sapf;
 				PRODUCT_NAME = Sapf;
 				SDKROOT = iphoneos;
 				SWIFT_OBJC_BRIDGING_HEADER = "Sapf/Engine/Sapf-Bridging-Header.h";
@@ -756,7 +763,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.lfnoise.sapf.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.audiosynth.sapf.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sapf.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Sapf";

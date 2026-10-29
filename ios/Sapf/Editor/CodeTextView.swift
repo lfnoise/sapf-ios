@@ -20,6 +20,7 @@ protocol CodeTextViewActions: AnyObject {
     func codeTextView(_ view: CodeTextView, evaluate code: String)
     func codeTextViewStop(_ view: CodeTextView)
     func codeTextViewDidChangeText(_ view: CodeTextView)
+    func codeTextViewDidEndEditing(_ view: CodeTextView)
 }
 
 /// The sapf source editor: syntax coloring, tap a word for help, and evaluation commands.
@@ -220,6 +221,14 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
 
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
         let point = gesture.location(in: self)
+        if !isEditable, let position = closestPosition(to: point) {
+            // Reading: there's no caret, but a tap still picks the block that Run evaluates.
+            // Set it after the text view's own tap handling, which clears the selection.
+            DispatchQueue.main.async {
+                self.selectedTextRange = self.textRange(from: position, to: position)
+                self.setNeedsLayout()
+            }
+        }
         guard showsHelpOnTap, !(tooltip.isShowing && tooltip.frame.contains(point)),
               case let (token, rect)? = wordToken(at: point) else {
             tooltip.hide()
@@ -299,6 +308,10 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
 
     func textViewDidChangeSelection(_ textView: UITextView) {
         setNeedsLayout()
+    }
+
+    func textViewDidEndEditing(_ textView: UITextView) {
+        actions?.codeTextViewDidEndEditing(self)
     }
 
     override func layoutSubviews() {
