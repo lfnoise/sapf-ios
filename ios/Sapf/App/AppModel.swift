@@ -182,6 +182,14 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     }
     static let audioBufferChoices = [256, 512, 1024, 2048]
 
+    /// Where you were in each document, by file name, kept across launches.
+    private var positions: [String: CodeTextView.Position] = {
+        guard let data = UserDefaults.standard.data(forKey: "documentPositions") else { return [:] }
+        return (try? JSONDecoder().decode([String: CodeTextView.Position].self, from: data)) ?? [:]
+    }()
+    /// The document in the editor, once one has been loaded.
+    private var loadedDocument: URL?
+
     private var savedDocumentName: String {
         get { UserDefaults.standard.string(forKey: "currentDocument") ?? DocumentStore.scratch.lastPathComponent }
         set { UserDefaults.standard.set(newValue, forKey: "currentDocument") }
@@ -353,13 +361,25 @@ final class AppModel: ObservableObject, CodeTextViewActions {
 
     func load(_ url: URL) {
         saveNow()
+        rememberPosition()
         let text = (try? String(contentsOf: url, encoding: .utf8))
             ?? (try? String(contentsOf: url, encoding: .isoLatin1))
             ?? ""
         currentDocument = url
         savedDocumentName = url.lastPathComponent
         editor.setText(text)
+        loadedDocument = url
+        if let position = positions[url.lastPathComponent] { editor.restore(position) }
         refreshDocuments()
+    }
+
+    /// Notes where you are in the current document, to return there next time it's opened.
+    func rememberPosition() {
+        guard let url = loadedDocument else { return }
+        positions[url.lastPathComponent] = editor.position
+        if let data = try? JSONEncoder().encode(positions) {
+            UserDefaults.standard.set(data, forKey: "documentPositions")
+        }
     }
 
     func newDocument() {

@@ -20,6 +20,7 @@
 		4A29451F15ED7AC99F6A8A5C /* AudioAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F822B7BC53BE2CA24352B15A /* AudioAnalyzer.swift */; };
 		547004C82E66B6FD9DE02457 /* SyntaxHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96751E64B8528F124FB891E1 /* SyntaxHighlighter.swift */; };
 		574D97C9D2CABCADC1E6FCC0 /* CodeTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AE5DC6ECD843BFC45FD040 /* CodeTextView.swift */; };
+		5A2591440C460574CAF3B72A /* EditorPositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341DE953C5C2DD350C288A3C /* EditorPositionTests.swift */; };
 		620A064C7D123FFC724581FF /* DelayUGens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C208B113157519FE26786869 /* DelayUGens.cpp */; };
 		6241AD6342A9E8A8726F0363 /* StreamOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 821F1BBAC013B51225D8F4BB /* StreamOps.cpp */; };
 		6485D606503623FAD430CBE5 /* VM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 02146E57E956FD1F42F9D826 /* VM.cpp */; };
@@ -98,6 +99,7 @@
 		2B37D0CDC57A546FA7CCA326 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2C6AAF2725DC4A435895399E /* OscilUGens.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = OscilUGens.cpp; sourceTree = "<group>"; };
 		2F2AEC033EB803C4D1CB1943 /* Opcode.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Opcode.hpp; sourceTree = "<group>"; };
+		341DE953C5C2DD350C288A3C /* EditorPositionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorPositionTests.swift; sourceTree = "<group>"; };
 		3450A3AF73BE0B2C54A26B39 /* Parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Parser.hpp; sourceTree = "<group>"; };
 		3484B306C34A3420D5E32135 /* rgen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = rgen.hpp; sourceTree = "<group>"; };
 		36D5CA3EE23DD34C1A4114AE /* Midi.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Midi.cpp; sourceTree = "<group>"; };
@@ -333,6 +335,7 @@
 			isa = PBXGroup;
 			children = (
 				84D4C9BEC521C269544F7BD0 /* CodeStructureTests.swift */,
+				341DE953C5C2DD350C288A3C /* EditorPositionTests.swift */,
 				ADB59F0D3DE917DE670CC4F0 /* ReadmeTests.swift */,
 			);
 			path = SapfTests;
@@ -525,6 +528,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BFC9088FB3ECB0D96E50EE37 /* CodeStructureTests.swift in Sources */,
+				5A2591440C460574CAF3B72A /* EditorPositionTests.swift in Sources */,
 				F3E278F50D3D4D61A1721CB8 /* ReadmeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

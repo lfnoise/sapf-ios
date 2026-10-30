@@ -90,9 +90,62 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
     func setText(_ newText: String) {
         tooltip.hide()
         text = newText
+        pendingPosition = nil
         selectedRange = NSRange(location: 0, length: 0)
         rehighlight()
         setContentOffset(CGPoint(x: 0, y: -adjustedContentInset.top), animated: false)
+    }
+
+    // MARK: Position
+
+    /// Where you are in a document: the first visible character and the selection. Kept as character
+    /// indexes, so they survive changes in text size.
+    struct Position: Codable, Equatable {
+        var top: Int
+        var selection: Int
+        var selectionLength: Int
+        /// How far the top line is scrolled out of view, as a fraction of its height.
+        var topLineFraction: Double? = nil
+    }
+
+    private var pendingPosition: Position?
+
+    var position: Position {
+        guard textStorage.length > 0 else { return Position(top: 0, selection: 0, selectionLength: 0) }
+        let y = max(contentOffset.y + adjustedContentInset.top - textContainerInset.top, 0)
+        // A point just inside the top line, not on the boundary with the one above.
+        let glyph = layoutManager.glyphIndex(for: CGPoint(x: 0, y: y + 1), in: textContainer)
+        let line = layoutManager.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
+        let fraction = line.height > 0 ? min(max(Double((y - line.minY) / line.height), 0), 1) : 0
+        return Position(top: layoutManager.characterIndexForGlyph(at: glyph), selection: selectedRange.location,
+                        selectionLength: selectedRange.length, topLineFraction: fraction)
+    }
+
+    /// Scrolls so the line holding `position.top` is at the top, and restores the selection.
+    /// Waits for layout if the view hasn't been sized yet.
+    func restore(_ position: Position) {
+        if bounds.height > 0 {
+            apply(position)
+        } else {
+            pendingPosition = position
+            setNeedsLayout()
+        }
+    }
+
+    private func apply(_ position: Position) {
+        let length = textStorage.length
+        let location = min(max(position.selection, 0), length)
+        selectedRange = NSRange(location: location, length: min(max(position.selectionLength, 0), length - location))
+        let top = min(max(position.top, 0), length)
+        guard top > 0, length > 0 else { return }
+        layoutManager.ensureLayout(for: textContainer)
+        layoutIfNeeded()
+        let glyph = layoutManager.glyphIndexForCharacter(at: min(top, length - 1))
+        let line = layoutManager.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
+        let maxOffset = max(contentSize.height + adjustedContentInset.bottom - bounds.height, -adjustedContentInset.top)
+        let into = line.height * CGFloat(position.topLineFraction ?? 0)
+        let offset = min(line.minY + into + textContainerInset.top - adjustedContentInset.top, maxOffset)
+        setContentOffset(CGPoint(x: 0, y: offset), animated: false)
     }
 
     func rehighlight() {
@@ -308,6 +361,10 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        if let position = pendingPosition, bounds.height > 0 {
+            pendingPosition = nil
+            apply(position)
+        }
         layoutGutter()
     }
 

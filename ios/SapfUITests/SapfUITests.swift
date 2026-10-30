@@ -170,6 +170,32 @@ final class SapfUITests: XCTestCase {
         app.buttons["Stop"].firstMatch.tap()
     }
 
+    private func openDocument(_ name: String) {
+        // firstMatch: a full query of the screen times out while the long Examples text is showing.
+        app.buttons["Documents"].firstMatch.tap()
+        app.buttons[name].firstMatch.tap()
+    }
+
+    func testSwitchingDocumentsKeepsTheScrollPosition() {
+        openDocument("Examples")
+        let editor = app.textViews.firstMatch
+        for _ in 0..<6 { editor.swipeUp(velocity: .fast) }
+        sleep(1)
+        // The margin buttons are pooled; the first one is beside the topmost visible block.
+        let firstRun = app.buttons.matching(identifier: "Run block").firstMatch
+        XCTAssertTrue(firstRun.exists)
+        let before = firstRun.frame
+        screenshot("examples-scrolled")
+
+        openDocument("Scratch")
+        openDocument("Examples")
+        sleep(1)
+        let after = firstRun.frame
+        screenshot("examples-returned")
+        XCTAssertEqual(after.minY, before.minY, accuracy: 2, "back where we were")
+        XCTAssertGreaterThan(app.textViews.firstMatch.frame.minY + 200, after.minY, "and not at the top")
+    }
+
     /// Plays something busy and captures every layout, for checking screen size handling by eye.
     func testLayouts() {
         let device = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"

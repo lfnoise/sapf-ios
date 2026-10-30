@@ -125,7 +125,10 @@ struct ContentView: View {
         .quickLookPreview($model.previewURL)
         .onAppear { model.start() }
         .onChange(of: scenePhase) { phase in
-            if phase != .active { model.saveNow() }
+            if phase != .active {
+                model.saveNow()
+                model.rememberPosition()
+            }
             if phase == .active {
                 model.refreshDocuments()
                 model.resumeAudioIfInterrupted()
