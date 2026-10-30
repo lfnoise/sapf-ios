@@ -119,6 +119,57 @@ final class SapfUITests: XCTestCase {
         }
     }
 
+    private func plotTopOfStack() {
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["Plot Top of Stack"].tap()
+    }
+
+    private func waveform() -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Waveform'")).firstMatch
+    }
+
+    func testPlotTopOfStack() {
+        _ = newDocument(with: "[1 4 9 16 25 16 9 4 1]\n\n1 0 lfsaw 2 *")
+        app.buttons["Hide keyboard"].firstMatch.tap()
+        let console = app.textViews["Console"]
+
+        app.buttons.matching(identifier: "Run block").element(boundBy: 0).tap()
+        plotTopOfStack()
+        XCTAssertTrue(app.buttons["Plot"].waitForExistence(timeout: 5), "the waveform switches to the plot")
+        if app.buttons["Console"].exists {
+            app.buttons["Console"].tap()
+            expectation(for: NSPredicate(format: "value CONTAINS 'plot: 9 values'"), evaluatedWith: console)
+            waitForExpectations(timeout: 3)
+            app.buttons["Scope"].tap()
+        }
+        screenshot("plot-values")
+
+        app.buttons.matching(identifier: "Run block").element(boundBy: 1).tap()
+        plotTopOfStack()
+        sleep(1)
+        screenshot("plot-signal")
+        waveform().pinch(withScale: 4, velocity: 4)
+        sleep(1)
+        screenshot("plot-zoomed")
+        if app.buttons["Console"].exists {
+            app.buttons["Console"].tap()
+            XCTAssertTrue((console.value as? String ?? "").contains("plot: first"), "an endless signal is cut off")
+        }
+    }
+
+    func testZoomOutShowsEnvelope() {
+        _ = newDocument(with: "440 0 sinosc 2 0 lfsaw 1 + .5 * * .3 * play")
+        app.buttons["Hide keyboard"].firstMatch.tap()
+        app.buttons["Run block"].firstMatch.tap()
+        if app.buttons["Scope"].exists { app.buttons["Scope"].tap() }
+        if app.buttons["Output"].exists { app.buttons["Output"].tap() }
+        waveform().pinch(withScale: 0.05, velocity: -4)
+        sleep(3)
+        screenshot("output-envelope")
+        waveform().doubleTap()
+        app.buttons["Stop"].firstMatch.tap()
+    }
+
     /// Plays something busy and captures every layout, for checking screen size handling by eye.
     func testLayouts() {
         let device = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"

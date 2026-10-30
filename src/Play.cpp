@@ -28,6 +28,13 @@ struct ScopeTap
 	std::atomic<bool> inUse{false};
 	std::atomic<uint64_t> writePos{0};
 	float buf[kScopeBufferSize];
+
+	std::atomic<uint64_t> envelopeWritePos{0};
+	float envelopeMin[kScopeEnvelopeBlocks];
+	float envelopeMax[kScopeEnvelopeBlocks];
+	// The block being accumulated. Only the render thread touches these.
+	float blockMin, blockMax;
+	int blockCount;
 };
 
 static ScopeTap gScopeTaps[kMaxScopeTaps];
@@ -39,6 +46,8 @@ static ScopeTap* claimScopeTap()
 		bool expected = false;
 		if (tap.inUse.compare_exchange_strong(expected, true)) {
 			tap.writePos.store(0);
+			tap.envelopeWritePos.store(0);
+			tap.blockCount = 0;
 			return &tap;
 		}
 	}
@@ -60,6 +69,28 @@ int getScopeSamples(float* out, int n)
 		uint64_t pos = end - avail;
 		for (int j = 0; j < avail; ++j) {
 			dst[j] += tap.buf[(pos + j) & (kScopeBufferSize - 1)];
+		}
+	}
+	return numActive;
+}
+
+int getScopeEnvelope(float* outMin, float* outMax, int n)
+{
+	n = std::min(n, kScopeEnvelopeBlocks);
+	memset(outMin, 0, n * sizeof(float));
+	memset(outMax, 0, n * sizeof(float));
+	int numActive = 0;
+	for (int i = 0; i < kMaxScopeTaps; ++i) {
+		ScopeTap& tap = gScopeTaps[i];
+		if (!tap.inUse.load(std::memory_order_acquire)) continue;
+		++numActive;
+		uint64_t end = tap.envelopeWritePos.load(std::memory_order_acquire);
+		int avail = (int)std::min<uint64_t>(end, n);
+		uint64_t pos = end - avail;
+		for (int j = 0; j < avail; ++j) {
+			int k = (pos + j) & (kScopeEnvelopeBlocks - 1);
+			outMin[n - avail + j] += tap.envelopeMin[k];
+			outMax[n - avail + j] += tap.envelopeMax[k];
 		}
 	}
 	return numActive;
@@ -266,14 +297,30 @@ static void tapPlayer(AUPlayer* player, int inNumberFrames, AudioBufferList cons
 
 	int numChannels = std::min((int)inData->mNumberBuffers, player->numChannels);
 	uint64_t pos = tap->writePos.load(std::memory_order_relaxed);
+	uint64_t envelopePos = tap->envelopeWritePos.load(std::memory_order_relaxed);
 	for (int i = 0; i < inNumberFrames; ++i) {
 		float sum = 0.f;
 		for (int j = 0; j < numChannels; ++j) {
 			sum += ((const float*)inData->mBuffers[j].mData)[i];
 		}
 		tap->buf[(pos + i) & (kScopeBufferSize - 1)] = sum;
+
+		if (tap->blockCount == 0) {
+			tap->blockMin = tap->blockMax = sum;
+		} else {
+			tap->blockMin = std::min(tap->blockMin, sum);
+			tap->blockMax = std::max(tap->blockMax, sum);
+		}
+		if (++tap->blockCount == kScopeEnvelopeBlockSize) {
+			int k = envelopePos & (kScopeEnvelopeBlocks - 1);
+			tap->envelopeMin[k] = tap->blockMin;
+			tap->envelopeMax[k] = tap->blockMax;
+			++envelopePos;
+			tap->blockCount = 0;
+		}
 	}
 	tap->writePos.store(pos + inNumberFrames, std::memory_order_release);
+	tap->envelopeWritePos.store(envelopePos, std::memory_order_release);
 }
 
 static OSStatus inputCallback(	void *							inRefCon,

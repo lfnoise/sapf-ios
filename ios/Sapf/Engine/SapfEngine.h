@@ -20,6 +20,18 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL builtIn;
 @end
 
+/// Samples taken from the top of the stack for plotting.
+@interface SapfPlot : NSObject
+/// One array of 32 bit floats per channel, all frameCount long.
+@property (nonatomic, readonly) NSArray<NSData *> *channels;
+@property (nonatomic, readonly) NSInteger frameCount;
+/// YES for signals, where frames are at the sample rate. NO for a list of numbers, one per item.
+@property (nonatomic, readonly) BOOL isSignal;
+/// YES if the value went on longer than the frames taken (for example an endless signal).
+@property (nonatomic, readonly) BOOL truncated;
+@property (nonatomic, readonly) double sampleRate;
+@end
+
 /// Wraps the sapf virtual machine. All evaluation happens on a private serial queue,
 /// so the interpreter state is only ever touched by one thread at a time.
 @interface SapfEngine : NSObject
@@ -62,6 +74,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// Looks up a word in the workspace and calls back on the main queue with a short description of its
 /// value, or nil if it is not defined. Runs on the interpreter queue, so it waits for any running evaluation.
 - (void)describeWord:(NSString *)word completion:(void (^)(NSString *_Nullable description))completion;
+
+/// Takes up to `maxSeconds` of the value on top of the stack, without popping it: a signal, a list
+/// of signals (channels), or a list of numbers. Calls back on the main queue with the plot, or nil
+/// and a message saying why not.
+- (void)plotTopOfStackWithMaxSeconds:(double)maxSeconds
+                          completion:(void (^)(SapfPlot *_Nullable plot, NSString *message))completion;
+
+/// Like copyOutputSamples, but block minimums and maximums of a longer stretch of output.
+/// Each block covers `outputEnvelopeBlockSize` frames; `count` is at most `outputEnvelopeCapacity`.
+- (NSInteger)copyOutputEnvelopeMin:(float *)minBuffer max:(float *)maxBuffer count:(NSInteger)count;
+@property (class, nonatomic, readonly) NSInteger outputEnvelopeBlockSize;
+@property (class, nonatomic, readonly) NSInteger outputEnvelopeCapacity;
 
 /// Copies the most recent `count` samples of everything currently playing (mixed to mono) into `buffer`.
 /// Returns the number of sounds playing. Safe to call from any thread.

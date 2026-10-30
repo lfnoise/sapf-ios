@@ -151,6 +151,8 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     @Published private(set) var currentDocument: URL = DocumentStore.scratch
     @Published private(set) var isBusy = false
     @Published var previewURL: URL?
+    /// Counts plots made, so views can react to a new one.
+    @Published private(set) var plotCount = 0
     /// The on-screen keyboard's frame in screen coordinates, or nil when it's hidden.
     @Published private(set) var keyboardFrame: CGRect?
     /// Whether the editor brings up the keyboard. When off, taps only show help and pick the block to run.
@@ -419,6 +421,21 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         SapfEngine.shared.stopAll()
     }
 
+    /// Plots up to a minute of the value on top of the stack in the waveform views.
+    func plotTopOfStack() {
+        SapfEngine.shared.plotTopOfStack(withMaxSeconds: 60) { [weak self] plot, message in
+            guard let self else { return }
+            guard let plot else {
+                self.console.append("plot: \(message)\n")
+                return
+            }
+            let shown = Plot(plot)
+            WaveformState.shared.show(shown)
+            self.plotCount += 1
+            self.console.append("plot: \(shown.summary)\n")
+        }
+    }
+
     func clearStack() {
         SapfEngine.shared.clearStack()
         console.append("stack cleared\n")
@@ -428,6 +445,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     func codeTextViewStop(_ view: CodeTextView) { stop() }
     func codeTextViewDidChangeText(_ view: CodeTextView) { scheduleSave() }
     func codeTextViewDidEndEditing(_ view: CodeTextView) { isEditing = false }
+    func codeTextViewPlot(_ view: CodeTextView) { plotTopOfStack() }
 }
 
 private extension StringProtocol {

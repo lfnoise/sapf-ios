@@ -47,6 +47,21 @@ static NSString* const kSapfVersion = @"0.1.22";
 @property (atomic, copy) NSDictionary<NSString *, SapfWordHelp *> *helpTable;
 @end
 
+@implementation SapfPlot
+- (instancetype)initWithChannels:(NSArray<NSData *> *)channels frameCount:(NSInteger)frameCount
+                        isSignal:(BOOL)isSignal truncated:(BOOL)truncated sampleRate:(double)sampleRate
+{
+	if ((self = [super init])) {
+		_channels = channels;
+		_frameCount = frameCount;
+		_isSignal = isSignal;
+		_truncated = truncated;
+		_sampleRate = sampleRate;
+	}
+	return self;
+}
+@end
+
 @implementation SapfEngine
 {
 	dispatch_queue_t _queue;
@@ -72,6 +87,21 @@ static NSString* const kSapfVersion = @"0.1.22";
 + (NSInteger)outputBufferCapacity
 {
 	return kScopeBufferSize;
+}
+
++ (NSInteger)outputEnvelopeBlockSize
+{
+	return kScopeEnvelopeBlockSize;
+}
+
++ (NSInteger)outputEnvelopeCapacity
+{
+	return kScopeEnvelopeBlocks;
+}
+
+- (NSInteger)copyOutputEnvelopeMin:(float *)minBuffer max:(float *)maxBuffer count:(NSInteger)count
+{
+	return getScopeEnvelope(minBuffer, maxBuffer, (int)count);
 }
 
 static void postHook(const char* str, size_t len)
@@ -273,6 +303,114 @@ static SapfWordHelp* parseHelpLine(std::string const& line, BOOL builtIn)
 			}
 		}
 		dispatch_async(dispatch_get_main_queue(), ^{ completion(result); });
+	});
+}
+
+#pragma mark Plotting
+
+// Pulls up to maxFrames from a signal into samples. Returns YES if the signal ended.
+static bool takeSignal(Thread& th, Arg signal, int64_t maxFrames, std::vector<float>& samples)
+{
+	ZIn in(signal);
+	const int kChunk = 4096;
+	samples.reserve((size_t)std::min<int64_t>(maxFrames, 1 << 20));
+	while ((int64_t)samples.size() < maxFrames) {
+		int n = (int)std::min<int64_t>(kChunk, maxFrames - samples.size());
+		size_t at = samples.size();
+		samples.resize(at + n);
+		bool done = in.fill(th, n, samples.data() + at, 1);
+		samples.resize(at + n);
+		if (done) return true;
+	}
+	return false;
+}
+
+- (void)plotTopOfStackWithMaxSeconds:(double)maxSeconds
+                          completion:(void (^)(SapfPlot * _Nullable, NSString *))completion
+{
+	dispatch_async(dispatch_get_main_queue(), ^{ if (self.busyHandler) self.busyHandler(YES); });
+	dispatch_async(_queue, ^{
+		SapfPlot* plot = nil;
+		NSString* message = @"";
+		Thread& th = *self->_thread;
+		double sampleRate = vm.ar.sampleRate;
+		// Keep the whole plot to about 128 MB of floats.
+		const int64_t kMaxTotalFrames = 32 << 20;
+		try {
+			if (th.stackDepth() == 0) {
+				message = @"the stack is empty";
+			} else {
+				V v = th.top();
+				std::vector<std::vector<float>> channels;
+				bool isSignal = true, truncated = false;
+
+				if (v.isZList()) {
+					channels.emplace_back();
+					truncated = !takeSignal(th, v, (int64_t)(maxSeconds * sampleRate), channels[0]);
+				} else if (v.isVList() && !v.isFinite()) {
+					message = @"can't plot an endless list of channels or values";
+				} else if (v.isVList()) {
+					P<List> list = ((List*)v.o())->pack(th);
+					Array* items = list->mArray();
+					int64_t count = items->size();
+					bool allSignals = count > 0, allNumbers = count > 0;
+					for (int64_t i = 0; i < count; ++i) {
+						V item = items->at(i);
+						allSignals = allSignals && item.isZList();
+						allNumbers = allNumbers && item.isReal();
+					}
+					if (allSignals && count <= 64) {
+						int64_t maxFrames = std::min<int64_t>((int64_t)(maxSeconds * sampleRate), kMaxTotalFrames / count);
+						for (int64_t i = 0; i < count; ++i) {
+							channels.emplace_back();
+							if (!takeSignal(th, items->at(i), maxFrames, channels.back())) truncated = true;
+						}
+					} else if (allNumbers) {
+						isSignal = false;
+						channels.emplace_back();
+						for (int64_t i = 0; i < std::min(count, kMaxTotalFrames); ++i) {
+							channels[0].push_back((float)items->at(i).f);
+						}
+						truncated = count > kMaxTotalFrames;
+					} else {
+						message = @"plot needs a signal, a list of signals, or a list of numbers";
+					}
+				} else {
+					message = @"plot needs a signal, a list of signals, or a list of numbers";
+				}
+
+				if (!channels.empty()) {
+					size_t frames = 0;
+					for (auto& c : channels) frames = std::max(frames, c.size());
+					NSMutableArray<NSData*>* datas = [NSMutableArray array];
+					for (auto& c : channels) {
+						c.resize(frames, 0.f); // channels that ended early are silent after
+						[datas addObject:[NSData dataWithBytes:c.data() length:frames * sizeof(float)]];
+					}
+					if (frames == 0) {
+						message = @"nothing to plot: it has no frames";
+					} else {
+						plot = [[SapfPlot alloc] initWithChannels:datas frameCount:(NSInteger)frames
+						                                 isSignal:isSignal truncated:truncated sampleRate:sampleRate];
+						message = @"";
+					}
+				}
+			}
+		} catch (int err) {
+			if (err <= -1000 && err > -1000 - kNumErrors) {
+				message = [NSString stringWithFormat:@"error: %s", errString[-1000 - err]];
+			} else {
+				message = [NSString stringWithFormat:@"error: %d", err];
+			}
+		} catch (std::bad_alloc&) {
+			message = @"not enough memory";
+		} catch (...) {
+			message = @"unknown error";
+		}
+		dispatch_async(dispatch_get_main_queue(), ^{
+			if (self.busyHandler) self.busyHandler(NO);
+			completion(plot, message);
+		});
 	});
 }
 

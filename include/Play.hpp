@@ -23,6 +23,16 @@ const int kScopeBufferSize = 16384;
 // everything currently playing. Returns the number of active players. Safe from any thread.
 int getScopeSamples(float* out, int n);
 
+// For longer views of the output, each player also keeps the minimum and maximum of each block of
+// kScopeEnvelopeBlockSize frames, for the most recent kScopeEnvelopeBlocks blocks.
+const int kScopeEnvelopeBlockSize = 128;
+const int kScopeEnvelopeBlocks = 16384; // power of two
+
+// Fills outMin and outMax with the most recent n blocks (n <= kScopeEnvelopeBlocks), oldest first.
+// With more than one player, the minimums and maximums of each are summed, which bounds the mix.
+// Returns the number of active players. Safe from any thread.
+int getScopeEnvelope(float* outMin, float* outMax, int n);
+
 // Audio timing, for spotting glitches. A dropout is a gap in the output's timestamps, whatever
 // caused it. A late render is one of ours that took longer than the audio it produced lasts.
 // The peak load is the largest render time as a fraction of that duration since the last reset.

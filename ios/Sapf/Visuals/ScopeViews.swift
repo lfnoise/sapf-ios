@@ -23,6 +23,8 @@ enum ScopeTheme {
 class ScopeBaseView: UIView, AnalyzerDisplay {
     private var pointer: CGPoint?
     var title: String { "" }
+    /// Whether dragging a finger drives mousex and mousey.
+    var drivesPointer: Bool { true }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -80,8 +82,10 @@ class ScopeBaseView: UIView, AnalyzerDisplay {
 
     // MARK: Pointer
 
-    private func updatePointer(_ touches: Set<UITouch>, down: Bool) {
-        guard let touch = touches.first else { return }
+    private func updatePointer(_ touches: Set<UITouch>, event: UIEvent?, down: Bool) {
+        guard drivesPointer || pointer != nil, let touch = touches.first else { return }
+        // A second finger means a pinch, not pointing.
+        let down = down && drivesPointer && (event?.touches(for: self)?.count ?? 1) == 1
         let p = touch.location(in: self)
         let x = Float(max(0, min(1, p.x / max(bounds.width, 1))))
         let y = Float(max(0, min(1, 1 - p.y / max(bounds.height, 1))))
@@ -90,74 +94,10 @@ class ScopeBaseView: UIView, AnalyzerDisplay {
         setNeedsDisplay()
     }
 
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) { updatePointer(touches, down: true) }
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) { updatePointer(touches, down: true) }
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) { updatePointer(touches, down: false) }
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { updatePointer(touches, down: false) }
-}
-
-/// An oscilloscope. Triggers on a rising zero crossing so periodic sounds stand still.
-final class WaveformView: ScopeBaseView {
-    override var title: String { "Waveform" }
-    /// Samples across the width of the view.
-    var span = 2048
-
-    override func drawScope(in ctx: CGContext, analyzer: AudioAnalyzer) {
-        let w = bounds.width, h = bounds.height
-        let mid = h / 2
-
-        ctx.setStrokeColor(ScopeTheme.grid.cgColor)
-        ctx.setLineWidth(1)
-        for f in [0.25, 0.5, 0.75] as [CGFloat] {
-            ctx.move(to: CGPoint(x: 0, y: h * f)); ctx.addLine(to: CGPoint(x: w, y: h * f))
-        }
-        ctx.strokePath()
-
-        let samples = analyzer.samples
-        let span = min(self.span, samples.count / 2)
-        // Search back from the newest possible start for a rising zero crossing.
-        var start = samples.count - span
-        var i = start
-        while i > samples.count - 2 * span {
-            if samples[i - 1] <= 0 && samples[i] > 0 { start = i; break }
-            i -= 1
-        }
-
-        // Scale up quiet sounds a bit, but never clip loud ones.
-        let gain = CGFloat(analyzer.peak > 1 ? 1 / analyzer.peak : 1) * (mid - 4)
-        let path = CGMutablePath()
-        let columns = max(Int(w * contentScaleFactor), 2)
-        let samplesPerColumn = Double(span) / Double(columns)
-        for c in 0..<columns {
-            // Min and max over each pixel column, so dense waveforms still render correctly.
-            let a = start + Int(Double(c) * samplesPerColumn)
-            let b = max(a + 1, start + Int(Double(c + 1) * samplesPerColumn))
-            var lo = samples[a], hi = samples[a]
-            for k in a..<min(b, samples.count) { lo = min(lo, samples[k]); hi = max(hi, samples[k]) }
-            let x = CGFloat(c) / contentScaleFactor
-            let y0 = mid - CGFloat(hi) * gain, y1 = mid - CGFloat(lo) * gain
-            if c == 0 { path.move(to: CGPoint(x: x, y: y0)) } else { path.addLine(to: CGPoint(x: x, y: y0)) }
-            if y1 - y0 > 1 { path.addLine(to: CGPoint(x: x, y: y1)) }
-        }
-        ctx.addPath(path)
-        ctx.setStrokeColor(ScopeTheme.trace.cgColor)
-        ctx.setLineWidth(1.5)
-        ctx.setLineJoin(.round)
-        ctx.strokePath()
-
-        let ms = Double(span) / analyzer.sampleRate * 1000
-        drawLabel(String(format: "%.0f ms", ms), at: CGPoint(x: w - 6, y: 6), alignRight: true)
-        if analyzer.playingCount > 0 {
-            let peakDB = 20 * log10(max(Double(analyzer.peak), 1e-6))
-            var status = String(format: "%d playing   peak %.1f dB", analyzer.playingCount, peakDB)
-            status += String(format: "   load %.0f%%", analyzer.renderLoad * 100)
-            let engine = SapfEngine.shared
-            if engine.audioDropouts > 0 || engine.lateAudioRenders > 0 {
-                status += "   dropouts \(engine.audioDropouts)   late \(engine.lateAudioRenders)"
-            }
-            drawLabel(status, at: CGPoint(x: 8, y: h - 18))
-        }
-    }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) { updatePointer(touches, event: event, down: true) }
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) { updatePointer(touches, event: event, down: true) }
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) { updatePointer(touches, event: event, down: false) }
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { updatePointer(touches, event: event, down: false) }
 }
 
 /// Log frequency magnitude spectrum.

@@ -12,6 +12,7 @@ protocol CodeTextViewActions: AnyObject {
     func codeTextViewStop(_ view: CodeTextView)
     func codeTextViewDidChangeText(_ view: CodeTextView)
     func codeTextViewDidEndEditing(_ view: CodeTextView)
+    func codeTextViewPlot(_ view: CodeTextView)
 }
 
 /// The sapf source editor: syntax coloring, tap a word for help, and evaluation commands.
@@ -385,17 +386,19 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         let line = UIKeyCommand(title: "Evaluate Line", action: #selector(evaluateLineCommand), input: "\r", modifierFlags: .shift)
         let stop = UIKeyCommand(title: "Stop", action: #selector(stopCommand), input: ".", modifierFlags: .command)
         let expand = UIKeyCommand(title: "Expand Selection", action: #selector(expandSelection), input: "b", modifierFlags: .command)
+        let plot = UIKeyCommand(title: "Plot Top of Stack", action: #selector(plotCommand), input: "p", modifierFlags: [.command, .shift])
         let bigger = UIKeyCommand(title: "Bigger", action: #selector(biggerCommand), input: "+", modifierFlags: .command)
         let bigger2 = UIKeyCommand(title: "Bigger", action: #selector(biggerCommand), input: "=", modifierFlags: .command)
         let smaller = UIKeyCommand(title: "Smaller", action: #selector(smallerCommand), input: "-", modifierFlags: .command)
         for c in [run, line, stop] { c.wantsPriorityOverSystemBehavior = true }
         bigger2.attributes = .hidden
-        return [run, line, stop, expand, bigger, bigger2, smaller]
+        return [run, line, stop, expand, plot, bigger, bigger2, smaller]
     }
 
     @objc private func evaluateBlockCommand() { evaluate(wholeBlock: true) }
     @objc private func evaluateLineCommand() { evaluate(wholeBlock: false) }
     @objc private func stopCommand() { actions?.codeTextViewStop(self) }
+    @objc private func plotCommand() { actions?.codeTextViewPlot(self) }
     @objc private func biggerCommand() { fontSize = min(fontSize + 1, 32) }
     @objc private func smallerCommand() { fontSize = max(fontSize - 1, 9) }
 
@@ -434,6 +437,9 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         })
         stack.addArrangedSubview(button(nil, image: "selection.pin.in.out", tint: .systemBlue, label: "Expand Selection") { [weak self] in
             self?.expandSelection()
+        })
+        stack.addArrangedSubview(button(nil, image: "chart.xyaxis.line", tint: .systemTeal, label: "Plot") { [weak self] in
+            self?.plotCommand()
         })
         for key in ["[", "]", "(", ")", "{", "}", "\\", "@", "'", "`", "=", ":", ";", "\"", "#", ",", "."] {
             stack.addArrangedSubview(button(key) { [weak self] in self?.insertText(key) })

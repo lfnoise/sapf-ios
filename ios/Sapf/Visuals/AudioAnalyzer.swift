@@ -22,7 +22,9 @@ final class AudioAnalyzer {
     static let minDB: Float = -100
     static let minFrequency: Double = 20
 
-    /// The latest output, oldest first. `fftSize` samples.
+    /// The latest output, oldest first, as much as the engine keeps.
+    private(set) var history = [Float](repeating: 0, count: SapfEngine.outputBufferCapacity)
+    /// The latest `fftSize` samples of `history`.
     private(set) var samples = [Float](repeating: 0, count: AudioAnalyzer.fftSize)
     /// Smoothed magnitude spectrum in dB re full scale sine, `fftSize / 2` bins.
     private(set) var spectrumDB = [Float](repeating: AudioAnalyzer.minDB, count: AudioAnalyzer.fftSize / 2)
@@ -72,8 +74,13 @@ final class AudioAnalyzer {
     }
 
     @objc private func tick() {
-        playingCount = samples.withUnsafeMutableBufferPointer {
+        playingCount = history.withUnsafeMutableBufferPointer {
             SapfEngine.shared.copyOutputSamples($0.baseAddress!, count: $0.count)
+        }
+        samples.withUnsafeMutableBufferPointer { dst in
+            history.withUnsafeBufferPointer { src in
+                dst.baseAddress!.update(from: src.baseAddress! + (src.count - dst.count), count: dst.count)
+            }
         }
 
         // When nothing has played for a while, stop scrolling and drawing to save power.

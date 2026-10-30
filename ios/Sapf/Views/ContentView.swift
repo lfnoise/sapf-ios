@@ -25,6 +25,8 @@ enum PanelTab: String, CaseIterable, Identifiable {
 /// One of the console or the visualizers at a time, with a segmented control to choose. For small spaces.
 struct TabbedPanel: View {
     let console: ConsoleBuffer
+    /// Changes when a new plot is made, to bring the waveform into view.
+    var plotCount = 0
     @SceneStorage("panelTab") private var tab: PanelTab = .console
 
     var body: some View {
@@ -46,6 +48,7 @@ struct TabbedPanel: View {
             .id(tab)
         }
         .background(Color(uiColor: .secondarySystemBackground))
+        .onChange(of: plotCount) { _ in tab = .waveform }
     }
 }
 
@@ -170,7 +173,7 @@ struct ContentView: View {
                 ConsoleView(buffer: model.console)
             }
         } else {
-            TabbedPanel(console: model.console)
+            TabbedPanel(console: model.console, plotCount: model.plotCount)
         }
     }
 
@@ -183,7 +186,7 @@ struct ContentView: View {
                 ScopeStack().frame(width: width * 0.45)
             }
         } else {
-            TabbedPanel(console: model.console)
+            TabbedPanel(console: model.console, plotCount: model.plotCount)
         }
     }
 
@@ -261,6 +264,10 @@ struct ContentView: View {
                     Label("Audio Buffer", systemImage: "waveform.badge.plus")
                 }
                 .pickerStyle(.menu)
+                Button { model.plotTopOfStack() } label: {
+                    Label("Plot Top of Stack", systemImage: "chart.xyaxis.line")
+                }
+                .keyboardShortcut("p", modifiers: [.command, .shift])
                 Section {
                     Button { model.evaluate("helpall") } label: { Label("List All Functions", systemImage: "list.bullet.rectangle") }
                     Button { model.clearStack() } label: { Label("Clear Stack", systemImage: "square.stack.3d.up.slash") }

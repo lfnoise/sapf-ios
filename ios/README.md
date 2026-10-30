@@ -30,6 +30,12 @@ After adding or removing source files, regenerate it:
   Turn this off with *Help on Tap* in the ⋯ menu.
 - **Waveform, Spectrum and Spectrogram** show everything currently playing.
   Drag a finger on any of them to drive `mousex`, `mousey`, `xmousex` and `xmousey`.
+  **Pinch the waveform** to zoom from a few milliseconds out to 30 seconds, which shows amplitude
+  envelopes. Double tap to reset.
+- **Plot Top of Stack** (⋯ menu, the plot button on the key bar, or Shift-Cmd-P) plots the value on
+  top of the stack without popping it: a signal (up to a minute of it), a list of signals as
+  channels, or a list of numbers. The waveform switches to Plot; use its Output / Plot switch to go
+  back and forth. Pinch to zoom around your fingers, drag to scroll, and double tap to see it all.
 - The key bar above the keyboard has Run, Stop and sapf's punctuation.
 - **Reading and editing.** Hiding the keyboard (its key bar button, or swiping down) switches to
   reading: taps show help and move the cursor without bringing the keyboard back. Tap the keyboard
