@@ -90,6 +90,13 @@ check out some examples:
     copy an example onto the command line.
 
 
+IPHONE AND IPAD
+
+There is also an app for iPhone and iPad, with its own Xcode project in the ios
+folder. Open ios/Sapf.xcodeproj, not SoundAsPureForm.xcodeproj (which builds the
+command line program for macOS). See ios/README.md for how to build and use it.
+
+
 COMMAND LINE
 
 sapf [-r sample-rate][-p prelude-file]
