@@ -333,6 +333,11 @@ static void reportError(int err)
 	stopPlaying();
 }
 
+- (void)resumeAll
+{
+	restartPlaying();
+}
+
 - (void)clearStack
 {
 	dispatch_async(_queue, ^{

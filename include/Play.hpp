@@ -12,6 +12,9 @@ void recordWithAudioUnit(Thread& th, V& v, Arg filename);
 
 void stopPlaying();
 void stopPlayingIfDone();
+// Starts the output of every player that hasn't finished again, e.g. after an audio interruption,
+// which stops them. They carry on from where they were.
+void restartPlaying();
 
 // Size of the per-player ring buffers used for displaying output. Must be a power of two.
 const int kScopeBufferSize = 16384;

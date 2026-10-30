@@ -177,6 +177,19 @@ void stopPlayingIfDone()
 	}
 }
 
+void restartPlaying()
+{
+	Locker lock(&gPlayerMutex);
+
+	for (AUPlayer* player = gAllPlayers; player; player = player->next) {
+		if (!player->outputUnit || player->done) continue;
+		// The gap while stopped isn't a dropout.
+		player->nextSampleTime = -1.;
+		OSStatus err = AudioOutputUnitStart(player->outputUnit);
+		if (err) post("AudioOutputUnitStart err %d\n", (int)err);
+	}
+}
+
 static void* stopDonePlayers(void* x)
 {
 	while(1) {

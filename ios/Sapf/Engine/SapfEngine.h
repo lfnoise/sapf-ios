@@ -67,6 +67,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Returns the number of sounds playing. Safe to call from any thread.
 - (NSInteger)copyOutputSamples:(float *)buffer count:(NSInteger)count;
 
+/// Starts the sounds that were playing again after an audio interruption stopped them.
+- (void)resumeAll;
+
 /// Gaps in the audio output's timestamps, whatever caused them.
 @property (nonatomic, readonly) NSUInteger audioDropouts;
 /// Renders that took longer than the audio they produced lasts.

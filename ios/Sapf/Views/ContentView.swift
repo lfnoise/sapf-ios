@@ -123,7 +123,10 @@ struct ContentView: View {
         .onAppear { model.start() }
         .onChange(of: scenePhase) { phase in
             if phase != .active { model.saveNow() }
-            if phase == .active { model.refreshDocuments() }
+            if phase == .active {
+                model.refreshDocuments()
+                model.resumeAudioIfInterrupted()
+            }
         }
     }
 

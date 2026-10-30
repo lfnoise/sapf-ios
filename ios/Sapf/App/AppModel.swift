@@ -129,6 +129,8 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     let editor = CodeTextView()
 
     private var saveWorkItem: DispatchWorkItem?
+    /// An interruption (a call, an alarm, Siri) stopped the sound and it hasn't been restarted yet.
+    private var resumeAfterInterruption = false
     private var started = false
 
     init() {
@@ -192,6 +194,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         FileManager.default.changeCurrentDirectoryPath(DocumentStore.directory.path)
 
         let sampleRate = configureAudioSession()
+        observeAudioSession()
 
         let engine = SapfEngine.shared
         engine.outputHandler = { [weak self] text in self?.console.append(text) }
@@ -207,6 +210,56 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         refreshDocuments()
         let saved = DocumentStore.directory.appendingPathComponent(savedDocumentName)
         load(FileManager.default.fileExists(atPath: saved.path) ? saved : DocumentStore.scratch)
+    }
+
+    private func observeAudioSession() {
+        let center = NotificationCenter.default
+        let session = AVAudioSession.sharedInstance()
+        center.addObserver(forName: AVAudioSession.interruptionNotification, object: session, queue: .main) { [weak self] note in
+            let info = note.userInfo ?? [:]
+            let type = (info[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap(AVAudioSession.InterruptionType.init)
+            let options = AVAudioSession.InterruptionOptions(rawValue: info[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0)
+            Task { @MainActor in self?.audioInterruption(type, shouldResume: options.contains(.shouldResume)) }
+        }
+        center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: session, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.audioServicesWereReset() }
+        }
+    }
+
+    private func audioInterruption(_ type: AVAudioSession.InterruptionType?, shouldResume: Bool) {
+        switch type {
+        case .began:
+            // iOS has already stopped the output units. The sounds keep their place.
+            resumeAfterInterruption = true
+            console.append("audio interrupted\n")
+        case .ended:
+            // Without shouldResume, iOS asks that we wait until the user comes back to the app.
+            if shouldResume { resumeAudioIfInterrupted() }
+        default:
+            break
+        }
+    }
+
+    /// Restarts sound stopped by an interruption. Also called whenever the app becomes active.
+    func resumeAudioIfInterrupted() {
+        guard resumeAfterInterruption else { return }
+        do {
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            // Something else still has the audio hardware; try again next time.
+            return
+        }
+        resumeAfterInterruption = false
+        SapfEngine.shared.resumeAll()
+        console.append("audio resumed\n")
+    }
+
+    /// The media server crashed and restarted, so every audio unit is gone.
+    private func audioServicesWereReset() {
+        resumeAfterInterruption = false
+        SapfEngine.shared.stopAll()
+        _ = configureAudioSession()
+        console.append("audio system was reset; sounds stopped\n")
     }
 
     private func configureAudioSession() -> Double {
