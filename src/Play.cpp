@@ -17,6 +17,7 @@
 #include "Play.hpp"
 #include <AudioToolbox/AudioToolbox.h>
 #include <pthread.h>
+#include <mach/mach_time.h>
 #include <atomic>
 
 #include "SoundFiles.hpp"
@@ -73,6 +74,39 @@ int getScopeSamples(float* out, int n)
 	return numActive;
 }
 
+static std::atomic<uint32_t> gAudioDropouts{0};
+static std::atomic<uint32_t> gLateRenders{0};
+static std::atomic<float> gPeakRenderLoad{0.f};
+
+AudioTimingStats getAudioTimingStats(bool resetPeakLoad)
+{
+	return {
+		gAudioDropouts.load(std::memory_order_relaxed),
+		gLateRenders.load(std::memory_order_relaxed),
+		resetPeakLoad ? gPeakRenderLoad.exchange(0.f, std::memory_order_relaxed)
+		              : gPeakRenderLoad.load(std::memory_order_relaxed)
+	};
+}
+
+static double hostTicksToSeconds()
+{
+	static double secondsPerTick = [] {
+		mach_timebase_info_data_t info;
+		mach_timebase_info(&info);
+		return 1e-9 * info.numer / info.denom;
+	}();
+	return secondsPerTick;
+}
+
+static void noteRenderTime(uint64_t startTicks, UInt32 numFrames)
+{
+	double seconds = (mach_absolute_time() - startTicks) * hostTicksToSeconds();
+	float load = (float)(seconds * vm.ar.sampleRate / numFrames);
+	if (load > 1.f) gLateRenders.fetch_add(1, std::memory_order_relaxed);
+	float peak = gPeakRenderLoad.load(std::memory_order_relaxed);
+	while (load > peak && !gPeakRenderLoad.compare_exchange_weak(peak, load, std::memory_order_relaxed)) {}
+}
+
 
 
 struct AUPlayer
@@ -109,6 +143,7 @@ struct AUPlayer
 	ExtAudioFileRef xaf = nullptr;
 	std::string path;
 	ScopeTap* scopeTap = nullptr;
+	Float64 nextSampleTime = -1.;
 };
 
 static void stopPlayer(AUPlayer* player)
@@ -246,10 +281,19 @@ static OSStatus inputCallback(	void *							inRefCon,
 {
 	
 	AUPlayer* player = (AUPlayer*)inRefCon;
-		
+	uint64_t startTicks = mach_absolute_time();
+
+	// When a render runs late, the next one starts later than where this one ended.
+	if (inTimeStamp->mFlags & kAudioTimeStampSampleTimeValid) {
+		if (player->nextSampleTime >= 0. && inTimeStamp->mSampleTime > player->nextSampleTime + 0.5)
+			gAudioDropouts.fetch_add(1, std::memory_order_relaxed);
+		player->nextSampleTime = inTimeStamp->mSampleTime + inNumberFrames;
+	}
+
 	bool done = fillBufferList(player, inNumberFrames, ioData);
 	recordPlayer(player, inNumberFrames, ioData);
 	tapPlayer(player, inNumberFrames, ioData);
+	noteRenderTime(startTicks, inNumberFrames);
 
 	if (done) {
 		player->done = true;

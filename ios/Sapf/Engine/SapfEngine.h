@@ -76,6 +76,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// Returns the number of sounds playing. Safe to call from any thread.
 - (NSInteger)copyOutputSamples:(float *)buffer count:(NSInteger)count;
 
+/// Gaps in the audio output's timestamps, whatever caused them.
+@property (nonatomic, readonly) NSUInteger audioDropouts;
+/// Renders that took longer than the audio they produced lasts.
+@property (nonatomic, readonly) NSUInteger lateAudioRenders;
+/// The longest render since the last call, as a fraction of the time available. Reading resets it.
+- (float)takePeakAudioLoad;
+
 /// Maximum count for copyOutputSamples.
 @property (class, nonatomic, readonly) NSInteger outputBufferCapacity;
 

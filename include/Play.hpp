@@ -29,3 +29,14 @@ const int kScopeBufferSize = 16384;
 // everything currently playing. Returns the number of active players. Safe from any thread.
 int getScopeSamples(float* out, int n);
 
+// Audio timing, for spotting glitches. A dropout is a gap in the output's timestamps, whatever
+// caused it. A late render is one of ours that took longer than the audio it produced lasts.
+// The peak load is the largest render time as a fraction of that duration since the last reset.
+struct AudioTimingStats
+{
+	uint32_t dropouts;
+	uint32_t lateRenders;
+	float peakLoad;
+};
+AudioTimingStats getAudioTimingStats(bool resetPeakLoad);
+

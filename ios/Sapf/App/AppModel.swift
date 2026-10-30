@@ -118,6 +118,16 @@ final class AppModel: ObservableObject, CodeTextViewActions {
             UserDefaults.standard.set(editorFontSize, forKey: "editorFontSize")
         }
     }
+    /// Frames per audio callback. sapf computes sound in the callback, so a bigger buffer rides out
+    /// busy moments on the main thread (like the keyboard animating) without glitching.
+    @Published var audioBufferFrames: Int {
+        didSet {
+            UserDefaults.standard.set(audioBufferFrames, forKey: "audioBufferFrames")
+            applyAudioBufferSize()
+        }
+    }
+    static let audioBufferChoices = [256, 512, 1024, 2048]
+
     private var savedDocumentName: String {
         get { UserDefaults.standard.string(forKey: "currentDocument") ?? DocumentStore.scratch.lastPathComponent }
         set { UserDefaults.standard.set(newValue, forKey: "currentDocument") }
@@ -135,6 +145,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         showsHelpOnTap = defaults.object(forKey: "helpOnTap") as? Bool ?? true
         editorFontSize = defaults.object(forKey: "editorFontSize") as? Double
             ?? (UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14)
+        audioBufferFrames = defaults.object(forKey: "audioBufferFrames") as? Int ?? 1024
         // On a phone the keyboard covers most of the screen, so start out reading.
         isEditing = UIDevice.current.userInterfaceIdiom == .pad
 
@@ -212,12 +223,18 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         do {
             try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setPreferredSampleRate(48000)
-            try session.setPreferredIOBufferDuration(256.0 / 48000)
             try session.setActive(true)
         } catch {
             console.append("audio session error: \(error.localizedDescription)\n")
         }
+        applyAudioBufferSize()
         return session.sampleRate > 0 ? session.sampleRate : 48000
+    }
+
+    private func applyAudioBufferSize() {
+        let session = AVAudioSession.sharedInstance()
+        let rate = session.sampleRate > 0 ? session.sampleRate : 48000
+        try? session.setPreferredIOBufferDuration(Double(audioBufferFrames) / rate)
     }
 
     // MARK: Documents

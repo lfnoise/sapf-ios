@@ -158,7 +158,13 @@ final class WaveformView: ScopeBaseView {
         drawLabel(String(format: "%.0f ms", ms), at: CGPoint(x: w - 6, y: 6), alignRight: true)
         if analyzer.playingCount > 0 {
             let peakDB = 20 * log10(max(Double(analyzer.peak), 1e-6))
-            drawLabel(String(format: "%d playing   peak %.1f dB", analyzer.playingCount, peakDB), at: CGPoint(x: 8, y: h - 18))
+            var status = String(format: "%d playing   peak %.1f dB", analyzer.playingCount, peakDB)
+            status += String(format: "   load %.0f%%", analyzer.renderLoad * 100)
+            let engine = SapfEngine.shared
+            if engine.audioDropouts > 0 || engine.lateAudioRenders > 0 {
+                status += "   dropouts \(engine.audioDropouts)   late \(engine.lateAudioRenders)"
+            }
+            drawLabel(status, at: CGPoint(x: 8, y: h - 18))
         }
     }
 }

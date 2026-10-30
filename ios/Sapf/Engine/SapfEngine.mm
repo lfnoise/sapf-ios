@@ -356,6 +356,21 @@ static void reportError(int err)
 	return getScopeSamples(buffer, (int)count);
 }
 
+- (NSUInteger)audioDropouts
+{
+	return getAudioTimingStats(false).dropouts;
+}
+
+- (NSUInteger)lateAudioRenders
+{
+	return getAudioTimingStats(false).lateRenders;
+}
+
+- (float)takePeakAudioLoad
+{
+	return getAudioTimingStats(true).peakLoad;
+}
+
 - (void)setPointerX:(float)x y:(float)y down:(BOOL)down
 {
 	setMouseUGenState(x, y, down);

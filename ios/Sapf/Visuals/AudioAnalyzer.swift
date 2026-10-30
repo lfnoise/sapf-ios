@@ -37,6 +37,8 @@ final class AudioAnalyzer {
     private(set) var spectrumDB = [Float](repeating: AudioAnalyzer.minDB, count: AudioAnalyzer.fftSize / 2)
     private(set) var playingCount = 0
     private(set) var peak: Float = 0
+    /// The longest recent audio render as a fraction of the time it had, falling slowly from each peak.
+    private(set) var renderLoad: Float = 0
 
     let spectrogram = SpectrogramBuffer(width: 600, height: 256)
 
@@ -90,6 +92,7 @@ final class AudioAnalyzer {
         var maxMag: Float = 0
         vDSP_maxmgv(samples, 1, &maxMag, vDSP_Length(samples.count))
         peak = maxMag
+        renderLoad = max(SapfEngine.shared.takePeakAudioLoad(), renderLoad * 0.98)
 
         analyzeSpectrum()
         spectrogram.addColumn(spectrumDB: spectrumDB, sampleRate: sampleRate)

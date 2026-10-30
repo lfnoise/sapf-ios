@@ -259,6 +259,14 @@ struct ContentView: View {
                         Label("Smaller Text", systemImage: "textformat.size.smaller")
                     }
                 }
+                Picker(selection: $model.audioBufferFrames) {
+                    ForEach(AppModel.audioBufferChoices, id: \.self) { frames in
+                        Text("\(frames) frames (\(Int((Double(frames) / max(SapfEngine.shared.sampleRate, 8000) * 1000).rounded())) ms)").tag(frames)
+                    }
+                } label: {
+                    Label("Audio Buffer", systemImage: "waveform.badge.plus")
+                }
+                .pickerStyle(.menu)
                 Section {
                     Button { model.evaluate("helpall") } label: { Label("List All Functions", systemImage: "list.bullet.rectangle") }
                     Button { model.clearStack() } label: { Label("Clear Stack", systemImage: "square.stack.3d.up.slash") }
