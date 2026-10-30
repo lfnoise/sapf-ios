@@ -109,10 +109,13 @@ final class SapfUITests: XCTestCase {
         screenshot("keyboard-after-rotation")
         let accessory = app.buttons["Hide keyboard"].firstMatch
         XCTAssertTrue(accessory.exists)
-        let scopes = app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Waveform'")).allElementsBoundByIndex
-        XCTAssertFalse(scopes.isEmpty, "a waveform is showing")
-        for scope in scopes {
-            XCTAssertLessThanOrEqual(scope.frame.maxY, accessory.frame.minY, "waveform is above the keyboard's accessory bar")
+        // With the on-screen keyboard the panel shrinks to a waveform; with a hardware keyboard
+        // (only the key bar showing) the whole panel stays, with the console on top.
+        let panel = app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Waveform'")).allElementsBoundByIndex
+            + app.textViews.matching(identifier: "Console").allElementsBoundByIndex
+        XCTAssertFalse(panel.isEmpty, "the bottom panel is showing")
+        for element in panel {
+            XCTAssertLessThanOrEqual(element.frame.maxY, accessory.frame.minY, "\(element.label) is above the keyboard's accessory bar")
         }
     }
 
