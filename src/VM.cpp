@@ -245,8 +245,9 @@ void Thread::getLine()
 	line = NULL;
 #endif
 	linepos = 0;
-	if (!line || strncmp(line, "quit", 4)==0 || strncmp(line, "..", 2)==0) { line = NULL; throw errUserQuit; }
-	if (linelen > 0) {
+	if (line == NULL) throw errUserQuit; // end of input, e.g. control-D
+	if (strncmp(line, "quit", 4)==0 || strncmp(line, "..", 2)==0) { line = NULL; throw errUserQuit; }
+	if (line && linelen) {
 #if USE_LIBEDIT
 		history(myhistory, &ev, H_ENTER, line);
 		history(myhistory, &ev, H_SAVE, historyfilename);

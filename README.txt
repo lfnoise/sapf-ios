@@ -172,7 +172,7 @@ TYPES
         
 SYNTAX
     Expressions are sequences of words (or other syntactic elements) written in postfix 
-    form. All words are executed in left to right order as they are encountered. When a 
+    form. Words are executed one at a time, from left to right. When a 
     word is executed it looks up the value bound to that word. If the value is a 
     function, then the function is applied and any arguments of the function are taken 
     from the stack. If the value is not a function then the value itself is pushed onto 

@@ -1,22 +1,21 @@
+# SAPF - Sound As Pure Form
+# Copyright (C) 2019 James McCartney
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-.phony: all build xcode xcode-native xcode-universal clean
+# Shortcuts for the CMake build. The program ends up in build/sapf.
 
+.PHONY: all universal clean
 
-all: build
+all:
+	cmake -S . -B build
+	cmake --build build
 
-
-build:
-	@mkdir -p build && cd build && \
-		cmake .. && \
-		cmake --build . --config Release
-
-xcode: xcode-native
-
-xcode-native:
-	@xcodebuild -project SoundAsPureForm.xcodeproj -arch arm64 -target SoundAsPureForm 
-
-xcode-universal:
-	@xcodebuild -project SoundAsPureForm.xcodeproj -target SoundAsPureForm 
+universal:
+	cmake -S . -B build -DUNIVERSAL=ON
+	cmake --build build
 
 clean:
-	@rm -rf build
+	rm -rf build

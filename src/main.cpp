@@ -23,36 +23,6 @@
 #include <complex>
 #include <dispatch/dispatch.h>
 #include <CoreFoundation/CoreFoundation.h>
-#include "Manta.h"
-
-class MyManta : public Manta
-{
-	virtual void PadEvent(int row, int column, int id, int value) {
-		printf("pad %d %d %d %d\n", row, column, id, value);
-	}
-	virtual void SliderEvent(int id, int value) {
-		printf("slider %d %d\n", id, value);
-	}
-	virtual void ButtonEvent(int id, int value) {
-		printf("button %d %d\n", id, value);
-	}
-	virtual void PadVelocityEvent(int row, int column, int id, int velocity) {
-		printf("pad vel %d %d %d %d\n", row, column, id, velocity);
-
-	}
-	virtual void ButtonVelocityEvent(int id, int velocity) {
-		printf("button vel %d %d\n", id, velocity);
-	}
-	virtual void FrameEvent(uint8_t *frame) {}
-	virtual void DebugPrint(const char *fmt, ...) {}
-};
-
-Manta* manta();
-Manta* manta()
-{
-	static MyManta* sManta = new MyManta();
-	return sManta;
-}
 
 /* issue:
 
@@ -171,25 +141,6 @@ int main (int argc, const char * argv[])
 	
 	__block Thread th;
 
-	auto m = manta();
-	try {
-		m->Connect();
-	} catch(...) {
-	}
-	printf("Manta %s connected.\n", m->IsConnected() ? "is" : "IS NOT");
-
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-		/*** see at bottom for better way ***/
-		while(true) {
-			try {
-				MantaUSB::HandleEvents();
-				usleep(5000);
-			} catch(...) {
-				sleep(1);
-			}
-		}
-	});
-	
 	if (!vm.prelude_file) {
 		vm.prelude_file = getenv("SAPF_PRELUDE");
 	}

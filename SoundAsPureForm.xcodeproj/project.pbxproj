@@ -8,11 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		920F92F614B058B800A03FFE /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 920F92F514B058B800A03FFE /* Carbon.framework */; };
-		9219F9E1201B901300270C1E /* MantaMulti.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9219F9DA201B901200270C1E /* MantaMulti.cpp */; };
-		9219F9E2201B901300270C1E /* Manta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9219F9DB201B901200270C1E /* Manta.cpp */; };
-		9219F9E3201B901300270C1E /* MantaUSB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9219F9DF201B901300270C1E /* MantaUSB.cpp */; };
-		9219F9E9201B952600270C1E /* hid.c in Sources */ = {isa = PBXBuildFile; fileRef = 9219F9E7201B952600270C1E /* hid.c */; };
-		9219F9EC201B95B900270C1E /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9219F9EB201B95B900270C1E /* IOKit.framework */; };
 		922974CF12A70E6200406390 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 922974CE12A70E6200406390 /* CoreServices.framework */; };
 		928A222F12A9DCAE00700D79 /* libedit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 928A222D12A9DCAE00700D79 /* libedit.a */; };
 		929A3EE82D4B57EB00A37BC3 /* VM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 929A3EE62D4B57EB00A37BC3 /* VM.cpp */; };
@@ -67,19 +62,6 @@
 		9202DFA82D49CDD1001A3339 /* COPYING */ = {isa = PBXFileReference; lastKnownFileType = text; path = COPYING; sourceTree = "<group>"; };
 		920733FE147AEF6200F5419E /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		920F92F514B058B800A03FFE /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = ../../../../../System/Library/Frameworks/Carbon.framework; sourceTree = "<group>"; };
-		9219F9D7201B901200270C1E /* MantaMulti.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MantaMulti.h; path = libmanta/MantaMulti.h; sourceTree = "<group>"; };
-		9219F9D8201B901200270C1E /* MantaUSB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MantaUSB.h; path = libmanta/MantaUSB.h; sourceTree = "<group>"; };
-		9219F9D9201B901200270C1E /* MantaExceptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MantaExceptions.h; path = libmanta/MantaExceptions.h; sourceTree = "<group>"; };
-		9219F9DA201B901200270C1E /* MantaMulti.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MantaMulti.cpp; path = libmanta/MantaMulti.cpp; sourceTree = "<group>"; };
-		9219F9DB201B901200270C1E /* Manta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Manta.cpp; path = libmanta/Manta.cpp; sourceTree = "<group>"; };
-		9219F9DC201B901200270C1E /* MantaClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MantaClient.h; path = libmanta/MantaClient.h; sourceTree = "<group>"; };
-		9219F9DD201B901300270C1E /* MantaServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MantaServer.h; path = libmanta/MantaServer.h; sourceTree = "<group>"; };
-		9219F9DE201B901300270C1E /* MantaVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MantaVersion.h; path = libmanta/MantaVersion.h; sourceTree = "<group>"; };
-		9219F9DF201B901300270C1E /* MantaUSB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MantaUSB.cpp; path = libmanta/MantaUSB.cpp; sourceTree = "<group>"; };
-		9219F9E0201B901300270C1E /* Manta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Manta.h; path = libmanta/Manta.h; sourceTree = "<group>"; };
-		9219F9E7201B952600270C1E /* hid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hid.c; path = libmanta/extern/hidapi/mac/hid.c; sourceTree = "<group>"; };
-		9219F9E8201B952600270C1E /* hidapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hidapi.h; path = libmanta/extern/hidapi/hidapi/hidapi.h; sourceTree = "<group>"; };
-		9219F9EB201B95B900270C1E /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/System/Library/Frameworks/IOKit.framework; sourceTree = DEVELOPER_DIR; };
 		922974CE12A70E6200406390 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
 		9275EA221348F4A000C3AA3D /* unit-tests2.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "unit-tests2.txt"; sourceTree = "<group>"; };
 		928A222D12A9DCAE00700D79 /* libedit.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libedit.a; path = /usr/local/lib/libedit.a; sourceTree = "<absolute>"; };
@@ -150,7 +132,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9219F9EC201B95B900270C1E /* IOKit.framework in Frameworks */,
 				922974CF12A70E6200406390 /* CoreServices.framework in Frameworks */,
 				928A222F12A9DCAE00700D79 /* libedit.a in Frameworks */,
 				92F25DBA13B63CAA007AED32 /* AudioToolbox.framework in Frameworks */,
@@ -183,7 +164,6 @@
 				9202DFA82D49CDD1001A3339 /* COPYING */,
 				929A3ECA2D4B57EB00A37BC3 /* include */,
 				929A3EE72D4B57EB00A37BC3 /* src */,
-				9219F9D6201B8FFD00270C1E /* libmanta */,
 				9275EA221348F4A000C3AA3D /* unit-tests2.txt */,
 				928A222D12A9DCAE00700D79 /* libedit.a */,
 				92E3F1BA15E610E8004EB5C8 /* Cocoa.framework */,
@@ -205,37 +185,9 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		9219F9D6201B8FFD00270C1E /* libmanta */ = {
-			isa = PBXGroup;
-			children = (
-				9219F9E6201B950100270C1E /* extern */,
-				9219F9DB201B901200270C1E /* Manta.cpp */,
-				9219F9E0201B901300270C1E /* Manta.h */,
-				9219F9DC201B901200270C1E /* MantaClient.h */,
-				9219F9D9201B901200270C1E /* MantaExceptions.h */,
-				9219F9DA201B901200270C1E /* MantaMulti.cpp */,
-				9219F9D7201B901200270C1E /* MantaMulti.h */,
-				9219F9DD201B901300270C1E /* MantaServer.h */,
-				9219F9DF201B901300270C1E /* MantaUSB.cpp */,
-				9219F9D8201B901200270C1E /* MantaUSB.h */,
-				9219F9DE201B901300270C1E /* MantaVersion.h */,
-			);
-			name = libmanta;
-			sourceTree = "<group>";
-		};
-		9219F9E6201B950100270C1E /* extern */ = {
-			isa = PBXGroup;
-			children = (
-				9219F9E7201B952600270C1E /* hid.c */,
-				9219F9E8201B952600270C1E /* hidapi.h */,
-			);
-			name = extern;
-			sourceTree = "<group>";
-		};
 		9219F9EA201B95B800270C1E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				9219F9EB201B95B900270C1E /* IOKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -369,7 +321,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9219F9E3201B901300270C1E /* MantaUSB.cpp in Sources */,
 				929A3EE82D4B57EB00A37BC3 /* VM.cpp in Sources */,
 				929A3EE92D4B57EB00A37BC3 /* primes.cpp in Sources */,
 				929A3EEA2D4B57EB00A37BC3 /* dsp.cpp in Sources */,
@@ -398,9 +349,6 @@
 				929A3F012D4B57EB00A37BC3 /* Midi.cpp in Sources */,
 				929A3F022D4B57EB00A37BC3 /* symbol.cpp in Sources */,
 				929A3F032D4B57EB00A37BC3 /* StreamOps.cpp in Sources */,
-				9219F9E1201B901300270C1E /* MantaMulti.cpp in Sources */,
-				9219F9E2201B901300270C1E /* Manta.cpp in Sources */,
-				9219F9E9201B952600270C1E /* hid.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
