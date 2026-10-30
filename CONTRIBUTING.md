@@ -28,10 +28,14 @@ cmake -DUNIVERSAL=ON ..
 make -j8
 ```
 
+`make` (or `make universal`) runs the same CMake build for you.
+
 #### Using Xcode
 
+Open `SoundAsPureForm.xcodeproj`, or from the command line:
+
 ```bash
-make  # Uses the Makefile to invoke xcodebuild
+xcodebuild -project SoundAsPureForm.xcodeproj -target SoundAsPureForm
 ```
 
 ## Branching Strategy
@@ -190,7 +194,7 @@ If you have questions about contributing, feel free to:
 
 ## License
 
-By contributing to SAPF, you agree that your contributions will be licensed under the same license as the project (GNU General Public License v3.0 or later).
+By contributing to SAPF, you agree that your contributions will be licensed under the same license as the project, the Mozilla Public License 2.0 (see COPYING).
 
 ---
 

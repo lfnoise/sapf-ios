@@ -61,3 +61,8 @@ buttons, evaluating code and the visualizers, and layouts in both orientations. 
 
     xcodebuild -project ios/Sapf.xcodeproj -scheme Sapf \
       -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M4)' test
+
+## License
+
+sapf, including this iOS app, is licensed under the Mozilla Public License 2.0. See `COPYING` at the
+top of the repository.
