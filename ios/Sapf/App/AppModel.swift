@@ -59,7 +59,15 @@ struct DocumentStore {
     }
 
     static func bundledResource(for url: URL) -> String? {
-        bundled.first { $0.0.standardizedFileURL == url.standardizedFileURL }?.1
+        // By name and folder: URLs for the same file can differ (e.g. /private/var and /var).
+        guard isInDocuments(url) else { return nil }
+        return bundled.first { $0.0.lastPathComponent == url.lastPathComponent }?.1
+    }
+
+    /// Whether a built-in document differs from the copy in the app bundle (or is missing).
+    static func isModified(_ url: URL, resource: String) -> Bool {
+        guard let source = Bundle.main.url(forResource: resource, withExtension: "txt") else { return false }
+        return FileManager.default.contentsEqual(atPath: url.path, andPath: source.path) == false
     }
 
     /// All editable documents: Scratch first, then the rest alphabetically.
@@ -80,7 +88,7 @@ struct DocumentStore {
     }
 
     static func isInDocuments(_ url: URL) -> Bool {
-        url.standardizedFileURL.path.hasPrefix(directory.standardizedFileURL.path)
+        url.resolvingSymlinksInPath().path.hasPrefix(directory.resolvingSymlinksInPath().path + "/")
     }
 
     /// The README as the `readme` command shows it in the app. Written to Caches on each launch.
@@ -182,6 +190,33 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     }
     static let audioBufferChoices = [256, 512, 1024, 2048]
 
+    enum UIMode: String, CaseIterable, Identifiable {
+        case auto = "Auto", light = "Light", dark = "Dark"
+        var id: String { rawValue }
+        var style: UIUserInterfaceStyle {
+            switch self {
+            case .auto: return .unspecified
+            case .light: return .light
+            case .dark: return .dark
+            }
+        }
+    }
+    /// Light or dark, or following the system.
+    @Published var uiMode: UIMode {
+        didSet {
+            UserDefaults.standard.set(uiMode.rawValue, forKey: "uiMode")
+            applyUIMode()
+        }
+    }
+
+    /// Set on the windows rather than with SwiftUI's preferredColorScheme, so the UIKit editor and
+    /// console, Quick Look, and going back to Auto all work.
+    func applyUIMode() {
+        for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+            for window in scene.windows { window.overrideUserInterfaceStyle = uiMode.style }
+        }
+    }
+
     /// Where you were in each document, by file name, kept across launches.
     private var positions: [String: CodeTextView.Position] = {
         guard let data = UserDefaults.standard.data(forKey: "documentPositions") else { return [:] }
@@ -210,6 +245,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         editorFontSize = defaults.object(forKey: "editorFontSize") as? Double
             ?? (UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14)
         audioBufferFrames = defaults.object(forKey: "audioBufferFrames") as? Int ?? 1024
+        uiMode = defaults.string(forKey: "uiMode").flatMap(UIMode.init) ?? .auto
         // On a phone the keyboard covers most of the screen, so start out reading.
         isEditing = UIDevice.current.userInterfaceIdiom == .pad
 
@@ -253,6 +289,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     func start() {
         guard !started else { return }
         started = true
+        applyUIMode()
 
         DocumentStore.setUp()
         setenv("SAPF_RECORDINGS", DocumentStore.recordings.path, 1)
@@ -357,6 +394,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
 
     func refreshDocuments() {
         documents = DocumentStore.list()
+        checkBuiltIns()
     }
 
     func load(_ url: URL) {
@@ -390,13 +428,37 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         isEditing = true
     }
 
-    var canRestoreCurrent: Bool { DocumentStore.bundledResource(for: currentDocument) != nil }
+    /// Built-in documents that have been changed from the originals in the app bundle.
+    @Published private(set) var modifiedBuiltIns: [URL] = []
 
-    func restoreCurrent() {
-        guard let resource = DocumentStore.bundledResource(for: currentDocument) else { return }
-        saveWorkItem?.cancel()
-        DocumentStore.restoreOriginal(currentDocument, resource: resource)
-        load(currentDocument)
+    func checkBuiltIns() {
+        modifiedBuiltIns = DocumentStore.bundled.filter { DocumentStore.isModified($0.0, resource: $0.1) }.map(\.0)
+    }
+
+    var canRevertCurrent: Bool { modifiedBuiltIns.contains { isCurrent($0) } }
+
+    /// By name: URLs for the same file can differ (e.g. /private/var and /var).
+    private func isCurrent(_ url: URL) -> Bool { url.lastPathComponent == currentDocument.lastPathComponent }
+
+    /// Puts a built-in document back the way it came with the app. Edits to it are lost.
+    func revertToOriginal(_ url: URL) {
+        guard let resource = DocumentStore.bundledResource(for: url) else { return }
+        let current = isCurrent(url)
+        if current {
+            // Drop any unsaved edits, or loading would save them over the original.
+            saveWorkItem?.cancel()
+            saveWorkItem = nil
+        }
+        DocumentStore.restoreOriginal(url, resource: resource)
+        if current { load(currentDocument) }
+        if url.lastPathComponent == DocumentStore.prelude.lastPathComponent {
+            console.append("Prelude.sapf reverted. It's loaded when sapf starts, so the change takes effect next launch.\n")
+        }
+        checkBuiltIns()
+    }
+
+    func revertAllBuiltIns() {
+        for url in modifiedBuiltIns { revertToOriginal(url) }
     }
 
     func title(for url: URL) -> String {
@@ -415,6 +477,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         saveWorkItem?.cancel()
         saveWorkItem = nil
         try? editor.text.write(to: currentDocument, atomically: true, encoding: .utf8)
+        if DocumentStore.bundledResource(for: currentDocument) != nil { checkBuiltIns() }
     }
 
     /// Called when sapf wants to show a file. Source files open in the editor; anything else in Quick Look.

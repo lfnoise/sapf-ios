@@ -43,8 +43,9 @@ After adding or removing source files, regenerate it:
 - **Drag the handle** above the bottom panel to resize it. While typing on a phone, the panel
   shrinks to a waveform, which has its own handle.
 - Documents live in the app's Documents folder and are visible in the Files app.
-  `Prelude.sapf` there is loaded at startup and can be edited; *Restore Original* in the
-  title menu brings back the bundled version of the prelude and examples.
+  `Prelude.sapf` there is loaded at startup and can be edited. If you change the examples or the
+  prelude, the Documents menu offers *Revert to Original…* for the open file and *Revert All
+  Built-in Files…*, which put back the versions that came with the app.
 - Recordings (`record`, `>sf`) and `sgram` spectrograms are saved in Documents/Recordings and
   Documents/Spectrograms and open in Quick Look.
 

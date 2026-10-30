@@ -105,6 +105,17 @@ struct ContentView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.horizontalSizeClass) private var sizeClass
+
+    private enum RevertRequest: Identifiable {
+        case current(URL), all
+        var id: String {
+            switch self {
+            case .current(let url): return url.path
+            case .all: return "all"
+            }
+        }
+    }
+    @State private var revertRequest: RevertRequest?
     /// The bottom panel's share of the height, and the waveform's height while typing on a phone.
     @AppStorage("panelFraction") private var panelFraction = 0.4
     @AppStorage("typingScopeHeight") private var typingScopeHeight = 80.0
@@ -123,6 +134,17 @@ struct ContentView: View {
             .toolbar { toolbarContent }
         }
         .quickLookPreview($model.previewURL)
+        .confirmationDialog(revertTitle, isPresented: Binding(get: { revertRequest != nil }, set: { if !$0 { revertRequest = nil } }),
+                            titleVisibility: .visible, presenting: revertRequest) { request in
+            Button("Revert", role: .destructive) {
+                switch request {
+                case .current(let url): model.revertToOriginal(url)
+                case .all: model.revertAllBuiltIns()
+                }
+            }
+        } message: { _ in
+            Text("Your changes will be lost.")
+        }
         .onAppear { model.start() }
         .onChange(of: scenePhase) { phase in
             if phase != .active {
@@ -193,15 +215,30 @@ struct ContentView: View {
         }
     }
 
+    private var revertTitle: String {
+        switch revertRequest {
+        case .current(let url)?: return "Revert \(model.title(for: url)) to the original?"
+        case .all?:
+            let names = model.modifiedBuiltIns.map { model.title(for: $0) }.sorted().joined(separator: ", ")
+            return "Revert \(names) to the originals?"
+        case nil: return ""
+        }
+    }
+
     // MARK: Toolbar
 
     @ViewBuilder
     private var documentMenu: some View {
         Section {
             Button { model.newDocument() } label: { Label("New Document", systemImage: "doc.badge.plus") }
-            if model.canRestoreCurrent {
-                Button(role: .destructive) { model.restoreCurrent() } label: {
-                    Label("Restore Original", systemImage: "arrow.counterclockwise")
+            if model.canRevertCurrent {
+                Button(role: .destructive) { revertRequest = .current(model.currentDocument) } label: {
+                    Label("Revert to Original…", systemImage: "arrow.counterclockwise")
+                }
+            }
+            if !model.modifiedBuiltIns.isEmpty {
+                Button(role: .destructive) { revertRequest = .all } label: {
+                    Label("Revert All Built-in Files…", systemImage: "arrow.counterclockwise.circle")
                 }
             }
         }
@@ -259,6 +296,12 @@ struct ContentView: View {
                         Label("Smaller Text", systemImage: "textformat.size.smaller")
                     }
                 }
+                Picker(selection: $model.uiMode) {
+                    ForEach(AppModel.UIMode.allCases) { Text($0.rawValue).tag($0) }
+                } label: {
+                    Label("UI Mode", systemImage: "circle.lefthalf.filled")
+                }
+                .pickerStyle(.menu)
                 Picker(selection: $model.audioBufferFrames) {
                     ForEach(AppModel.audioBufferChoices, id: \.self) { frames in
                         Text("\(frames) frames (\(Int((Double(frames) / max(SapfEngine.shared.sampleRate, 8000) * 1000).rounded())) ms)").tag(frames)

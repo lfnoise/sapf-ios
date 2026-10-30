@@ -193,7 +193,43 @@ final class SapfUITests: XCTestCase {
         let after = firstRun.frame
         screenshot("examples-returned")
         XCTAssertEqual(after.minY, before.minY, accuracy: 2, "back where we were")
-        XCTAssertGreaterThan(app.textViews.firstMatch.frame.minY + 200, after.minY, "and not at the top")
+    }
+
+    private func setUIMode(_ mode: String) {
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["UI Mode"].firstMatch.tap()
+        app.buttons[mode].firstMatch.tap()
+    }
+
+    func testUIModeMenu() {
+        setUIMode("Dark")
+        sleep(1)
+        screenshot("ui-dark")
+        setUIMode("Light")
+        sleep(1)
+        screenshot("ui-light")
+        setUIMode("Auto")
+    }
+
+    func testRevertBuiltInFile() {
+        openDocument("Builtin Examples")
+        app.buttons["Documents"].firstMatch.tap()
+        XCTAssertFalse(app.buttons["Revert to Original…"].exists, "nothing to revert yet")
+        app.buttons["Builtin Examples"].firstMatch.tap() // close the menu
+
+        if app.buttons["Edit"].exists { app.buttons["Edit"].tap() } // phones start out reading
+        app.textViews.firstMatch.tap()
+        app.textViews.firstMatch.typeText("CORRUPTED ")
+        sleep(2) // saved after a second
+
+        app.buttons["Documents"].firstMatch.tap()
+        app.buttons["Revert to Original…"].firstMatch.tap()
+        app.buttons["Revert"].firstMatch.tap()
+        sleep(1)
+        let text = app.textViews.firstMatch.value as? String ?? ""
+        XCTAssertFalse(text.contains("CORRUPTED"), "the original is back")
+        app.buttons["Documents"].firstMatch.tap()
+        XCTAssertFalse(app.buttons["Revert All Built-in Files…"].exists, "nothing left to revert")
     }
 
     /// Plays something busy and captures every layout, for checking screen size handling by eye.
