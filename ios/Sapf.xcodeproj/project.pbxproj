@@ -48,6 +48,7 @@
 		BE7EB6D82513C174F827ACA9 /* RCObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F1B4FCA0DA25A90DBDED44 /* RCObj.cpp */; };
 		BFC9088FB3ECB0D96E50EE37 /* CodeStructureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D4C9BEC521C269544F7BD0 /* CodeStructureTests.swift */; };
 		C6ED5F9A65BA0D9CA45F2ED5 /* primes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A1D41B415B98598963C0FFCF /* primes.cpp */; };
+		C798021822C7D01A9500AC8F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = DABCC168C0A5A16C2F667C96 /* PrivacyInfo.xcprivacy */; };
 		D3856DFACB4465E3C99852B6 /* CodeStructure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA53D41B7A206F5809CF762 /* CodeStructure.swift */; };
 		D8A4806343D8DFB7DD200106 /* ScopeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E535ED0367D33204B74A564F /* ScopeViews.swift */; };
 		E2F013DF7AB676C4CA8B4720 /* RandomOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B3BEA51089005A8C714B9CB /* RandomOps.cpp */; };
@@ -140,6 +141,7 @@
 		C27451AAEC4D950302E332E2 /* clz.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = clz.hpp; sourceTree = "<group>"; };
 		CF68A7B767DB1E700C054A62 /* SapfEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SapfEngine.h; sourceTree = "<group>"; };
 		D91C5A1DAA53B98BC985360F /* Parser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Parser.cpp; sourceTree = "<group>"; };
+		DABCC168C0A5A16C2F667C96 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		DE4D3EE07AED09F2828ECE92 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		DFA64A1972849D075AA0DD2A /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		E535ED0367D33204B74A564F /* ScopeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScopeViews.swift; sourceTree = "<group>"; };
@@ -317,6 +319,7 @@
 				4323A5F7D1CC47B834D98B9A /* Visuals */,
 				2B37D0CDC57A546FA7CCA326 /* Assets.xcassets */,
 				B41F1BD028B7CC36FCAF1D1E /* Info.plist */,
+				DABCC168C0A5A16C2F667C96 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Sapf;
 			sourceTree = "<group>";
@@ -445,6 +448,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				67A396EB3409F4D65F35B438 /* Assets.xcassets in Resources */,
+				C798021822C7D01A9500AC8F /* PrivacyInfo.xcprivacy in Resources */,
 				A5782E8032ECCD2234DAA9F1 /* README.txt in Resources */,
 				E984904EEF25B5D6E2DF1BFE /* sapf-bif-examples.txt in Resources */,
 				A810BDD1C456A393922A43B3 /* sapf-examples.txt in Resources */,
