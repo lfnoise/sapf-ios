@@ -82,6 +82,67 @@ struct DocumentStore {
     static func isInDocuments(_ url: URL) -> Bool {
         url.standardizedFileURL.path.hasPrefix(directory.standardizedFileURL.path)
     }
+
+    /// The README as the `readme` command shows it in the app. Written to Caches on each launch.
+    static let readme = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("README.txt")
+
+    static func writeReadme() {
+        guard let source = Bundle.main.url(forResource: "README", withExtension: "txt"),
+              let text = try? String(contentsOf: source, encoding: .utf8) else { return }
+        try? appReadme(from: text).write(to: readme, atomically: true, encoding: .utf8)
+    }
+
+    /// The README for reading on a phone: without the sections about installing and running the
+    /// command line program, and with its paragraphs reflowed so they wrap to the screen.
+    static func appReadme(from text: String) -> String {
+        reflow(withoutCommandLineSections(text))
+    }
+
+    /// Leaves out QUICK SET-UP up to BUILT IN FUNCTION HELP. Returns the text unchanged if they're not found.
+    static func withoutCommandLineSections(_ text: String) -> String {
+        var lines = text.components(separatedBy: "\n")
+        let heading = { (name: String) in lines.firstIndex { $0.trimmingCharacters(in: .whitespaces) == name } }
+        guard let start = heading("QUICK SET-UP"), let end = heading("BUILT IN FUNCTION HELP"), start < end else {
+            return text
+        }
+        lines.removeSubrange(start..<end)
+        return lines.joined(separator: "\n")
+    }
+
+    /// Joins lines that were broken only to fit 80 columns. A line is joined onto the one before when
+    /// both are prose at the same shallow indent and the one before is nearly full and doesn't end a
+    /// sentence. Deeper indents and lines with `-->` or starting with `;` are code examples and are
+    /// left alone.
+    static func reflow(_ text: String) -> String {
+        func indent(_ line: Substring) -> Substring { line.prefix { $0 == " " || $0 == "\t" } }
+        func columns(_ s: Substring) -> Int { s.reduce(0) { $0 + ($1 == "\t" ? 4 : 1) } }
+        func isProse(_ line: Substring) -> Bool {
+            let body = line.drop { $0 == " " || $0 == "\t" }
+            return !body.isEmpty && columns(indent(line)) <= 4 && !body.hasPrefix(";") && !line.contains("-->")
+        }
+
+        // A line that ends a sentence may be a list item, so the next line starts a new one.
+        func endsSentence(_ line: Substring) -> Bool {
+            guard let last = line.trimmingTrailingSpaces.last else { return false }
+            return ".:?!".contains(last)
+        }
+
+        var out: [String] = []
+        var previous: Substring?
+        for line in text.split(separator: "\n", omittingEmptySubsequences: false) {
+            if let p = previous, isProse(p), isProse(line), indent(p) == indent(line),
+               columns(p.trimmingTrailingSpaces) >= 60, !endsSentence(p) {
+                // Measure each original line, not the joined result, so a paragraph's short last
+                // line still ends it.
+                out[out.count - 1] = out[out.count - 1].trimmingTrailingSpaces + " " + line.drop { $0 == " " || $0 == "\t" }
+            } else {
+                out.append(String(line))
+            }
+            previous = line
+        }
+        return out.joined(separator: "\n")
+    }
 }
 
 @MainActor
@@ -188,7 +249,8 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         setenv("SAPF_SPECTROGRAMS", DocumentStore.spectrograms.path, 1)
         setenv("SAPF_TMPDIR", NSTemporaryDirectory(), 1)
         setenv("SAPF_PRELUDE", DocumentStore.prelude.path, 1)
-        if let readme = Bundle.main.path(forResource: "README", ofType: "txt") { setenv("SAPF_README", readme, 1) }
+        DocumentStore.writeReadme()
+        setenv("SAPF_README", DocumentStore.readme.path, 1)
         setenv("SAPF_EXAMPLES", DocumentStore.bundled[0].0.path, 1)
         // Relative paths in sapf code (e.g. for sound files) are relative to Documents.
         FileManager.default.changeCurrentDirectoryPath(DocumentStore.directory.path)
@@ -366,4 +428,12 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     func codeTextViewStop(_ view: CodeTextView) { stop() }
     func codeTextViewDidChangeText(_ view: CodeTextView) { scheduleSave() }
     func codeTextViewDidEndEditing(_ view: CodeTextView) { isEditing = false }
+}
+
+private extension StringProtocol {
+    var trimmingTrailingSpaces: SubSequence {
+        var s = self[...]
+        while let last = s.last, last == " " || last == "\t" { s = s.dropLast() }
+        return s
+    }
 }

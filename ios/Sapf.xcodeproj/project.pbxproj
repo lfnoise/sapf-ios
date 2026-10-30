@@ -53,6 +53,7 @@
 		D8A4806343D8DFB7DD200106 /* ScopeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E535ED0367D33204B74A564F /* ScopeViews.swift */; };
 		E2F013DF7AB676C4CA8B4720 /* RandomOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B3BEA51089005A8C714B9CB /* RandomOps.cpp */; };
 		E984904EEF25B5D6E2DF1BFE /* sapf-bif-examples.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3DFD313251A61C2EBBB99444 /* sapf-bif-examples.txt */; };
+		F3E278F50D3D4D61A1721CB8 /* ReadmeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB59F0D3DE917DE670CC4F0 /* ReadmeTests.swift */; };
 		FA583553BEDC890A7BB5C879 /* SapfUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B979B684DF9A299D7505335E /* SapfUITests.swift */; };
 /* End PBXBuildFile section */
 
@@ -132,6 +133,7 @@
 		A3B6F3B23AF7FEF5C090A6C3 /* SapfLexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SapfLexer.swift; sourceTree = "<group>"; };
 		A695D8E5B31656870846AFC5 /* symbol.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = symbol.hpp; sourceTree = "<group>"; };
 		AADF8E44C780388FD25FE4C9 /* Sapf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sapf.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ADB59F0D3DE917DE670CC4F0 /* ReadmeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadmeTests.swift; sourceTree = "<group>"; };
 		B41F1BD028B7CC36FCAF1D1E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B90454F3C0C12F795349BBF5 /* UGen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = UGen.hpp; sourceTree = "<group>"; };
 		B979B684DF9A299D7505335E /* SapfUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SapfUITests.swift; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 			isa = PBXGroup;
 			children = (
 				84D4C9BEC521C269544F7BD0 /* CodeStructureTests.swift */,
+				ADB59F0D3DE917DE670CC4F0 /* ReadmeTests.swift */,
 			);
 			path = SapfTests;
 			sourceTree = "<group>";
@@ -518,6 +521,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BFC9088FB3ECB0D96E50EE37 /* CodeStructureTests.swift in Sources */,
+				F3E278F50D3D4D61A1721CB8 /* ReadmeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
