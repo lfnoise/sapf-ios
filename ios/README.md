@@ -35,7 +35,8 @@ After adding or removing source files, regenerate it:
 - **Plot Top of Stack** (⋯ menu, the plot button on the key bar, or Shift-Cmd-P) plots the value on
   top of the stack without popping it: a signal (up to a minute of it), a list of signals as
   channels, or a list of numbers. The waveform switches to Plot; use its Output / Plot switch to go
-  back and forth. Pinch to zoom around your fingers, drag to scroll, and double tap to see it all.
+  back and forth, or × to close the plot. Pinch to zoom around your fingers, drag to scroll, and
+  double tap to see it all.
 - The key bar above the keyboard has Run, Stop and sapf's punctuation.
 - **Reading and editing.** Hiding the keyboard (its key bar button, or swiping down) switches to
   reading: taps show help and move the cursor without bringing the keyboard back. Tap the keyboard

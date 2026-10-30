@@ -89,6 +89,14 @@ final class WaveformState {
         fitPlot()
     }
 
+    /// Discards the plot and goes back to the output.
+    func clearPlot() {
+        guard plot != nil else { return }
+        plot = nil
+        source = .output
+        changed()
+    }
+
     func setSource(_ source: Source) {
         guard source != self.source, source == .output || plot != nil else { return }
         self.source = source
@@ -126,6 +134,7 @@ final class WaveformState {
 final class WaveformView: ScopeBaseView, UIGestureRecognizerDelegate {
     private var state: WaveformState { .shared }
     private let sourcePicker = UISegmentedControl(items: ["Output", "Plot"])
+    private let closeButton = UIButton(type: .system)
     private let scopeElement: UIAccessibilityElement
     private let pan = UIPanGestureRecognizer()
     private var gestureStart: (start: Double, span: Double, anchor: Double)?
@@ -154,14 +163,22 @@ final class WaveformView: ScopeBaseView, UIGestureRecognizerDelegate {
         }, for: .valueChanged)
         addSubview(sourcePicker)
 
+        closeButton.setImage(UIImage(systemName: "xmark.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 16)), for: .normal)
+        closeButton.tintColor = UIColor(white: 1, alpha: 0.45)
+        closeButton.accessibilityLabel = "Close Plot"
+        closeButton.addAction(UIAction { [weak self] _ in self?.state.clearPlot() }, for: .touchUpInside)
+        addSubview(closeButton)
+
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
         pinch.delegate = self
         addGestureRecognizer(pinch)
         pan.addTarget(self, action: #selector(handlePan(_:)))
+        pan.delegate = self
         pan.maximumNumberOfTouches = 1
         addGestureRecognizer(pan)
         let doubleTap = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap))
         doubleTap.numberOfTapsRequired = 2
+        doubleTap.delegate = self
         addGestureRecognizer(doubleTap)
         isMultipleTouchEnabled = true
 
@@ -177,7 +194,7 @@ final class WaveformView: ScopeBaseView, UIGestureRecognizerDelegate {
     }
 
     override var accessibilityElements: [Any]? {
-        get { sourcePicker.isHidden ? [scopeElement] : [scopeElement, sourcePicker] }
+        get { sourcePicker.isHidden ? [scopeElement] : [scopeElement, sourcePicker, closeButton] }
         set {}
     }
 
@@ -185,17 +202,25 @@ final class WaveformView: ScopeBaseView, UIGestureRecognizerDelegate {
         super.layoutSubviews()
         let size = sourcePicker.sizeThatFits(CGSize(width: 140, height: 22))
         sourcePicker.frame = CGRect(x: (bounds.width - size.width) / 2, y: 3, width: size.width, height: 22)
+        closeButton.frame = CGRect(x: sourcePicker.frame.maxX + 2, y: 0, width: 28, height: 28)
         scopeElement.accessibilityFrameInContainerSpace = bounds
     }
 
     @objc private func stateChanged() {
         sourcePicker.isHidden = state.plot == nil
+        closeButton.isHidden = sourcePicker.isHidden
         sourcePicker.selectedSegmentIndex = state.source == .output ? 0 : 1
         pan.isEnabled = state.source == .plot
         setNeedsDisplay()
     }
 
     // MARK: Gestures
+
+    /// Leaves touches on the picker and close button to them, so they respond without waiting
+    /// for the double tap to fail.
+    func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        !(touch.view is UIControl)
+    }
 
     func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
         other == pan

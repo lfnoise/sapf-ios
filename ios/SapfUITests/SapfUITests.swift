@@ -154,7 +154,12 @@ final class SapfUITests: XCTestCase {
         if app.buttons["Console"].exists {
             app.buttons["Console"].tap()
             XCTAssertTrue((console.value as? String ?? "").contains("plot: first"), "an endless signal is cut off")
+            app.buttons["Scope"].tap()
         }
+        app.buttons["Close Plot"].tap()
+        screenshot("plot-closed")
+        XCTAssertFalse(app.buttons["Output"].exists, "the plot and its Output/Plot switch are gone")
+        XCTAssertFalse(app.buttons["Close Plot"].exists)
     }
 
     func testZoomOutShowsEnvelope() {
@@ -249,3 +254,4 @@ final class SapfUITests: XCTestCase {
         app.buttons["Stop"].firstMatch.tap()
     }
 }
+
