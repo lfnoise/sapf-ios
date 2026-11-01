@@ -267,7 +267,9 @@ struct ContentView: View {
         // Left side, so that on a small phone it doesn't push Stop off the right.
         ToolbarItemGroup(placement: .navigationBarLeading) {
             Menu { documentMenu } label: { Label("Documents", systemImage: "folder") }
-            if !model.isEditing {
+            if model.isEditing {
+                Button { model.stopEditing() } label: { Label("Hide keyboard", systemImage: "keyboard.chevron.compact.down") }
+            } else {
                 Button { model.startEditing() } label: { Label("Edit", systemImage: "keyboard") }
             }
         }

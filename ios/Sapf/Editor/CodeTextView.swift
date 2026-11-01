@@ -501,9 +501,6 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         for key in ["[", "]", "(", ")", "{", "}", "\\", "@", "'", "`", "=", ":", ";", "\"", "#", ",", "."] {
             stack.addArrangedSubview(button(key) { [weak self] in self?.insertText(key) })
         }
-        stack.addArrangedSubview(button(nil, image: "keyboard.chevron.compact.down", label: "Hide keyboard") { [weak self] in
-            self?.resignFirstResponder()
-        })
 
         NSLayoutConstraint.activate([
             scroll.leadingAnchor.constraint(equalTo: bar.leadingAnchor),

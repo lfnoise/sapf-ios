@@ -38,9 +38,9 @@ After adding or removing source files, regenerate it:
   back and forth, or × to close the plot. Pinch to zoom around your fingers, drag to scroll, and
   double tap to see it all.
 - The key bar above the keyboard has Run, Stop and sapf's punctuation.
-- **Reading and editing.** Hiding the keyboard (its key bar button, or swiping down) switches to
-  reading: taps show help and move the cursor without bringing the keyboard back. Tap the keyboard
-  button in the toolbar to edit again. On a phone, reading is the starting mode.
+- **Reading and editing.** The keyboard button in the toolbar switches between them. Hiding the
+  keyboard (that button, or swiping down) switches to reading: taps show help and move the cursor
+  without bringing the keyboard back. On a phone, reading is the starting mode.
 - **Drag the handle** above the bottom panel to resize it. While typing on a phone, the panel
   shrinks to a waveform, which has its own handle.
 - Documents live in the app's Documents folder and are visible in the Files app.

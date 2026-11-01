@@ -286,6 +286,12 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         editor.becomeFirstResponder()
     }
 
+    /// Back to reading: hides the keyboard, and taps no longer bring it back.
+    func stopEditing() {
+        editor.resignFirstResponder()
+        isEditing = false
+    }
+
     func start() {
         guard !started else { return }
         started = true

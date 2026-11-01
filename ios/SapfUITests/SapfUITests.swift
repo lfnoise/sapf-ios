@@ -98,6 +98,10 @@ final class SapfUITests: XCTestCase {
         XCTAssertFalse(app.keyboards.firstMatch.exists, "no keyboard while reading")
         app.buttons["Edit"].tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2), "Edit brings up the keyboard")
+        // The same toolbar button now hides it.
+        app.navigationBars.buttons["Hide keyboard"].tap()
+        XCTAssertTrue(app.navigationBars.buttons["Edit"].waitForExistence(timeout: 2), "back to reading")
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
     }
 
     func testPanelStaysAboveKeyboardAfterRotating() {
@@ -107,7 +111,7 @@ final class SapfUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
         sleep(2)
         screenshot("keyboard-after-rotation")
-        let accessory = app.buttons["Hide keyboard"].firstMatch
+        let accessory = app.buttons["Evaluate"].firstMatch // on the key bar
         XCTAssertTrue(accessory.exists)
         // With the on-screen keyboard the panel shrinks to a waveform; with a hardware keyboard
         // (only the key bar showing) the whole panel stays, with the console on top.
