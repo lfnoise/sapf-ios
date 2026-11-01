@@ -18,6 +18,9 @@ struct DocumentStore {
 
     static let scratch = directory.appendingPathComponent("Scratch.sapf")
     static let prelude = directory.appendingPathComponent("Prelude.sapf")
+    /// Every block run, with a timestamp line each hour, like ~/sapf-log.txt on the Mac. Not in the
+    /// documents list, so it can't be edited while blocks are appended to it.
+    static let log = directory.appendingPathComponent("sapf-log.txt")
 
     /// Documents copied from the app bundle, and their original resource names.
     static let bundled: [(URL, String)] = [
@@ -73,7 +76,9 @@ struct DocumentStore {
     /// All editable documents: Scratch first, then the rest alphabetically.
     static func list() -> [URL] {
         let urls = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
-        let docs = urls.filter { ["sapf", "txt"].contains($0.pathExtension.lowercased()) }
+        let docs = urls.filter {
+            ["sapf", "txt"].contains($0.pathExtension.lowercased()) && $0.lastPathComponent != log.lastPathComponent
+        }
             .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
         return [scratch] + docs.filter { $0.lastPathComponent != scratch.lastPathComponent }
     }
@@ -302,6 +307,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         setenv("SAPF_SPECTROGRAMS", DocumentStore.spectrograms.path, 1)
         setenv("SAPF_TMPDIR", NSTemporaryDirectory(), 1)
         setenv("SAPF_PRELUDE", DocumentStore.prelude.path, 1)
+        setenv("SAPF_LOG", DocumentStore.log.path, 1)
         DocumentStore.writeReadme()
         setenv("SAPF_README", DocumentStore.readme.path, 1)
         setenv("SAPF_EXAMPLES", DocumentStore.bundled[0].0.path, 1)
@@ -492,6 +498,14 @@ final class AppModel: ObservableObject, CodeTextViewActions {
 
     func showAllFunctions() {
         functionListText = SapfEngine.shared.allHelpText()
+    }
+
+    /// Shows the log of everything run, read-only.
+    func showLog() {
+        if !FileManager.default.fileExists(atPath: DocumentStore.log.path) {
+            FileManager.default.createFile(atPath: DocumentStore.log.path, contents: Data())
+        }
+        previewURL = DocumentStore.log
     }
 
     /// Called when sapf wants to show a file. Source files open in the editor; anything else in Quick Look.

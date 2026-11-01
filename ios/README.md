@@ -47,6 +47,9 @@ After adding or removing source files, regenerate it:
   shrinks to a waveform, which has its own handle.
 - **README** in the ⋯ menu shows sapf's README (also `readme`), without the sections on installing
   and running from the command line.
+- Every block you run is appended to `sapf-log.txt` in Documents, with a timestamp line at the start
+  of each session and each hour, as `~/sapf-log.txt` is on the Mac. *Log* in the Documents menu
+  shows it read-only.
 - Documents live in the app's Documents folder and are visible in the Files app.
   `Prelude.sapf` there is loaded at startup and can be edited. If you change the examples or the
   prelude, the Documents menu offers *Revert to Original…* for the open file and *Revert All

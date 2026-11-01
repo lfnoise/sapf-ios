@@ -285,6 +285,22 @@ final class SapfUITests: XCTestCase {
         screenshot("editor-find")
     }
 
+    func testRunCodeIsLogged() {
+        let marker = "\(Int.random(in: 100000...999999)) 7 +"
+        _ = newDocument(with: marker)
+        app.buttons["Hide keyboard"].firstMatch.tap()
+        app.buttons["Run block"].firstMatch.tap()
+        sleep(1)
+        app.buttons["Documents"].firstMatch.tap()
+        app.buttons["Log"].firstMatch.tap()
+        let logged = NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", marker, marker)
+        XCTAssertTrue(app.descendants(matching: .any).matching(logged).firstMatch.waitForExistence(timeout: 5), "the block is in the log")
+        screenshot("log")
+        app.buttons["Done"].firstMatch.tap()
+        app.buttons["Documents"].firstMatch.tap()
+        XCTAssertFalse(app.buttons["sapf-log"].exists, "the log isn't an editable document")
+    }
+
     /// Plays something busy and captures every layout, for checking screen size handling by eye.
     func testLayouts() {
         let device = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"

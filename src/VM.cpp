@@ -33,7 +33,9 @@ Thread::Thread()
 	mWorkspace(new GForm()),
     parsingWhat(parsingWords),
     fromString(false),
-    line(NULL)
+    line(NULL),
+    logfilename(NULL),
+    previousTimeStamp(0)
 {
 	rgen.init(timeseed());
 }
@@ -43,7 +45,9 @@ Thread::Thread(const Thread& inParent)
     mWorkspace(inParent.mWorkspace),
     parsingWhat(parsingWords),
     fromString(false),
-    line(NULL)
+    line(NULL),
+    logfilename(NULL),
+    previousTimeStamp(0)
 {
 	rgen.init(timeseed());
 }
@@ -54,7 +58,9 @@ Thread::Thread(const Thread& inParent, P<Fun> const& inFun)
     mWorkspace(inParent.mWorkspace),
     parsingWhat(parsingWords),
     fromString(false),
-    line(NULL)
+    line(NULL),
+    logfilename(NULL),
+    previousTimeStamp(0)
 {
 	rgen.init(timeseed());
 }

@@ -234,6 +234,7 @@ struct ContentView: View {
     private var documentMenu: some View {
         Section {
             Button { model.newDocument() } label: { Label("New Document", systemImage: "doc.badge.plus") }
+            Button { model.showLog() } label: { Label("Log", systemImage: "clock.arrow.circlepath") }
             if model.canRevertCurrent {
                 Button(role: .destructive) { revertRequest = .current(model.currentDocument) } label: {
                     Label("Revert to Original…", systemImage: "arrow.counterclockwise")

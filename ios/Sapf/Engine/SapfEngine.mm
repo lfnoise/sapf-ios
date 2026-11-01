@@ -444,12 +444,26 @@ static void reportError(int err)
 	}
 }
 
+// Appends code that's run to $SAPF_LOG, as Thread::getLine does for each line typed on the Mac.
+static void logCode(Thread& th, std::string const& source)
+{
+	const char* path = getenv("SAPF_LOG");
+	if (!path || source.find_first_not_of(" \t\r\n") == std::string::npos) return;
+	FILE* file = fopen(path, "a");
+	if (!file) return;
+	th.logTimestamp(file);
+	fwrite(source.data(), 1, source.size(), file);
+	if (source.back() != '\n') fputc('\n', file);
+	fclose(file);
+}
+
 - (void)evaluate:(NSString *)code
 {
 	std::string source = code.UTF8String ?: "";
 	dispatch_async(dispatch_get_main_queue(), ^{ if (self.busyHandler) self.busyHandler(YES); });
 	dispatch_async(_queue, ^{
 		Thread& th = *self->_thread;
+		logCode(th, source);
 		// Same as one turn of Thread::repl, but reading from a string.
 		try {
 			P<Fun> compiledFun;
