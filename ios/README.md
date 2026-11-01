@@ -38,11 +38,15 @@ After adding or removing source files, regenerate it:
   back and forth, or × to close the plot. Pinch to zoom around your fingers, drag to scroll, and
   double tap to see it all.
 - The key bar above the keyboard has Run, Stop and sapf's punctuation.
+- **Find** (⋯ menu, the magnifying glass on the key bar, or Cmd-F) searches the open document, with
+  replace while editing. Cmd-G finds the next match.
 - **Reading and editing.** The keyboard button in the toolbar switches between them. Hiding the
   keyboard (that button, or swiping down) switches to reading: taps show help and move the cursor
   without bringing the keyboard back. On a phone, reading is the starting mode.
 - **Drag the handle** above the bottom panel to resize it. While typing on a phone, the panel
   shrinks to a waveform, which has its own handle.
+- **README** in the ⋯ menu shows sapf's README (also `readme`), without the sections on installing
+  and running from the command line.
 - Documents live in the app's Documents folder and are visible in the Files app.
   `Prelude.sapf` there is loaded at startup and can be edited. If you change the examples or the
   prelude, the Documents menu offers *Revert to Original…* for the open file and *Revert All

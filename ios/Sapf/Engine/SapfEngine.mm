@@ -287,6 +287,16 @@ static SapfWordHelp* parseHelpLine(std::string const& line, BOOL builtIn)
 	self.helpTable = _helpTableBuilder;
 }
 
+- (NSString *)allHelpText
+{
+	std::string text = "BUILT IN FUNCTIONS\n\n";
+	Locker lock(&gHelpMutex);
+	for (auto const& line : vm.bifHelp) text += line + "\n";
+	text += "\nUSER DEFINED FUNCTIONS\n\n";
+	for (auto const& line : vm.udfHelp) text += line + "\n";
+	return [NSString stringWithUTF8String:text.c_str()] ?: @"";
+}
+
 - (SapfWordHelp *)helpForWord:(NSString *)word
 {
 	return self.helpTable[word];

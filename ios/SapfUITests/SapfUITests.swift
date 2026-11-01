@@ -250,6 +250,41 @@ final class SapfUITests: XCTestCase {
         print("startup: \(line)")
     }
 
+    func testReadmeFromMoreMenu() {
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["README"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'sapf'")).firstMatch.waitForExistence(timeout: 5)
+                      || app.textViews.containing(NSPredicate(format: "value CONTAINS 'sapf'")).firstMatch.waitForExistence(timeout: 1),
+                      "the README is showing")
+        sleep(1)
+        screenshot("readme")
+        app.buttons["Done"].firstMatch.tap()
+    }
+
+    func testListAllFunctions() {
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["List All Functions"].firstMatch.tap()
+        XCTAssertTrue(app.textViews["All Functions"].waitForExistence(timeout: 5), "shown in a viewer")
+        screenshot("all-functions")
+        app.buttons["Find"].tap()
+        app.typeText("sinosc")
+        sleep(1)
+        screenshot("all-functions-find")
+        app.buttons["Done"].firstMatch.tap()
+        if app.buttons["Console"].exists { app.buttons["Console"].tap() }
+        XCTAssertFalse((app.textViews["Console"].value as? String ?? "").contains("BUILT IN FUNCTIONS"), "not in the console")
+    }
+
+    func testFindInEditor() {
+        _ = newDocument(with: "440 0 sinosc .2 * play\n\n220 0 sinosc .1 * play")
+        app.buttons["More"].firstMatch.tap()
+        app.buttons["Find"].firstMatch.tap()
+        app.typeText("sinosc")
+        let count = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS '1/2' OR label CONTAINS '1 of 2'")).firstMatch
+        XCTAssertTrue(count.waitForExistence(timeout: 3), "both matches found")
+        screenshot("editor-find")
+    }
+
     /// Plays something busy and captures every layout, for checking screen size handling by eye.
     func testLayouts() {
         let device = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"

@@ -8,11 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		06BB8523F2D58F0D16D9A227 /* Play.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 293BE9FF29B7ECCED997A51E /* Play.cpp */; };
+		07BDA255CA28AF7F77932391 /* FunctionList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F2CD5094F6379DD005736A /* FunctionList.swift */; };
 		0B5554014B2644791EFADF74 /* Parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D91C5A1DAA53B98BC985360F /* Parser.cpp */; };
 		0B95794630CDC5D8DA24B8BC /* dsp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D89B631E673317B56AC7026 /* dsp.cpp */; };
 		1E45D3A07492E51A550FA608 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE4D3EE07AED09F2828ECE92 /* ContentView.swift */; };
 		1E4843FD394097659BC8732B /* ConsoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 513FEB9762C8C278297F1738 /* ConsoleView.swift */; };
 		2048EF2140FCDC818E71D009 /* FilterUGens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0334BDA7EEB0C5DB559B9746 /* FilterUGens.cpp */; };
+		29FD49F665D1A7FAA55B3096 /* FunctionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E995326437EFB913EAF598F /* FunctionListView.swift */; };
 		35E0B51E0FBA65EC3E45EDC7 /* MathFuns.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1C5FBFA44168F1E48A8A0FB5 /* MathFuns.cpp */; };
 		385C6F05F8951680C1886271 /* MathOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3AC4493E36DB9B72BF0647CB /* MathOps.cpp */; };
 		40D9A8C172D68B9C1297688C /* SetOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5D9DF91C75A1585A1C772E2B /* SetOps.cpp */; };
@@ -32,6 +34,7 @@
 		7A504924303F9717D05239D9 /* Midi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 36D5CA3EE23DD34C1A4114AE /* Midi.cpp */; };
 		7E0A46A30749987061FA2BD1 /* SoundFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 795A4E03C878FFC2ECBDA947 /* SoundFiles.cpp */; };
 		7E839961ACF7EEBA35536790 /* CoreOps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8021F6A0F32B639B14EFF5AA /* CoreOps.cpp */; };
+		7E961F07629F602999EA0638 /* FunctionListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D4F03C324F25059FC27A83 /* FunctionListTests.swift */; };
 		7F6245E69BE7E6F95A92BA12 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5EB561D4CD100A7AF6766A6C /* Opcode.cpp */; };
 		8272FB50D0DCC213E3229EB2 /* sapf-prelude.txt in Resources */ = {isa = PBXBuildFile; fileRef = A28D8E94F2DC121F543CDDC5 /* sapf-prelude.txt */; };
 		8A5298B9CF9BDBC2928351CC /* MultichannelExpansion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 54CAF3E47EE2B7774237108D /* MultichannelExpansion.cpp */; };
@@ -84,6 +87,7 @@
 		099BCBE32AED4E217B3E16E2 /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
 		0DEE7673B6C021E3EF009AA0 /* rc_ptr.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = rc_ptr.hpp; sourceTree = "<group>"; };
 		0F2D4EDD68E8670E9B182277 /* sapf-examples.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "sapf-examples.txt"; sourceTree = "<group>"; };
+		11F2CD5094F6379DD005736A /* FunctionList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionList.swift; sourceTree = "<group>"; };
 		12849BCD4C909A52918A3E33 /* VM.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = VM.hpp; sourceTree = "<group>"; };
 		14F896C0BCC51BFF662C8C27 /* MathFuns.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MathFuns.hpp; sourceTree = "<group>"; };
 		151FC912DBB0F272B92A8A57 /* SapfApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SapfApp.swift; sourceTree = "<group>"; };
@@ -104,6 +108,7 @@
 		341DE953C5C2DD350C288A3C /* EditorPositionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorPositionTests.swift; sourceTree = "<group>"; };
 		3450A3AF73BE0B2C54A26B39 /* Parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Parser.hpp; sourceTree = "<group>"; };
 		3484B306C34A3420D5E32135 /* rgen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = rgen.hpp; sourceTree = "<group>"; };
+		34D4F03C324F25059FC27A83 /* FunctionListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionListTests.swift; sourceTree = "<group>"; };
 		36D5CA3EE23DD34C1A4114AE /* Midi.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Midi.cpp; sourceTree = "<group>"; };
 		3AC4493E36DB9B72BF0647CB /* MathOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MathOps.cpp; sourceTree = "<group>"; };
 		3D8493C74876AE16A4973EAD /* MultichannelExpansion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MultichannelExpansion.hpp; sourceTree = "<group>"; };
@@ -123,6 +128,7 @@
 		7342A3E20BDDD0C09B5A73FD /* FilterUGens.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = FilterUGens.hpp; sourceTree = "<group>"; };
 		795A4E03C878FFC2ECBDA947 /* SoundFiles.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SoundFiles.cpp; sourceTree = "<group>"; };
 		7C95C5552EE7FD6D4D5EFDB8 /* Object.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Object.cpp; sourceTree = "<group>"; };
+		7E995326437EFB913EAF598F /* FunctionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionListView.swift; sourceTree = "<group>"; };
 		8021F6A0F32B639B14EFF5AA /* CoreOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CoreOps.cpp; sourceTree = "<group>"; };
 		821F1BBAC013B51225D8F4BB /* StreamOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StreamOps.cpp; sourceTree = "<group>"; };
 		83261EFC5AB36D58EDBF65F9 /* ErrorCodes.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ErrorCodes.hpp; sourceTree = "<group>"; };
@@ -170,6 +176,7 @@
 			isa = PBXGroup;
 			children = (
 				49CFF3E6FF98951F78D5911C /* AppModel.swift */,
+				11F2CD5094F6379DD005736A /* FunctionList.swift */,
 				151FC912DBB0F272B92A8A57 /* SapfApp.swift */,
 			);
 			path = App;
@@ -290,6 +297,7 @@
 			children = (
 				513FEB9762C8C278297F1738 /* ConsoleView.swift */,
 				DE4D3EE07AED09F2828ECE92 /* ContentView.swift */,
+				7E995326437EFB913EAF598F /* FunctionListView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -339,6 +347,7 @@
 			children = (
 				84D4C9BEC521C269544F7BD0 /* CodeStructureTests.swift */,
 				341DE953C5C2DD350C288A3C /* EditorPositionTests.swift */,
+				34D4F03C324F25059FC27A83 /* FunctionListTests.swift */,
 				ADB59F0D3DE917DE670CC4F0 /* ReadmeTests.swift */,
 			);
 			path = SapfTests;
@@ -488,6 +497,8 @@
 				620A064C7D123FFC724581FF /* DelayUGens.cpp in Sources */,
 				BE0FBD94C59C4B466CE0BB57 /* ErrorCodes.cpp in Sources */,
 				2048EF2140FCDC818E71D009 /* FilterUGens.cpp in Sources */,
+				07BDA255CA28AF7F77932391 /* FunctionList.swift in Sources */,
+				29FD49F665D1A7FAA55B3096 /* FunctionListView.swift in Sources */,
 				AD86DE3F2F5F9B521B3F993B /* HelpTooltipView.swift in Sources */,
 				35E0B51E0FBA65EC3E45EDC7 /* MathFuns.cpp in Sources */,
 				385C6F05F8951680C1886271 /* MathOps.cpp in Sources */,
@@ -535,6 +546,7 @@
 			files = (
 				BFC9088FB3ECB0D96E50EE37 /* CodeStructureTests.swift in Sources */,
 				5A2591440C460574CAF3B72A /* EditorPositionTests.swift in Sources */,
+				7E961F07629F602999EA0638 /* FunctionListTests.swift in Sources */,
 				F3E278F50D3D4D61A1721CB8 /* ReadmeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

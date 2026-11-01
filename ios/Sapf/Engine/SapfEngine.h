@@ -71,6 +71,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Help for a built in or user defined word. Returns nil if there is none. Fast; safe from the main thread.
 - (nullable SapfWordHelp *)helpForWord:(NSString *)word;
 
+/// The help for every built in and user defined function, as 'helpall' prints it. Safe from the main thread.
+- (NSString *)allHelpText;
+
 /// Looks up a word in the workspace and calls back on the main queue with a short description of its
 /// value, or nil if it is not defined. Runs on the interpreter queue, so it waits for any running evaluation.
 - (void)describeWord:(NSString *)word completion:(void (^)(NSString *_Nullable description))completion;

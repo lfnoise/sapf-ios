@@ -134,6 +134,9 @@ struct ContentView: View {
             .toolbar { toolbarContent }
         }
         .quickLookPreview($model.previewURL)
+        .sheet(isPresented: Binding(get: { model.functionListText != nil }, set: { if !$0 { model.functionListText = nil } })) {
+            FunctionListView(text: model.functionListText ?? "")
+        }
         .confirmationDialog(revertTitle, isPresented: Binding(get: { revertRequest != nil }, set: { if !$0 { revertRequest = nil } }),
                             titleVisibility: .visible, presenting: revertRequest) { request in
             Button("Revert", role: .destructive) {
@@ -312,12 +315,16 @@ struct ContentView: View {
                     Label("Audio Buffer", systemImage: "waveform.badge.plus")
                 }
                 .pickerStyle(.menu)
+                Button { model.editor.showFind() } label: {
+                    Label("Find", systemImage: "magnifyingglass")
+                }
                 Button { model.plotTopOfStack() } label: {
                     Label("Plot Top of Stack", systemImage: "chart.xyaxis.line")
                 }
                 .keyboardShortcut("p", modifiers: [.command, .shift])
                 Section {
-                    Button { model.evaluate("helpall") } label: { Label("List All Functions", systemImage: "list.bullet.rectangle") }
+                    Button { model.previewURL = DocumentStore.readme } label: { Label("README", systemImage: "book") }
+                    Button { model.showAllFunctions() } label: { Label("List All Functions", systemImage: "list.bullet.rectangle") }
                     Button { model.clearStack() } label: { Label("Clear Stack", systemImage: "square.stack.3d.up.slash") }
                     Button { model.console.clear() } label: { Label("Clear Console", systemImage: "trash") }
                 }

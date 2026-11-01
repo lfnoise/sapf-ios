@@ -486,6 +486,14 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         if DocumentStore.bundledResource(for: currentDocument) != nil { checkBuiltIns() }
     }
 
+    /// The help text for the All Functions viewer while it's showing. Read afresh each time, since
+    /// user defined functions can be added at any time.
+    @Published var functionListText: String?
+
+    func showAllFunctions() {
+        functionListText = SapfEngine.shared.allHelpText()
+    }
+
     /// Called when sapf wants to show a file. Source files open in the editor; anything else in Quick Look.
     func open(_ url: URL) {
         if ["sapf", "txt"].contains(url.pathExtension.lowercased()) && DocumentStore.isInDocuments(url) {

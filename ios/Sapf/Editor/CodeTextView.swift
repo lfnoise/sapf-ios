@@ -55,6 +55,7 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         autocapitalizationType = .none
         autocorrectionType = .no
         smartQuotesType = .no
+        isFindInteractionEnabled = true // Cmd-F, Cmd-G, and the find bar
         smartDashesType = .no
         smartInsertDeleteType = .no
         spellCheckingType = .no
@@ -456,6 +457,11 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
     @objc private func evaluateLineCommand() { evaluate(wholeBlock: false) }
     @objc private func stopCommand() { actions?.codeTextViewStop(self) }
     @objc private func plotCommand() { actions?.codeTextViewPlot(self) }
+
+    /// Shows the find bar, with replace while editing.
+    func showFind() {
+        findInteraction?.presentFindNavigator(showingReplace: isEditable)
+    }
     @objc private func biggerCommand() { fontSize = min(fontSize + 1, 32) }
     @objc private func smallerCommand() { fontSize = max(fontSize - 1, 9) }
 
@@ -497,6 +503,9 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         })
         stack.addArrangedSubview(button(nil, image: "chart.xyaxis.line", tint: .systemTeal, label: "Plot") { [weak self] in
             self?.plotCommand()
+        })
+        stack.addArrangedSubview(button(nil, image: "magnifyingglass", tint: .systemBlue, label: "Find") { [weak self] in
+            self?.showFind()
         })
         for key in ["[", "]", "(", ")", "{", "}", "\\", "@", "'", "`", "=", ":", ";", "\"", "#", ",", "."] {
             stack.addArrangedSubview(button(key) { [weak self] in self?.insertText(key) })
