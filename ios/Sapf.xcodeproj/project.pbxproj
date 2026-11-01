@@ -36,6 +36,7 @@
 		8272FB50D0DCC213E3229EB2 /* sapf-prelude.txt in Resources */ = {isa = PBXBuildFile; fileRef = A28D8E94F2DC121F543CDDC5 /* sapf-prelude.txt */; };
 		8A5298B9CF9BDBC2928351CC /* MultichannelExpansion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 54CAF3E47EE2B7774237108D /* MultichannelExpansion.cpp */; };
 		903A1EC107CD77A4FF88DF21 /* symbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EAD6BC1B5970F58A9DF303E4 /* symbol.cpp */; };
+		93B0CD69954B193879DCF0FC /* CodeWarmer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1A5902C2FAFC4D283BECCCD5 /* CodeWarmer.mm */; };
 		A374F35F01E416F2963B61FD /* elapsedTime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1B9ED634932196EF5E2079F8 /* elapsedTime.cpp */; };
 		A5782E8032ECCD2234DAA9F1 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = DFA64A1972849D075AA0DD2A /* README.txt */; };
 		A6ECF7A13EE9AC655C24F3BE /* SapfEngine.mm in Sources */ = {isa = PBXBuildFile; fileRef = 20C8CEDEBFF09443EC47D7A8 /* SapfEngine.mm */; };
@@ -89,6 +90,7 @@
 		169CF6FC8855EFE461CDF523 /* SapfUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SapfUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		188D96C63503653BCD692DB1 /* makeImage.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = makeImage.hpp; sourceTree = "<group>"; };
 		19CE6FFB0B1BE86EB269680C /* Types.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Types.cpp; sourceTree = "<group>"; };
+		1A5902C2FAFC4D283BECCCD5 /* CodeWarmer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CodeWarmer.mm; sourceTree = "<group>"; };
 		1B9ED634932196EF5E2079F8 /* elapsedTime.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = elapsedTime.cpp; sourceTree = "<group>"; };
 		1C5FBFA44168F1E48A8A0FB5 /* MathFuns.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MathFuns.cpp; sourceTree = "<group>"; };
 		20C8CEDEBFF09443EC47D7A8 /* SapfEngine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SapfEngine.mm; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 		BDAD64FC5F5E87B7FB9D249D /* MathOps.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MathOps.hpp; sourceTree = "<group>"; };
 		C208B113157519FE26786869 /* DelayUGens.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DelayUGens.cpp; sourceTree = "<group>"; };
 		C27451AAEC4D950302E332E2 /* clz.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = clz.hpp; sourceTree = "<group>"; };
+		C6AA5C17CBA5349C04A74402 /* CodeWarmer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CodeWarmer.h; sourceTree = "<group>"; };
 		CF68A7B767DB1E700C054A62 /* SapfEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SapfEngine.h; sourceTree = "<group>"; };
 		D91C5A1DAA53B98BC985360F /* Parser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Parser.cpp; sourceTree = "<group>"; };
 		DABCC168C0A5A16C2F667C96 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -344,6 +347,8 @@
 		FBF03F8396FD72A6327D4593 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
+				C6AA5C17CBA5349C04A74402 /* CodeWarmer.h */,
+				1A5902C2FAFC4D283BECCCD5 /* CodeWarmer.mm */,
 				8795E10514BB0735D17C01CE /* Sapf-Bridging-Header.h */,
 				CF68A7B767DB1E700C054A62 /* SapfEngine.h */,
 				20C8CEDEBFF09443EC47D7A8 /* SapfEngine.mm */,
@@ -476,6 +481,7 @@
 				4A29451F15ED7AC99F6A8A5C /* AudioAnalyzer.swift in Sources */,
 				D3856DFACB4465E3C99852B6 /* CodeStructure.swift in Sources */,
 				574D97C9D2CABCADC1E6FCC0 /* CodeTextView.swift in Sources */,
+				93B0CD69954B193879DCF0FC /* CodeWarmer.mm in Sources */,
 				1E4843FD394097659BC8732B /* ConsoleView.swift in Sources */,
 				1E45D3A07492E51A550FA608 /* ContentView.swift in Sources */,
 				7E839961ACF7EEBA35536790 /* CoreOps.cpp in Sources */,

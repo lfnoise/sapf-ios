@@ -6,6 +6,7 @@
 //    file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #import "SapfEngine.h"
+#include "CodeWarmer.h"
 
 #include "VM.hpp"
 #include "Play.hpp"
@@ -188,6 +189,14 @@ static void openFileHook(const char* path)
 
 		vm.setSampleRate(sampleRate);
 		post("sample rate %g\n", vm.ar.sampleRate);
+
+		// On by default; launch with "-warmCode NO" to compare.
+		NSNumber* warm = [NSUserDefaults.standardUserDefaults objectForKey:@"warmCode"];
+		if (!warm || warm.boolValue) {
+			CodeWarmth warmth = warmCode();
+			post("code warmed: %zu pages, %.1f MB%s\n", warmth.pages, warmth.bytes / 1048576.,
+			     warmth.locked ? ", locked in memory" : "");
+		}
 
 		vm.addBifHelp("Argument Automapping legend:");
 		vm.addBifHelp("   a - as is. argument is not automapped.");

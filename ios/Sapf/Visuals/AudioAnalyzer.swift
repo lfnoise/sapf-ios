@@ -32,6 +32,8 @@ final class AudioAnalyzer {
     private(set) var peak: Float = 0
     /// The longest recent audio render as a fraction of the time it had, falling slowly from each peak.
     private(set) var renderLoad: Float = 0
+    /// The longest render since sounds last started playing, held so brief spikes can be seen.
+    private(set) var maxRenderLoad: Float = 0
 
     let spectrogram = SpectrogramBuffer(width: 600, height: 256)
 
@@ -74,9 +76,11 @@ final class AudioAnalyzer {
     }
 
     @objc private func tick() {
+        let wasPlaying = playingCount > 0
         playingCount = history.withUnsafeMutableBufferPointer {
             SapfEngine.shared.copyOutputSamples($0.baseAddress!, count: $0.count)
         }
+        if playingCount > 0 && !wasPlaying { maxRenderLoad = 0 }
         samples.withUnsafeMutableBufferPointer { dst in
             history.withUnsafeBufferPointer { src in
                 dst.baseAddress!.update(from: src.baseAddress! + (src.count - dst.count), count: dst.count)
@@ -90,7 +94,9 @@ final class AudioAnalyzer {
         var maxMag: Float = 0
         vDSP_maxmgv(samples, 1, &maxMag, vDSP_Length(samples.count))
         peak = maxMag
-        renderLoad = max(SapfEngine.shared.takePeakAudioLoad(), renderLoad * 0.98)
+        let load = SapfEngine.shared.takePeakAudioLoad()
+        renderLoad = max(load, renderLoad * 0.98)
+        if playingCount > 0 { maxRenderLoad = max(maxRenderLoad, load) }
 
         analyzeSpectrum()
         spectrogram.addColumn(spectrumDB: spectrumDB, sampleRate: sampleRate)

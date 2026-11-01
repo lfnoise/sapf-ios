@@ -364,12 +364,12 @@ final class WaveformView: ScopeBaseView, UIGestureRecognizerDelegate {
         if analyzer.playingCount > 0 {
             let peakDB = 20 * log10(max(Double(analyzer.peak), 1e-6))
             var status = String(format: "%d playing   peak %.1f dB", analyzer.playingCount, peakDB)
-            status += String(format: "   load %.0f%%", analyzer.renderLoad * 100)
+            status += String(format: "   load %.0f%% (max %.0f%%)", analyzer.renderLoad * 100, analyzer.maxRenderLoad * 100)
+            drawLabel(status, at: CGPoint(x: 8, y: h - 32))
+            // Counted since launch: a dropout is a gap in the output's timeline, a late render one
+            // that took longer than its buffer lasts.
             let engine = SapfEngine.shared
-            if engine.audioDropouts > 0 || engine.lateAudioRenders > 0 {
-                status += "   dropouts \(engine.audioDropouts)   late \(engine.lateAudioRenders)"
-            }
-            drawLabel(status, at: CGPoint(x: 8, y: h - 18))
+            drawLabel("dropouts \(engine.audioDropouts)   late \(engine.lateAudioRenders)", at: CGPoint(x: 8, y: h - 18))
         }
     }
 

@@ -237,6 +237,15 @@ final class SapfUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Revert All Built-in Files…"].exists, "nothing left to revert")
     }
 
+    func testCodeIsWarmedAtStartup() {
+        if app.buttons["Console"].exists { app.buttons["Console"].tap() }
+        let console = app.textViews["Console"]
+        expectation(for: NSPredicate(format: "value CONTAINS 'code warmed'"), evaluatedWith: console)
+        waitForExpectations(timeout: 5)
+        let line = (console.value as? String ?? "").split(separator: "\n").first { $0.hasPrefix("code warmed") } ?? ""
+        print("startup: \(line)")
+    }
+
     /// Plays something busy and captures every layout, for checking screen size handling by eye.
     func testLayouts() {
         let device = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
