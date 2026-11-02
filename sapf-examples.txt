@@ -342,10 +342,6 @@ data-space play
 	[1/1 6/5 3/2 9/5] f * 0 sinosc r 4X lfnoise3 0 | .2 * * brands pan2 +/
 ] 2 .5 2 xftx .1 .1 1 combn play
 
-;;;; clapping music - steve reich
-([1 1 1 0 1 1 0 1 0 1 1 0] 12 ncyc [(13 0s) (0 -12 to)] rot @ $/ @) (5.6 0 impulse) iseq .1m 8c decay2 2 * white [1k 8h] .2 bpf [-1 1] 1m itd +/ play
-
-
 ;;;; birdies
 \[ ((\[.4 .5 rand 0  .1 .9 rand lfpulse 4 7 rand *] 2X +/ 2 +) 0 lfsaw (-1k -1.8k rand)(28h 52h rand) *+ 5c lag) 0 sinosc  (.2 .7 rand) 0 .4 lfpulse 2c * .3 lag * rpan2] 7 4 4 2 oltx 2c 1.5 apverb4 play
 
