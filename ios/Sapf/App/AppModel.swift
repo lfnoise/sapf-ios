@@ -510,7 +510,9 @@ final class AppModel: ObservableObject, CodeTextViewActions {
 
     /// Called when sapf wants to show a file. Source files open in the editor; anything else in Quick Look.
     func open(_ url: URL) {
-        if ["sapf", "txt"].contains(url.pathExtension.lowercased()) && DocumentStore.isInDocuments(url) {
+        if url.standardizedFileURL == DocumentStore.log.standardizedFileURL {
+            showLog()
+        } else if ["sapf", "txt"].contains(url.pathExtension.lowercased()) && DocumentStore.isInDocuments(url) {
             load(url)
         } else {
             previewURL = url

@@ -14,6 +14,13 @@ struct EditorView: UIViewRepresentable {
     func updateUIView(_ uiView: CodeTextView, context: Context) {}
 }
 
+/// Run, Stop and the other key bar commands, under the editor while reading.
+struct ReadingBar: UIViewRepresentable {
+    let editor: CodeTextView
+    func makeUIView(context: Context) -> UIView { editor.makeReadingBar() }
+    func updateUIView(_ uiView: UIView, context: Context) {}
+}
+
 enum PanelTab: String, CaseIterable, Identifiable {
     case console = "Console"
     case waveform = "Scope"
@@ -172,6 +179,11 @@ struct ContentView: View {
         let stack = wide ? AnyLayout(HStackLayout(spacing: 0)) : AnyLayout(VStackLayout(spacing: 0))
         return stack {
             EditorView(editor: model.editor)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if !model.isEditing {
+                        ReadingBar(editor: model.editor).frame(height: 46)
+                    }
+                }
             if wide {
                 Divider()
                 sideColumn(height: height)

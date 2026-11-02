@@ -96,8 +96,13 @@ final class SapfUITests: XCTestCase {
         app.textViews.firstMatch.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 39 + 8.4 * 8, dy: 22)).tap()
         sleep(1)
         XCTAssertFalse(app.keyboards.firstMatch.exists, "no keyboard while reading")
+        // The reading bar has the commands but not the keys, even after tapping the text.
+        XCTAssertTrue(app.buttons["Evaluate"].isHittable && app.buttons["Plot"].isHittable, "the reading bar is showing")
+        XCTAssertFalse(app.buttons["["].exists, "no keys while reading")
         app.buttons["Edit"].tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2), "Edit brings up the keyboard")
+        XCTAssertTrue(app.buttons["["].waitForExistence(timeout: 2), "the key bar has the keys")
+        XCTAssertEqual(app.buttons.matching(identifier: "Evaluate").count, 1, "the reading bar goes while editing")
         // The same toolbar button now hides it.
         app.navigationBars.buttons["Hide keyboard"].tap()
         XCTAssertTrue(app.navigationBars.buttons["Edit"].waitForExistence(timeout: 2), "back to reading")
@@ -266,7 +271,7 @@ final class SapfUITests: XCTestCase {
         app.buttons["List All Functions"].firstMatch.tap()
         XCTAssertTrue(app.textViews["All Functions"].waitForExistence(timeout: 5), "shown in a viewer")
         screenshot("all-functions")
-        app.buttons["Find"].tap()
+        app.navigationBars["All Functions"].buttons["Find"].tap()
         app.typeText("sinosc")
         sleep(1)
         screenshot("all-functions-find")
@@ -287,14 +292,13 @@ final class SapfUITests: XCTestCase {
 
     func testRunCodeIsLogged() {
         let marker = "\(Int.random(in: 100000...999999)) 7 +"
-        _ = newDocument(with: marker)
+        _ = newDocument(with: marker + " logfile")
         app.buttons["Hide keyboard"].firstMatch.tap()
         app.buttons["Run block"].firstMatch.tap()
-        sleep(1)
-        app.buttons["Documents"].firstMatch.tap()
-        app.buttons["Log"].firstMatch.tap()
+        // The logfile word opens the log as a preview, not as a document.
+        XCTAssertTrue(app.buttons["Done"].firstMatch.waitForExistence(timeout: 5), "logfile shows the log")
         let logged = NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", marker, marker)
-        XCTAssertTrue(app.descendants(matching: .any).matching(logged).firstMatch.waitForExistence(timeout: 5), "the block is in the log")
+        XCTAssertTrue(app.descendants(matching: .any).matching(logged).firstMatch.exists, "the block is in the log")
         screenshot("log")
         app.buttons["Done"].firstMatch.tap()
         app.buttons["Documents"].firstMatch.tap()

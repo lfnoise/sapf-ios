@@ -213,6 +213,7 @@ static void openFileHook(const char* path)
 		AddSetOps();
 
 		self->_thread = new Thread();
+		if (const char* log = getenv("SAPF_LOG")) vm.log_file = strdup(log);
 
 		if (prelude) {
 			vm.prelude_file = strdup(prelude.fileSystemRepresentation);
@@ -444,10 +445,10 @@ static void reportError(int err)
 	}
 }
 
-// Appends code that's run to $SAPF_LOG, as Thread::getLine does for each line typed on the Mac.
+// Appends code that's run to the log file, as Thread::getLine does for each line typed on the Mac.
 static void logCode(Thread& th, std::string const& source)
 {
-	const char* path = getenv("SAPF_LOG");
+	const char* path = vm.log_file;
 	if (!path || source.find_first_not_of(" \t\r\n") == std::string::npos) return;
 	FILE* file = fopen(path, "a");
 	if (!file) return;

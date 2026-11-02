@@ -32,6 +32,17 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
     private let blockBar = UIView()
     private static let gutterWidth: CGFloat = 30
 
+    /// The key bar shows only while editing: reading has its own bar, from `makeReadingBar`, and
+    /// without this a tap while reading would bring up the key bar on its own.
+    override var isEditable: Bool {
+        didSet {
+            guard isEditable != oldValue else { return }
+            inputAccessoryView = isEditable ? keyBar : nil
+            if isFirstResponder { reloadInputViews() }
+        }
+    }
+    private lazy var keyBar = makeAccessoryBar()
+
     var fontSize: CGFloat = 15 {
         didSet {
             guard fontSize != oldValue else { return }
@@ -64,7 +75,7 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         keyboardDismissMode = .interactive
         textContainerInset = UIEdgeInsets(top: 12, left: Self.gutterWidth + 4, bottom: 40, right: 8)
         typingAttributes = highlighter.baseAttributes
-        inputAccessoryView = makeAccessoryBar()
+        inputAccessoryView = isEditable ? keyBar : nil
 
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         tap.delegate = self
@@ -468,6 +479,19 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
     private func makeAccessoryBar() -> UIView {
         let bar = UIInputView(frame: CGRect(x: 0, y: 0, width: 320, height: 46), inputViewStyle: .keyboard)
         bar.allowsSelfSizing = true
+        fillBar(bar, withKeys: true)
+        return bar
+    }
+
+    /// The bar shown under the editor while reading: the key bar's commands without the keys.
+    func makeReadingBar() -> UIView {
+        let bar = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 46))
+        bar.backgroundColor = .secondarySystemBackground
+        fillBar(bar, withKeys: false)
+        return bar
+    }
+
+    private func fillBar(_ bar: UIView, withKeys: Bool) {
 
         let scroll = UIScrollView()
         scroll.showsHorizontalScrollIndicator = false
@@ -507,7 +531,7 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         stack.addArrangedSubview(button(nil, image: "magnifyingglass", tint: .systemBlue, label: "Find") { [weak self] in
             self?.showFind()
         })
-        for key in ["[", "]", "(", ")", "{", "}", "\\", "@", "'", "`", "=", ":", ";", "\"", "#", ",", "."] {
+        for key in withKeys ? ["[", "]", "(", ")", "{", "}", "\\", "@", "'", "`", "=", ":", ";", "\"", "#", ",", "."] : [] {
             stack.addArrangedSubview(button(key) { [weak self] in self?.insertText(key) })
         }
 
@@ -522,7 +546,6 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
             stack.centerYAnchor.constraint(equalTo: scroll.frameLayoutGuide.centerYAnchor),
             stack.heightAnchor.constraint(equalToConstant: 36),
         ])
-        return bar
     }
 }
 

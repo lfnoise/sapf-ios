@@ -37,7 +37,8 @@ After adding or removing source files, regenerate it:
   channels, or a list of numbers. The waveform switches to Plot; use its Output / Plot switch to go
   back and forth, or × to close the plot. Pinch to zoom around your fingers, drag to scroll, and
   double tap to see it all.
-- The key bar above the keyboard has Run, Stop and sapf's punctuation.
+- The key bar above the keyboard has Run, Stop, Expand Selection, Plot, Find and sapf's punctuation.
+  While reading, a bar under the editor has the same commands without the punctuation.
 - **Find** (⋯ menu, the magnifying glass on the key bar, or Cmd-F) searches the open document, with
   replace while editing. Cmd-G finds the next match.
 - **Reading and editing.** The keyboard button in the toolbar switches between them. Hiding the
