@@ -23,7 +23,7 @@ enum FunctionList {
         guard let first = line.first, !first.isWhitespace, !line.hasSuffix(":"),
               let space = line.firstIndex(of: " ") else { return nil }
         let name = String(line[..<space])
-        guard !name.hasSuffix(":"), !name.hasPrefix("*") else { return nil }
+        guard !name.hasSuffix(":"), !name.hasPrefix("***") else { return nil }
 
         var rest = line[line.index(after: space)...].drop { $0 == " " }
         var mask: String?

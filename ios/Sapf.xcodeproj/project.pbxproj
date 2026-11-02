@@ -40,6 +40,7 @@
 		8A5298B9CF9BDBC2928351CC /* MultichannelExpansion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 54CAF3E47EE2B7774237108D /* MultichannelExpansion.cpp */; };
 		903A1EC107CD77A4FF88DF21 /* symbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EAD6BC1B5970F58A9DF303E4 /* symbol.cpp */; };
 		93B0CD69954B193879DCF0FC /* CodeWarmer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1A5902C2FAFC4D283BECCCD5 /* CodeWarmer.mm */; };
+		A25DBCC99CF88805FC26684A /* StoreScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 363F88ABFB2C3FF6AE3002E8 /* StoreScreenshots.swift */; };
 		A374F35F01E416F2963B61FD /* elapsedTime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1B9ED634932196EF5E2079F8 /* elapsedTime.cpp */; };
 		A5782E8032ECCD2234DAA9F1 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = DFA64A1972849D075AA0DD2A /* README.txt */; };
 		A6ECF7A13EE9AC655C24F3BE /* SapfEngine.mm in Sources */ = {isa = PBXBuildFile; fileRef = 20C8CEDEBFF09443EC47D7A8 /* SapfEngine.mm */; };
@@ -109,6 +110,7 @@
 		3450A3AF73BE0B2C54A26B39 /* Parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Parser.hpp; sourceTree = "<group>"; };
 		3484B306C34A3420D5E32135 /* rgen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = rgen.hpp; sourceTree = "<group>"; };
 		34D4F03C324F25059FC27A83 /* FunctionListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionListTests.swift; sourceTree = "<group>"; };
+		363F88ABFB2C3FF6AE3002E8 /* StoreScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreScreenshots.swift; sourceTree = "<group>"; };
 		36D5CA3EE23DD34C1A4114AE /* Midi.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Midi.cpp; sourceTree = "<group>"; };
 		3AC4493E36DB9B72BF0647CB /* MathOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MathOps.cpp; sourceTree = "<group>"; };
 		3D8493C74876AE16A4973EAD /* MultichannelExpansion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MultichannelExpansion.hpp; sourceTree = "<group>"; };
@@ -243,6 +245,7 @@
 			isa = PBXGroup;
 			children = (
 				B979B684DF9A299D7505335E /* SapfUITests.swift */,
+				363F88ABFB2C3FF6AE3002E8 /* StoreScreenshots.swift */,
 			);
 			path = SapfUITests;
 			sourceTree = "<group>";
@@ -537,6 +540,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA583553BEDC890A7BB5C879 /* SapfUITests.swift in Sources */,
+				A25DBCC99CF88805FC26684A /* StoreScreenshots.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -15,6 +15,10 @@ final class FunctionListTests: XCTestCase {
                        "(list \\item[..] -->)")
     }
 
+    func testNamesCanStartWithAStar() {
+        XCTAssertEqual(FunctionList.entry("*+ @zzz (a b c --> out) multiply add. a b * c +")?.name, "*+")
+    }
+
     func testHeadingsAndLegendAreNotEntries() {
         XCTAssertNil(FunctionList.entry("*** stack ops ***"))
         XCTAssertNil(FunctionList.entry("Argument Automapping legend:"))
