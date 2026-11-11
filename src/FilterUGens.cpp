@@ -740,6 +740,16 @@ static void hpf1_(Thread& th, Prim* prim)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// The biquads below (from the RBJ cookbook) are stable only while 0 < w0 < pi, that is for cutoffs between 0 and the
+// Nyquist frequency. Outside that, sin(w0) is negative (the sine table wraps, so this repeats every sample rate), their
+// poles move outside the unit circle and the output grows until it is NaN, whatever the rq or bandwidth.
+// This returns w0 in sine table units, with the cutoff kept between 1 mHz and just under Nyquist.
+static inline Z biquadW0(Z freq, Z freqmul)
+{
+	const Z kMaxW0 = .999 * .5 * kSineTableSize; // pi is half the table
+	return std::clamp(freq * freqmul, 1e-3 * freqmul, kMaxW0);
+}
+
 
 struct LPF : public Gen
 {
@@ -778,7 +788,7 @@ struct LPF : public Gen
 			}
 			
 			if (freqStride == 0) {
-				Z w0 = std::max(1e-3, *freq) * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * alphamul;
@@ -806,7 +816,7 @@ struct LPF : public Gen
 				_in.advance(n);
 			} else {
 				for (int i = 0; i < n; ++i) {				
-					Z w0 = std::max(1e-3, *freq) * freqmul;
+					Z w0 = biquadW0(*freq, freqmul);
 					Z sn, cs;
 					tsincosx(w0, sn, cs);
 					Z alpha = sn * alphamul;
@@ -886,7 +896,7 @@ struct LPF2 : public Gen
 			}
 			
 			if (freqStride == 0) {
-				Z w0 = std::max(1e-3, *freq) * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * alphamul;
@@ -920,7 +930,7 @@ struct LPF2 : public Gen
 				_in.advance(n);
 			} else {
 				for (int i = 0; i < n; ++i) {
-					Z w0 = std::max(1e-3, *freq) * freqmul;
+					Z w0 = biquadW0(*freq, freqmul);
 					Z sn, cs;
 					tsincosx(w0, sn, cs);
 					Z alpha = sn * alphamul;
@@ -1004,7 +1014,7 @@ struct HPF : public Gen
 			}
 			
 			if (freqStride == 0) {
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * alphamul;
@@ -1033,7 +1043,7 @@ struct HPF : public Gen
 				_in.advance(n);
 			} else {
 				for (int i = 0; i < n; ++i) {				
-					Z w0 = *freq * freqmul;
+					Z w0 = biquadW0(*freq, freqmul);
 					Z sn, cs;
 					tsincosx(w0, sn, cs);
 					Z alpha = sn * alphamul;
@@ -1111,7 +1121,7 @@ struct HPF2 : public Gen
 			}
 			
 			if (freqStride == 0) {
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * alphamul;
@@ -1145,7 +1155,7 @@ struct HPF2 : public Gen
 				_in.advance(n);
 			} else {
 				for (int i = 0; i < n; ++i) {				
-					Z w0 = *freq * freqmul;
+					Z w0 = biquadW0(*freq, freqmul);
 					Z sn, cs;
 					tsincosx(w0, sn, cs);
 					Z alpha = sn * alphamul;
@@ -1231,7 +1241,7 @@ struct RLPF : public Gen
 			}
 			
 			for (int i = 0; i < n; ++i) {				
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * *rq * .5;
@@ -1313,7 +1323,7 @@ struct RLPF2 : public Gen
 			}
 			
 			for (int i = 0; i < n; ++i) {				
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * *rq * .5;
@@ -1401,7 +1411,7 @@ struct RHPF : public Gen
 			}
 			
 			for (int i = 0; i < n; ++i) {				
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * *rq * .5;
@@ -1483,7 +1493,7 @@ struct RHPF2 : public Gen
 			}
 			
 			for (int i = 0; i < n; ++i) {				
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * *rq * .5;
@@ -1571,7 +1581,7 @@ struct BPF : public Gen
 			}
 			
 			for (int i = 0; i < n; ++i) {				
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 
@@ -1651,7 +1661,7 @@ struct BSF : public Gen
 			}
 			
 			for (int i = 0; i < n; ++i) {				
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 
@@ -1733,7 +1743,7 @@ struct APF : public Gen
 			}
 			
 			for (int i = 0; i < n; ++i) {				
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				
@@ -1816,7 +1826,7 @@ struct PEQ : public Gen
 			
 			for (int i = 0; i < n; ++i) {	
 				Z A = t_dbamp(.5 * *gain);
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 
@@ -1909,7 +1919,7 @@ struct LowShelf : public Gen
 				Z Ap1 = A + 1.;
 				Z Am1 = A - 1.;
 				Z Asqrt = t_dbamp(.25 * *gain);
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * alphamul;
@@ -1998,7 +2008,7 @@ struct HighShelf : public Gen
 				Z Ap1 = A + 1.;
 				Z Am1 = A - 1.;
 				Z Asqrt = t_dbamp(.25 * *gain);
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 				Z alpha = sn * alphamul;
@@ -2154,7 +2164,7 @@ struct RLowShelf : public Gen
 				Z Ap1 = A + 1.;
 				Z Am1 = A - 1.;
 				Z Asqrt = t_dbamp(.25 * *gain);
-				Z w0 = *freq * freqmul;
+				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
 
