@@ -3151,7 +3151,7 @@ static void repeat_(Thread& th, Prim* prim)
 		th.push(vm._nilv);
 	} else {
 		Gen* g;
-		if (x >= (Z)LONG_MAX) {
+		if (x >= (Z)LLONG_MAX) {
 			if (a.isFunOrPrim()) {
 				g = new InfRepeatFun(th, a);
 			} else {
@@ -3178,7 +3178,7 @@ static void repeatz_(Thread& th, Prim* prim)
 		th.push(vm._nilv);
 	} else {
 		Gen* g;
-		if (x >= (Z)LONG_MAX) {
+		if (x >= (Z)LLONG_MAX) {
 			if (a.isFunOrPrim()) {
 				g = new InfRepeatFunz(th, a);
 			} else {

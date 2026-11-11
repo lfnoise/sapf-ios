@@ -1010,13 +1010,13 @@ static void sleep_(Thread& th, Prim* prim)
 #if COLLECT_MINFO
 static void minfo_(Thread& th, Prim* prim)
 {
-	post("signal generators %qd\n", vm.totalSignalGenerators.load());
-	post("stream generators %qd\n", vm.totalStreamGenerators.load());
-	post("objects live %qd\n", vm.totalObjectsAllocated.load() - vm.totalObjectsFreed.load());
-	post("objects allocated %qd\n", vm.totalObjectsAllocated.load());
-	post("objects freed %qd\n", vm.totalObjectsFreed.load());
-	post("retains %qd\n", vm.totalRetains.load());
-	post("releases %qd\n", vm.totalReleases.load());
+	post("signal generators %lld\n", (long long)(vm.totalSignalGenerators.load()));
+	post("stream generators %lld\n", (long long)(vm.totalStreamGenerators.load()));
+	post("objects live %lld\n", (long long)(vm.totalObjectsAllocated.load() - vm.totalObjectsFreed.load()));
+	post("objects allocated %lld\n", (long long)(vm.totalObjectsAllocated.load()));
+	post("objects freed %lld\n", (long long)(vm.totalObjectsFreed.load()));
+	post("retains %lld\n", (long long)(vm.totalRetains.load()));
+	post("releases %lld\n", (long long)(vm.totalReleases.load()));
 }
 #endif
 
@@ -1121,7 +1121,7 @@ static void prelude_(Thread& th, Prim* prim)
 	if (vm.prelude_file) {
 		openFileExternally(vm.prelude_file);
 	} else {
-		printf("no prelude file.\n");
+		post("no prelude file.\n");
 	}
 }
 
@@ -1131,7 +1131,7 @@ static void examples_(Thread& th, Prim* prim)
 	if (examples_file) {
 		openFileExternally(examples_file);
 	} else {
-		printf("no examples file.\n");
+		post("no examples file.\n");
 	}
 }
 
@@ -1141,7 +1141,7 @@ static void readme_(Thread& th, Prim* prim)
 	if (readme_file) {
 		openFileExternally(readme_file);
 	} else {
-		printf("no readme file.\n");
+		post("no readme file.\n");
 	}
 }
 
@@ -1150,7 +1150,7 @@ static void logfile_(Thread& th, Prim* prim)
 	if (vm.log_file) {
 		openFileExternally(vm.log_file);
 	} else {
-		printf("no log file.\n");
+		post("no log file.\n");
 	}
 }
 
@@ -1300,8 +1300,8 @@ static void glob_(Thread& th, Prim* prim)
 	memset(&g, 0, sizeof(g));
 	glob(pat->s, GLOB_MARK, nullptr, &g);
 	
-	P<Array> a = new Array(itemTypeV, g.gl_matchc);
-	for (int i = 0; i < g.gl_matchc; ++i) {
+	P<Array> a = new Array(itemTypeV, (int64_t)g.gl_pathc);
+	for (size_t i = 0; i < g.gl_pathc; ++i) {
 		a->add(new String(g.gl_pathv[i]));
 	}
 	globfree(&g);

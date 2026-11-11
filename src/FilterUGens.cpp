@@ -14,7 +14,7 @@
 #include <float.h>
 #include <vector>
 #include <algorithm>
-#include <Accelerate/Accelerate.h>
+#include "Accel.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2658,7 +2658,7 @@ struct Klank : public Gen
 	{
 		inputBuffer = new Z[mBlockSize];
 	
-		int64_t numFilters = LONG_MAX;
+		int64_t numFilters = LLONG_MAX;
 		if (freqs.isVList()) { 
 			freqs = ((List*)freqs.o())->pack(th); 
 			numFilters = std::min(numFilters, freqs.length(th)); 
@@ -2672,7 +2672,7 @@ struct Klank : public Gen
 			numFilters = std::min(numFilters, ringTimes.length(th)); 
 		}
 		
-		if (numFilters == LONG_MAX) numFilters = 1;
+		if (numFilters == LLONG_MAX) numFilters = 1;
 		
 		for (ssize_t i = 0; i < numFilters; ++i) {
 			KlankFilter kf(freqs.at(i), amps.at(i), ringTimes.at(i));

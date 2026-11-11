@@ -16,7 +16,7 @@
 #include <float.h>
 #include <vector>
 #include <algorithm>
-#include <Accelerate/Accelerate.h>
+#include "Accel.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1627,7 +1627,7 @@ struct Klang : public Gen
 			_cutoff(_nyq * .8),
 			_slope(1. / (_nyq - _cutoff))
 	{
-		int64_t numOscs = LONG_MAX;
+		int64_t numOscs = LLONG_MAX;
 		if (freqs.isVList()) { 
 			freqs = ((List*)freqs.o())->pack(th); 
 			numOscs = std::min(numOscs, freqs.length(th));
@@ -1641,7 +1641,7 @@ struct Klang : public Gen
 			numOscs = std::min(numOscs, phases.length(th));
 		}
 		
-		if (numOscs == LONG_MAX) numOscs = 1;
+		if (numOscs == LLONG_MAX) numOscs = 1;
 		
 		for (int64_t i = 0; i < numOscs; ++i) {
 			KlangOsc kf(freqs.at(i), amps.at(i), phases.atz(i));

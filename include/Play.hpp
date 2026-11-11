@@ -44,3 +44,14 @@ struct AudioTimingStats
 };
 AudioTimingStats getAudioTimingStats(bool resetPeakLoad);
 
+#include "Platform.hpp"
+#if SAPF_SHARED_MIXER
+// The web: one audio callback mixes every player. left and right are zeroed first. Called on the audio
+// thread; never blocks (if the player list is being changed, that buffer is left silent).
+void renderSharedMix(float* left, float* right, int numFrames);
+// Silence the output while still feeding the scope (for automated tests).
+void setOutputMuted(bool muted);
+// Number of players that haven't finished.
+int numPlayersPlaying();
+#endif
+

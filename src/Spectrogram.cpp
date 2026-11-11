@@ -7,7 +7,7 @@
 
 #include "Spectrogram.hpp"
 #include "makeImage.hpp"
-#include <Accelerate/Accelerate.h>
+#include "Accel.hpp"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>

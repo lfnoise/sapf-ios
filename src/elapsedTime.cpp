@@ -6,8 +6,11 @@
 //    file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #include "elapsedTime.hpp"
+#include "Platform.hpp"
+
+#if SAPF_APPLE
+
 #include <mach/mach_time.h>
-#include <pthread.h>
 
 extern "C" {
 
@@ -27,3 +30,42 @@ double elapsedTime()
 }
 
 }
+
+#elif SAPF_WEB
+
+#include <emscripten.h>
+
+extern "C" {
+
+void initElapsedTime()
+{
+}
+
+// Not std::chrono::steady_clock: in the audio worklet the browser has no monotonic clock, and asking for one
+// throws. emscripten_get_now() falls back to Date.now() there.
+double elapsedTime()
+{
+	return emscripten_get_now() * 1e-3;
+}
+
+}
+
+#else
+
+#include <chrono>
+
+extern "C" {
+
+void initElapsedTime()
+{
+}
+
+double elapsedTime()
+{
+	using namespace std::chrono;
+	return duration<double>(steady_clock::now().time_since_epoch()).count();
+}
+
+}
+
+#endif

@@ -9,9 +9,24 @@
 #include "VM.hpp"
 #include "UGen.hpp"
 #include "ErrorCodes.hpp"
-#include <CoreMidi/CoreMidi.h>
+#include "Platform.hpp"
 #include <vector>
+#include <stdint.h>
+
+#if SAPF_APPLE
+#include <CoreMidi/CoreMidi.h>
 #include <mach/mach_time.h>
+#define SAPF_COREMIDI 1
+#else
+// without CoreMIDI, packets come from the host (e.g. Web MIDI) through sapfMidiInput().
+typedef uint8_t Byte;
+struct MIDIPacket
+{
+	uint64_t timeStamp;
+	uint16_t length;
+	Byte data[256];
+};
+#endif
 
 
 struct MidiChanState
@@ -30,8 +45,10 @@ struct MidiChanState
 const int kMaxMidiPorts = 16;
 MidiChanState gMidiState[kMaxMidiPorts][16];
 bool gMidiDebug = false;
+#if SAPF_COREMIDI
 MIDIClientRef gMIDIClient = 0;
 MIDIPortRef gMIDIInPort[kMaxMidiPorts], gMIDIOutPort[kMaxMidiPorts];
+#endif
 int gNumMIDIInPorts = 0, gNumMIDIOutPorts = 0;
 bool gMIDIInitialized = false;
 
@@ -147,7 +164,7 @@ static void midiProcessPacket(MIDIPacket *pkt, int srcIndex)
 			case 0x80 : //noteOff
 				a = pkt->data[i+1];
 				b = pkt->data[i+2];
-				if (gMidiDebug) printf("midi note off %d %d %d %d\n", srcIndex, chan+1, a, b);
+				if (gMidiDebug) post("midi note off %d %d %d %d\n", srcIndex, chan+1, a, b);
 				gMidiState[srcIndex][chan].keyvel[a] = 0;
 				--gMidiState[srcIndex][chan].numKeysDown;
 				i += 3;
@@ -155,7 +172,7 @@ static void midiProcessPacket(MIDIPacket *pkt, int srcIndex)
 			case 0x90 : //noteOn
 				a = pkt->data[i+1];
 				b = pkt->data[i+2];
-				if (gMidiDebug) printf("midi note on %d %d %d %d\n", srcIndex, chan+1, a, b);
+				if (gMidiDebug) post("midi note on %d %d %d %d\n", srcIndex, chan+1, a, b);
 				if (b) {
 					gMidiState[srcIndex][chan].lastkey = a;
 					gMidiState[srcIndex][chan].lastvel = b;
@@ -169,14 +186,14 @@ static void midiProcessPacket(MIDIPacket *pkt, int srcIndex)
 			case 0xA0 : //polytouch
 				a = pkt->data[i+1];
 				b = pkt->data[i+2];
-				if (gMidiDebug) printf("midi poly %d %d %d %d\n", srcIndex, chan+1, a, b);
+				if (gMidiDebug) post("midi poly %d %d %d %d\n", srcIndex, chan+1, a, b);
 				gMidiState[srcIndex][chan].polytouch[a] = b;
 				i += 3;
 				break;
 			case 0xB0 : //control
 				a = pkt->data[i+1];
 				b = pkt->data[i+2];
-				if (gMidiDebug) printf("midi control %d %d %d %d\n", srcIndex, chan+1, a, b);
+				if (gMidiDebug) post("midi control %d %d %d %d\n", srcIndex, chan+1, a, b);
 				gMidiState[srcIndex][chan].control[a] = b;
 				if (a == 120 || (a >= 123 && a <= 127)) {
 					// all notes off
@@ -192,19 +209,19 @@ static void midiProcessPacket(MIDIPacket *pkt, int srcIndex)
 			case 0xC0 : //program
 				a = pkt->data[i+1];
 				gMidiState[srcIndex][chan].program = a;
-				if (gMidiDebug) printf("midi program %d %d %d\n", srcIndex, chan+1, a);
+				if (gMidiDebug) post("midi program %d %d %d\n", srcIndex, chan+1, a);
 				i += 2;
 				break;
 			case 0xD0 : //touch
 				a = pkt->data[i+1];
-				printf("midi touch %d %d\n", chan+1, a);
+				post("midi touch %d %d\n", chan+1, a);
 				gMidiState[srcIndex][chan].touch = a;
 				i += 2;
 				break;
 			case 0xE0 : //bend
 				a = pkt->data[i+1];
 				b = pkt->data[i+2];
-				if (gMidiDebug) printf("midi bend %d %d %d %d\n", srcIndex, chan+1, a, b);
+				if (gMidiDebug) post("midi bend %d %d %d %d\n", srcIndex, chan+1, a, b);
 				gMidiState[srcIndex][chan].bend = ((b << 7) | a) - 8192;
 				i += 3;
 				break;
@@ -226,6 +243,8 @@ static void midiProcessPacket(MIDIPacket *pkt, int srcIndex)
 	}
 }
 
+#if SAPF_COREMIDI
+
 static void midiReadProc(const MIDIPacketList *pktlist, void* readProcRefCon, void* srcConnRefCon)
 {
 	MIDIPacket *pkt = (MIDIPacket*)pktlist->packet;
@@ -238,7 +257,7 @@ static void midiReadProc(const MIDIPacketList *pktlist, void* readProcRefCon, vo
 
 static void midiNotifyProc(const MIDINotification *message, void *refCon)
 {
-	printf("midi notification %d %d\n", (int)message->messageID, (int)message->messageSize);
+	post("midi notification %d %d\n", (int)message->messageID, (int)message->messageSize);
 }
 
 static struct mach_timebase_info machTimebaseInfo() {
@@ -329,7 +348,7 @@ static int midiInit(int numIn, int numOut)
 		dispatch_sync(dispatch_get_main_queue(), ^{
 			err2 = MIDIClientCreate(clientName, midiNotifyProc, nil, &gMIDIClient);
 		});
-		printf("gMIDIClient %d\n", (int)gMIDIClient);
+		post("gMIDIClient %d\n", (int)gMIDIClient);
 		if (err2) {
 			fprintf(stderr, "Could not create MIDI client. error %d\n", err);
 			return errFailed;
@@ -379,7 +398,7 @@ static int prListMIDIEndpoints()
 	int numSrc = (int)MIDIGetNumberOfSources();
 	int numDst = (int)MIDIGetNumberOfDestinations();
 
-	printf("midi sources %d destinations %d\n", (int)numSrc, (int)numDst);
+	post("midi sources %d destinations %d\n", (int)numSrc, (int)numDst);
 
 	for (int i=0; i<numSrc; ++i) {
 		MIDIEndpointRef src = MIDIGetSource(i);
@@ -411,7 +430,7 @@ static int prListMIDIEndpoints()
 			CFStringGetCString(endname, cendname, 1024, kCFStringEncodingUTF8);
 		}
 		
-		printf("MIDI Source %2d '%s', '%s' UID: %d\n", i, cdevname, cendname, uid);
+		post("MIDI Source %2d '%s', '%s' UID: %d\n", i, cdevname, cendname, uid);
 	}
 
 
@@ -446,7 +465,7 @@ static int prListMIDIEndpoints()
 			CFStringGetCString(devname, cdevname, 1024, kCFStringEncodingUTF8);
 			CFStringGetCString(endname, cendname, 1024, kCFStringEncodingUTF8);
 		}
-		printf("MIDI Destination %2d '%s', '%s' UID: %d\n", i, cdevname, cendname, uid);
+		post("MIDI Destination %2d '%s', '%s' UID: %d\n", i, cdevname, cendname, uid);
 	}
 	return errNone;
 }
@@ -518,6 +537,60 @@ static void midiDisconnectInput_(Thread& th, Prim* prim)
 	int uid = (int)th.popInt("midiDisconnectInput : sourceUID");
 	prDisconnectMIDIIn(uid, index);
 }
+
+#else
+
+// feed one MIDI message (or several concatenated) from the host. srcIndex selects the input port slot.
+void sapfMidiInput(int srcIndex, const uint8_t* data, int length)
+{
+	if (srcIndex < 0 || srcIndex >= kMaxMidiPorts || length <= 0) return;
+	MIDIPacket pkt;
+	pkt.timeStamp = 0;
+	pkt.length = (uint16_t)(length > 256 ? 256 : length);
+	memcpy(pkt.data, data, pkt.length);
+	midiProcessPacket(&pkt, srcIndex);
+}
+
+static void midiNotAvailable()
+{
+	post("MIDI devices are not available in this version of sapf.\n");
+}
+
+static void midiStart_(Thread& th, Prim* prim)
+{
+	gMIDIInitialized = true;
+	midiNotAvailable();
+}
+
+static void midiRestart_(Thread& th, Prim* prim)
+{
+	midiNotAvailable();
+}
+
+static void midiStop_(Thread& th, Prim* prim)
+{
+	gMIDIInitialized = false;
+}
+
+static void midiList_(Thread& th, Prim* prim)
+{
+	midiNotAvailable();
+}
+
+static void midiConnectInput_(Thread& th, Prim* prim)
+{
+	th.popInt("midiConnectInput : port");
+	th.popInt("midiConnectInput : sourceUID");
+	midiNotAvailable();
+}
+
+static void midiDisconnectInput_(Thread& th, Prim* prim)
+{
+	th.popInt("midiDisconnectInput : port");
+	th.popInt("midiDisconnectInput : sourceUID");
+}
+
+#endif
 
 static void midiDebug_(Thread& th, Prim* prim)
 {

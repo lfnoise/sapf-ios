@@ -15,7 +15,7 @@
 #include <sys/time.h>
 #include <atomic>
 
-#if TARGET_OS_IPHONE
+#if SAPF_IOS || SAPF_WEB
 #define USE_LIBEDIT 0
 #else
 #define USE_LIBEDIT 1

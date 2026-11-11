@@ -11,6 +11,7 @@
 		07BDA255CA28AF7F77932391 /* FunctionList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F2CD5094F6379DD005736A /* FunctionList.swift */; };
 		0B5554014B2644791EFADF74 /* Parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D91C5A1DAA53B98BC985360F /* Parser.cpp */; };
 		0B95794630CDC5D8DA24B8BC /* dsp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D89B631E673317B56AC7026 /* dsp.cpp */; };
+		105397E8F642BADC09F87E16 /* makeImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35041DC2A5ECD37549EFB8CE /* makeImage.cpp */; };
 		1E45D3A07492E51A550FA608 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE4D3EE07AED09F2828ECE92 /* ContentView.swift */; };
 		1E4843FD394097659BC8732B /* ConsoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 513FEB9762C8C278297F1738 /* ConsoleView.swift */; };
 		2048EF2140FCDC818E71D009 /* FilterUGens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0334BDA7EEB0C5DB559B9746 /* FilterUGens.cpp */; };
@@ -110,6 +111,7 @@
 		3450A3AF73BE0B2C54A26B39 /* Parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Parser.hpp; sourceTree = "<group>"; };
 		3484B306C34A3420D5E32135 /* rgen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = rgen.hpp; sourceTree = "<group>"; };
 		34D4F03C324F25059FC27A83 /* FunctionListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionListTests.swift; sourceTree = "<group>"; };
+		35041DC2A5ECD37549EFB8CE /* makeImage.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = makeImage.cpp; sourceTree = "<group>"; };
 		363F88ABFB2C3FF6AE3002E8 /* StoreScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreScreenshots.swift; sourceTree = "<group>"; };
 		36D5CA3EE23DD34C1A4114AE /* Midi.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Midi.cpp; sourceTree = "<group>"; };
 		3AC4493E36DB9B72BF0647CB /* MathOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MathOps.cpp; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 		54CAF3E47EE2B7774237108D /* MultichannelExpansion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MultichannelExpansion.cpp; sourceTree = "<group>"; };
 		5D9DF91C75A1585A1C772E2B /* SetOps.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SetOps.cpp; sourceTree = "<group>"; };
 		5EB561D4CD100A7AF6766A6C /* Opcode.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Opcode.cpp; sourceTree = "<group>"; };
+		6063491BA5CFEC4D467A2A2C /* PortableAccel.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PortableAccel.hpp; sourceTree = "<group>"; };
 		608F82B5CCACF3DBEA3F1E0F /* makeImage.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = makeImage.mm; sourceTree = "<group>"; };
 		7342A3E20BDDD0C09B5A73FD /* FilterUGens.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = FilterUGens.hpp; sourceTree = "<group>"; };
 		795A4E03C878FFC2ECBDA947 /* SoundFiles.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SoundFiles.cpp; sourceTree = "<group>"; };
@@ -146,9 +149,10 @@
 		A28D8E94F2DC121F543CDDC5 /* sapf-prelude.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "sapf-prelude.txt"; sourceTree = "<group>"; };
 		A3B6F3B23AF7FEF5C090A6C3 /* SapfLexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SapfLexer.swift; sourceTree = "<group>"; };
 		A695D8E5B31656870846AFC5 /* symbol.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = symbol.hpp; sourceTree = "<group>"; };
-		AADF8E44C780388FD25FE4C9 /* Sapf.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sapf.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AADF8E44C780388FD25FE4C9 /* Sapf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Sapf.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ADB59F0D3DE917DE670CC4F0 /* ReadmeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadmeTests.swift; sourceTree = "<group>"; };
 		B41F1BD028B7CC36FCAF1D1E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B61C4E02910466BCA750196B /* SpinLock.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SpinLock.hpp; sourceTree = "<group>"; };
 		B90454F3C0C12F795349BBF5 /* UGen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = UGen.hpp; sourceTree = "<group>"; };
 		B979B684DF9A299D7505335E /* SapfUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SapfUITests.swift; sourceTree = "<group>"; };
 		B994B9CB9B89ECE9EA10340C /* elapsedTime.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = elapsedTime.hpp; sourceTree = "<group>"; };
@@ -156,13 +160,15 @@
 		C208B113157519FE26786869 /* DelayUGens.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DelayUGens.cpp; sourceTree = "<group>"; };
 		C27451AAEC4D950302E332E2 /* clz.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = clz.hpp; sourceTree = "<group>"; };
 		C6AA5C17CBA5349C04A74402 /* CodeWarmer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CodeWarmer.h; sourceTree = "<group>"; };
+		CC112E6C8AA6146ACC7AFC2B /* Platform.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Platform.hpp; sourceTree = "<group>"; };
 		CF68A7B767DB1E700C054A62 /* SapfEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SapfEngine.h; sourceTree = "<group>"; };
 		D91C5A1DAA53B98BC985360F /* Parser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Parser.cpp; sourceTree = "<group>"; };
-		DABCC168C0A5A16C2F667C96 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		DABCC168C0A5A16C2F667C96 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		DE4D3EE07AED09F2828ECE92 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		DFA64A1972849D075AA0DD2A /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		E535ED0367D33204B74A564F /* ScopeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScopeViews.swift; sourceTree = "<group>"; };
 		E5A353C2D978D525FB020333 /* Play.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Play.hpp; sourceTree = "<group>"; };
+		E70BA568AAE540946D0B7EE2 /* Accel.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Accel.hpp; sourceTree = "<group>"; };
 		E9A12981AEC854DDD36271B7 /* HelpTooltipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpTooltipView.swift; sourceTree = "<group>"; };
 		EAD6BC1B5970F58A9DF303E4 /* symbol.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = symbol.cpp; sourceTree = "<group>"; };
 		F0F564A4AD88B309317B033B /* UGen.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UGen.cpp; sourceTree = "<group>"; };
@@ -205,6 +211,7 @@
 				1B9ED634932196EF5E2079F8 /* elapsedTime.cpp */,
 				26756B1D06615BE248B5080C /* ErrorCodes.cpp */,
 				0334BDA7EEB0C5DB559B9746 /* FilterUGens.cpp */,
+				35041DC2A5ECD37549EFB8CE /* makeImage.cpp */,
 				608F82B5CCACF3DBEA3F1E0F /* makeImage.mm */,
 				1C5FBFA44168F1E48A8A0FB5 /* MathFuns.cpp */,
 				3AC4493E36DB9B72BF0647CB /* MathOps.cpp */,
@@ -253,6 +260,7 @@
 		5E77F517D06CEF27700E9C9F /* include */ = {
 			isa = PBXGroup;
 			children = (
+				E70BA568AAE540946D0B7EE2 /* Accel.hpp */,
 				C27451AAEC4D950302E332E2 /* clz.hpp */,
 				4E77C31BE29B26F5EE0F51BF /* DelayUGens.hpp */,
 				A11B6A86437920CA23BCFE5D /* dsp.hpp */,
@@ -269,13 +277,16 @@
 				2F2AEC033EB803C4D1CB1943 /* Opcode.hpp */,
 				F4E58CDEFEAEA02169E6E1A7 /* OscilUGens.hpp */,
 				3450A3AF73BE0B2C54A26B39 /* Parser.hpp */,
+				CC112E6C8AA6146ACC7AFC2B /* Platform.hpp */,
 				E5A353C2D978D525FB020333 /* Play.hpp */,
+				6063491BA5CFEC4D467A2A2C /* PortableAccel.hpp */,
 				076BF3F0A3E099A1E94695E8 /* primes.hpp */,
 				0DEE7673B6C021E3EF009AA0 /* rc_ptr.hpp */,
 				3FA2FE56EB2F918D12DD2FDE /* RCObj.hpp */,
 				3484B306C34A3420D5E32135 /* rgen.hpp */,
 				FF629C01B4290BEE94468AB6 /* SoundFiles.hpp */,
 				5024AD23347364A1E5C043F9 /* Spectrogram.hpp */,
+				B61C4E02910466BCA750196B /* SpinLock.hpp */,
 				A695D8E5B31656870846AFC5 /* symbol.hpp */,
 				F4CC4791869CFDA3BB74C812 /* Types.hpp */,
 				B90454F3C0C12F795349BBF5 /* UGen.hpp */,
@@ -529,6 +540,7 @@
 				C744079D8B1D66D57C695D83 /* WaveformView.swift in Sources */,
 				0B95794630CDC5D8DA24B8BC /* dsp.cpp in Sources */,
 				A374F35F01E416F2963B61FD /* elapsedTime.cpp in Sources */,
+				105397E8F642BADC09F87E16 /* makeImage.cpp in Sources */,
 				43C548D29D6BD1E660A0BC6D /* makeImage.mm in Sources */,
 				C6ED5F9A65BA0D9CA45F2ED5 /* primes.cpp in Sources */,
 				903A1EC107CD77A4FF88DF21 /* symbol.cpp in Sources */,
@@ -618,18 +630,12 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.audiosynth.sapf;
 				PRODUCT_NAME = Sapf;
 				SDKROOT = iphoneos;
 				SWIFT_OBJC_BRIDGING_HEADER = "Sapf/Engine/Sapf-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				WARNING_CFLAGS = (
-					"-Wno-shorten-64-to-32",
-					"-Wno-comma",
-					"-Wno-unused-variable",
-					"-Wno-deprecated-declarations",
-				);
+				WARNING_CFLAGS = "-Wno-shorten-64-to-32 -Wno-comma -Wno-unused-variable -Wno-deprecated-declarations";
 			};
 			name = Release;
 		};
@@ -704,7 +710,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 0.1.22;
+				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -764,7 +770,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 0.1.22;
+				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -788,18 +794,12 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.audiosynth.sapf;
 				PRODUCT_NAME = Sapf;
 				SDKROOT = iphoneos;
 				SWIFT_OBJC_BRIDGING_HEADER = "Sapf/Engine/Sapf-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				WARNING_CFLAGS = (
-					"-Wno-shorten-64-to-32",
-					"-Wno-comma",
-					"-Wno-unused-variable",
-					"-Wno-deprecated-declarations",
-				);
+				WARNING_CFLAGS = "-Wno-shorten-64-to-32 -Wno-comma -Wno-unused-variable -Wno-deprecated-declarations";
 			};
 			name = Debug;
 		};

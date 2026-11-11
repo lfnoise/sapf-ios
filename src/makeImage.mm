@@ -6,9 +6,11 @@
 //    file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #import "makeImage.hpp"
-#import <TargetConditionals.h>
+#import "Platform.hpp"
 
-#if TARGET_OS_IPHONE
+#if SAPF_APPLE_IMAGE
+
+#if SAPF_IOS
 
 #import <CoreGraphics/CoreGraphics.h>
 #import <ImageIO/ImageIO.h>
@@ -130,3 +132,5 @@ void fillRect(Bitmap* bitmap, int x, int y, int width, int height, int r, int g,
 		}
 	}
 }
+
+#endif // SAPF_APPLE_IMAGE

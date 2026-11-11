@@ -14,7 +14,7 @@
 #include <float.h>
 #include <vector>
 #include <algorithm>
-#include <Accelerate/Accelerate.h>
+#include "Accel.hpp"
 
 
 
@@ -4293,7 +4293,7 @@ static void ifold_(Thread& th, Prim* prim)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if !TARGET_OS_IPHONE
+#if SAPF_DESKTOP_MAC
 #include <Carbon/Carbon.h>
 #endif
 
@@ -4302,8 +4302,8 @@ struct MouseUGenGlobalState {
 	bool mouseButton;
 } gMouseUGenGlobals;
 
-#if TARGET_OS_IPHONE
-// There is no mouse to poll on iOS. The app reports touch positions here instead.
+#if !SAPF_DESKTOP_MAC
+// There is no mouse to poll on iOS or the web. The app reports touch positions here instead.
 void setMouseUGenState(float x, float y, bool button)
 {
 	gMouseUGenGlobals.mouseX = x;
@@ -4545,7 +4545,7 @@ void AddUGenOps()
 	s_dt = getsym("dt");
 	s_out = getsym("out");
 
-#if !TARGET_OS_IPHONE
+#if SAPF_DESKTOP_MAC
 	pthread_t mouseListenThread;
 	pthread_create (&mouseListenThread, nullptr, gstate_update_func, (void*)0);
 #endif

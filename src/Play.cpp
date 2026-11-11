@@ -6,12 +6,28 @@
 //    file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #include "Play.hpp"
+#include "Platform.hpp"
+#if SAPF_COREAUDIO
 #include <AudioToolbox/AudioToolbox.h>
-#include <pthread.h>
 #include <mach/mach_time.h>
+#endif
+#include <pthread.h>
+#include <unistd.h>
 #include <atomic>
+#include <vector>
+#include <algorithm>
 
 #include "SoundFiles.hpp"
+#include "elapsedTime.hpp"
+
+// Sound output.
+//
+//   macOS and iOS: each player has its own output AudioUnit; the system mixes them.
+//   The web (SAPF_SHARED_MIXER): the host's AudioWorklet calls renderSharedMix(), which mixes every player.
+//
+// Either way, players are evaluated lazily on the audio thread, each one feeds its own scope tap, and render
+// times feed the timing statistics. gPlayerMutex guards the player list; the shared mixer only try-locks it,
+// so the audio thread never blocks.
 
 pthread_mutex_t gPlayerMutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -110,76 +126,108 @@ AudioTimingStats getAudioTimingStats(bool resetPeakLoad)
 	};
 }
 
-static double hostTicksToSeconds()
+// a clock for measuring render times, in seconds.
+static double renderClock()
 {
+#if SAPF_COREAUDIO
 	static double secondsPerTick = [] {
 		mach_timebase_info_data_t info;
 		mach_timebase_info(&info);
 		return 1e-9 * info.numer / info.denom;
 	}();
-	return secondsPerTick;
+	return mach_absolute_time() * secondsPerTick;
+#else
+	return elapsedTime(); // never throws, even on the audio worklet
+#endif
 }
 
-static void noteRenderTime(uint64_t startTicks, UInt32 numFrames)
+static void noteLoad(float load)
 {
-	double seconds = (mach_absolute_time() - startTicks) * hostTicksToSeconds();
-	float load = (float)(seconds * vm.ar.sampleRate / numFrames);
 	if (load > 1.f) gLateRenders.fetch_add(1, std::memory_order_relaxed);
 	float peak = gPeakRenderLoad.load(std::memory_order_relaxed);
 	while (load > peak && !gPeakRenderLoad.compare_exchange_weak(peak, load, std::memory_order_relaxed)) {}
+}
+
+static void noteRenderTime(double startSeconds, int numFrames)
+{
+	double seconds = renderClock() - startSeconds;
+#if SAPF_SHARED_MIXER
+	// The browser's audio thread only has a millisecond clock, and renders are about 3 ms, so measure the load
+	// over windows of several renders. Only the audio thread calls this.
+	static double windowSeconds = 0.;
+	static int windowFrames = 0;
+	windowSeconds += seconds;
+	windowFrames += numFrames;
+	if (windowFrames < 8192) return;
+	float load = (float)(windowSeconds * vm.ar.sampleRate / windowFrames);
+	windowSeconds = 0.;
+	windowFrames = 0;
+	noteLoad(load);
+#else
+	noteLoad((float)(seconds * vm.ar.sampleRate / numFrames));
+#endif
 }
 
 
 
 struct AUPlayer
 {
-	AUPlayer(Thread& inThread, int inNumChannels, ExtAudioFileRef inXAFRef = nullptr)
-		: th(inThread), count(0), done(false), prev(nullptr), next(gAllPlayers), outputUnit(nullptr), numChannels(inNumChannels), xaf(inXAFRef)
-	{ 
-		gAllPlayers = this; 
-		if (next) next->prev = this; 
+	AUPlayer(Thread& inThread, int inNumChannels, SoundFileWriter* inRecording = nullptr)
+		: th(inThread), count(0), done(false), prev(nullptr), next(gAllPlayers), numChannels(inNumChannels), recording(inRecording)
+	{
+		gAllPlayers = this;
+		if (next) next->prev = this;
 		scopeTap = claimScopeTap();
 	}
-	
+
 	~AUPlayer() {
 		if (next) next->prev = prev;
 
 		if (prev) prev->next = next;
 		else gAllPlayers = next;
-		
-		if (xaf) {
-			ExtAudioFileDispose(xaf);
+
+		if (recording) {
+			sfclose(recording);
 			openFileExternally(path.c_str());
 		}
 		if (scopeTap) scopeTap->inUse.store(false, std::memory_order_release);
 	}
-	
+
 	Thread th;
 	int count;
 	bool done;
 	AUPlayer* prev;
 	AUPlayer* next;
-	AudioComponentInstance outputUnit;
+#if SAPF_COREAUDIO
+	AudioComponentInstance outputUnit = nullptr;
+#endif
 	int numChannels;
 	ZIn in[kMaxChannels];
-	ExtAudioFileRef xaf = nullptr;
+	SoundFileWriter* recording = nullptr;
 	std::string path;
 	ScopeTap* scopeTap = nullptr;
-	Float64 nextSampleTime = -1.;
+	double nextSampleTime = -1.;
+#if SAPF_SHARED_MIXER
+	// with the shared mixer each player renders into its own buffers first.
+	std::vector<float> scratch;
+	float* bufs[kMaxChannels] = {};
+#endif
 };
 
 static void stopPlayer(AUPlayer* player)
 {
+#if SAPF_COREAUDIO
 	AudioComponentInstance outputUnit = player->outputUnit;
 	player->outputUnit = nullptr;
 	if (outputUnit) {
-	
+
 		OSStatus err = AudioOutputUnitStop(outputUnit);
 		if (err) post("AudioOutputUnitStop err %d\n", (int)err);
 		err = AudioComponentInstanceDispose(outputUnit);
 		if (err) post("AudioComponentInstanceDispose outputUnit err %d\n", (int)err);
-		
+
 	}
+#endif
 	delete player;
 }
 
@@ -198,7 +246,7 @@ void stopPlaying()
 void stopPlayingIfDone()
 {
 	Locker lock(&gPlayerMutex);
-	
+
 	AUPlayer* player = gAllPlayers;
 	while (player) {
 		AUPlayer* next = player->next;
@@ -213,47 +261,60 @@ void restartPlaying()
 	Locker lock(&gPlayerMutex);
 
 	for (AUPlayer* player = gAllPlayers; player; player = player->next) {
-		if (!player->outputUnit || player->done) continue;
+		if (player->done) continue;
 		// The gap while stopped isn't a dropout.
 		player->nextSampleTime = -1.;
+#if SAPF_COREAUDIO
+		if (!player->outputUnit) continue;
 		OSStatus err = AudioOutputUnitStart(player->outputUnit);
 		if (err) post("AudioOutputUnitStart err %d\n", (int)err);
+#endif
 	}
 }
 
 static void* stopDonePlayers(void* x)
 {
+#if SAPF_EXTAUDIOFILE
 	while(1) {
 		sleep(1);
 		stopPlayingIfDone();
 	}
+#else
+	// recordings are written out from here, so wake more often than once a second.
+	for (int tick = 1; ; ++tick) {
+		usleep(100000);
+		sfserviceAsync();
+		if (tick % 10 == 0) stopPlayingIfDone();
+	}
+#endif
 	return nullptr;
 }
 
 bool gWatchdogRunning = false;
 pthread_t watchdog;
 
-static bool fillBufferList(AUPlayer* player, int inNumberFrames, AudioBufferList* ioData)
+// fill numBufs output buffers of n frames from the player's inputs. returns true when the player is done.
+static bool fillBuffers(AUPlayer* player, int inNumberFrames, float* const* bufs, int numBufs)
 {
 	if (player->done) {
 zeroAll:
-		for (int i = 0; i < (int)ioData->mNumberBuffers; ++i) {
-			memset((float*)ioData->mBuffers[i].mData, 0, inNumberFrames * sizeof(float));
+		for (int i = 0; i < numBufs; ++i) {
+			memset(bufs[i], 0, inNumberFrames * sizeof(float));
 		}
 		return true;
 	}
 	ZIn* in = player->in;
 	bool done = true;
-	for (int i = 0; i < (int)ioData->mNumberBuffers; ++i) {
+	for (int i = 0; i < numBufs; ++i) {
 		int n = inNumberFrames;
 		if (i >= player->numChannels) {
-			memset(ioData->mBuffers[i].mData, 0, ioData->mBuffers[i].mDataByteSize);
+			memset(bufs[i], 0, inNumberFrames * sizeof(float));
 		} else {
 			try {
-				float* buf = (float*)ioData->mBuffers[i].mData;
+				float* buf = bufs[i];
 				bool imdone = in[i].fill(player->th, n, buf, 1);
 				if (n < inNumberFrames) {
-					memset((float*)ioData->mBuffers[i].mData + n, 0, (inNumberFrames - n) * sizeof(float));
+					memset(buf + n, 0, (inNumberFrames - n) * sizeof(float));
 				}
 				done = done && imdone;
 			} catch (int err) {
@@ -278,30 +339,28 @@ zeroAll:
 			}
 		}
 	}
-	
+
 	return done;
 }
 
-static void recordPlayer(AUPlayer* player, int inNumberFrames, AudioBufferList const* inData)
+static void recordPlayer(AUPlayer* player, int inNumberFrames, float* const* bufs)
 {
-	if (!player->xaf) return;
-		
-	OSStatus err = ExtAudioFileWriteAsync(player->xaf, inNumberFrames, inData); // initialize async.
-	if (err) printf("ExtAudioFileWriteAsync err %d\n", (int)err);
+	if (!player->recording) return;
+	sfwriteAsync(player->recording, bufs, inNumberFrames);
 }
 
-static void tapPlayer(AUPlayer* player, int inNumberFrames, AudioBufferList const* inData)
+static void tapPlayer(AUPlayer* player, int inNumberFrames, float* const* bufs, int numBufs)
 {
 	ScopeTap* tap = player->scopeTap;
 	if (!tap) return;
 
-	int numChannels = std::min((int)inData->mNumberBuffers, player->numChannels);
+	int numChannels = std::min(numBufs, player->numChannels);
 	uint64_t pos = tap->writePos.load(std::memory_order_relaxed);
 	uint64_t envelopePos = tap->envelopeWritePos.load(std::memory_order_relaxed);
 	for (int i = 0; i < inNumberFrames; ++i) {
 		float sum = 0.f;
 		for (int j = 0; j < numChannels; ++j) {
-			sum += ((const float*)inData->mBuffers[j].mData)[i];
+			sum += bufs[j][i];
 		}
 		tap->buf[(pos + i) & (kScopeBufferSize - 1)] = sum;
 
@@ -323,6 +382,79 @@ static void tapPlayer(AUPlayer* player, int inNumberFrames, AudioBufferList cons
 	tap->envelopeWritePos.store(envelopePos, std::memory_order_release);
 }
 
+#if SAPF_SHARED_MIXER
+
+const int kMaxRenderFrames = 4096;
+static std::atomic<bool> gOutputMuted { false };
+
+void setOutputMuted(bool muted)
+{
+	gOutputMuted = muted;
+}
+
+static void preparePlayerBuffers(AUPlayer* player)
+{
+	int numChannels = player->numChannels;
+	player->scratch.assign((size_t)numChannels * kMaxRenderFrames, 0.f);
+	for (int i = 0; i < numChannels; ++i) {
+		player->bufs[i] = player->scratch.data() + (size_t)i * kMaxRenderFrames;
+	}
+}
+
+void renderSharedMix(float* outL, float* outR, int inNumberFrames)
+{
+	double start = renderClock();
+	memset(outL, 0, inNumberFrames * sizeof(float));
+	if (outR != outL) memset(outR, 0, inNumberFrames * sizeof(float));
+
+	// never block the audio thread. if a player is being added or removed, skip mixing for this buffer.
+	if (pthread_mutex_trylock(&gPlayerMutex) == 0) {
+		for (int offset = 0; offset < inNumberFrames; offset += kMaxRenderFrames) {
+			int n = std::min(kMaxRenderFrames, inNumberFrames - offset);
+			for (AUPlayer* player = gAllPlayers; player; player = player->next) {
+				if (player->done || player->scratch.empty()) continue;
+				if (fillBuffers(player, n, player->bufs, player->numChannels)) player->done = true;
+				recordPlayer(player, n, player->bufs);
+				tapPlayer(player, n, player->bufs, player->numChannels);
+				// mono to both sides; otherwise channels alternate left and right.
+				if (player->numChannels == 1) {
+					float* in = player->bufs[0];
+					for (int i = 0; i < n; ++i) { outL[offset+i] += in[i]; }
+					if (outR != outL) for (int i = 0; i < n; ++i) { outR[offset+i] += in[i]; }
+				} else {
+					for (int c = 0; c < player->numChannels; ++c) {
+						float* in = player->bufs[c];
+						float* out = (c & 1) ? outR : outL;
+						for (int i = 0; i < n; ++i) { out[offset+i] += in[i]; }
+					}
+				}
+			}
+		}
+		bool anyPlaying = gAllPlayers != nullptr;
+		pthread_mutex_unlock(&gPlayerMutex);
+		if (anyPlaying) noteRenderTime(start, inNumberFrames);
+	}
+
+	if (gOutputMuted) {
+		memset(outL, 0, inNumberFrames * sizeof(float));
+		if (outR != outL) memset(outR, 0, inNumberFrames * sizeof(float));
+	}
+}
+
+int numPlayersPlaying()
+{
+	Locker lock(&gPlayerMutex);
+	int count = 0;
+	for (AUPlayer* player = gAllPlayers; player; player = player->next) {
+		if (!player->done) ++count;
+	}
+	return count;
+}
+
+#endif // SAPF_SHARED_MIXER
+
+#if SAPF_COREAUDIO
+
 static OSStatus inputCallback(	void *							inRefCon,
 						AudioUnitRenderActionFlags *	ioActionFlags,
 						const AudioTimeStamp *			inTimeStamp,
@@ -330,9 +462,9 @@ static OSStatus inputCallback(	void *							inRefCon,
 						UInt32							inNumberFrames,
 						AudioBufferList *				ioData)
 {
-	
+
 	AUPlayer* player = (AUPlayer*)inRefCon;
-	uint64_t startTicks = mach_absolute_time();
+	double start = renderClock();
 
 	// When a render runs late, the next one starts later than where this one ended.
 	if (inTimeStamp->mFlags & kAudioTimeStampSampleTimeValid) {
@@ -341,10 +473,14 @@ static OSStatus inputCallback(	void *							inRefCon,
 		player->nextSampleTime = inTimeStamp->mSampleTime + inNumberFrames;
 	}
 
-	bool done = fillBufferList(player, inNumberFrames, ioData);
-	recordPlayer(player, inNumberFrames, ioData);
-	tapPlayer(player, inNumberFrames, ioData);
-	noteRenderTime(startTicks, inNumberFrames);
+	float* bufs[kMaxChannels];
+	int numBufs = std::min((int)ioData->mNumberBuffers, kMaxChannels);
+	for (int i = 0; i < numBufs; ++i) bufs[i] = (float*)ioData->mBuffers[i].mData;
+
+	bool done = fillBuffers(player, inNumberFrames, bufs, numBufs);
+	recordPlayer(player, inNumberFrames, bufs);
+	tapPlayer(player, inNumberFrames, bufs, numBufs);
+	noteRenderTime(start, inNumberFrames);
 
 	if (done) {
 		player->done = true;
@@ -369,14 +505,22 @@ static AudioComponentInstance openAU(UInt32 inType, UInt32 inSubtype, UInt32 inM
 
     AudioComponentInstance au = nullptr;
     AudioComponentInstanceNew(comp, &au);
-	
+
 	return au;
 }
 
-static OSStatus createGraph(AUPlayer* player)
+#endif // SAPF_COREAUDIO
+
+typedef int PlayStatus; // 0 or an OSStatus
+
+static PlayStatus createGraph(AUPlayer* player)
 {
+#if SAPF_SHARED_MIXER
+	preparePlayerBuffers(player);
+	return 0; // the host's audio callback calls renderSharedMix().
+#else
     OSStatus err = noErr;
-#if TARGET_OS_IPHONE
+#if SAPF_IOS
 	AudioComponentInstance outputUnit = openAU(kAudioUnitType_Output, kAudioUnitSubType_RemoteIO, kAudioUnitManufacturer_Apple);
 #else
 	AudioComponentInstance outputUnit = openAU('auou', 'def ', 'appl');
@@ -385,44 +529,53 @@ static OSStatus createGraph(AUPlayer* player)
 		post("open output unit failed\n");
 		return 'fail';
 	}
-	
+
 	player->outputUnit = outputUnit;
-	
+
 	UInt32 flags = kAudioFormatFlagsNativeFloatPacked | kAudioFormatFlagIsNonInterleaved;
 	AudioStreamBasicDescription fmt = { vm.ar.sampleRate, kAudioFormatLinearPCM, flags, 4, 1, 4, (UInt32)player->numChannels, 32, 0 };
-	
+
 	err = AudioUnitSetProperty(outputUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &fmt, sizeof(fmt));
 	if (err) {
 		post("set outputUnit client format failed\n");
 		return err;
 	}
-	
+
 	AURenderCallbackStruct cbs;
-		
+
 	cbs.inputProc = inputCallback;
 	cbs.inputProcRefCon = player;
-	
+
 	err = AudioUnitSetProperty(outputUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &cbs, sizeof(cbs));
 	if (err) {
 		post("set render callback failed\n");
 		return err;
 	}
-	
+
 	err = AudioUnitInitialize(outputUnit);
 	if (err) {
 		post("initialize output unit failed\n");
 		return err;
 	}
-	
+
 	err = AudioOutputUnitStart(outputUnit);
 	if (err) {
 		post("start output unit failed\n");
 		return err;
 	}
-	
+
 	post("start output unit OK\n");
-	
+
 	return noErr;
+#endif
+}
+
+static void startWatchdog()
+{
+	if (!gWatchdogRunning) {
+		pthread_create(&watchdog, nullptr, stopDonePlayers, nullptr);
+		gWatchdogRunning = true;
+	}
 }
 
 void playWithAudioUnit(Thread& th, V& v)
@@ -430,9 +583,9 @@ void playWithAudioUnit(Thread& th, V& v)
 	if (!v.isList()) wrongType("play : s", "List", v);
 
 	Locker lock(&gPlayerMutex);
-	
+
 	AUPlayer *player;
-	
+
 	if (v.isZList()) {
 		player = new AUPlayer(th, 1);
 		player->in[0].set(v);
@@ -446,9 +599,9 @@ void playWithAudioUnit(Thread& th, V& v)
 			return;
 		}
 		Array* a = s->mArray();
-		
+
 		int asize = (int)a->size();
-		
+
 		player = new AUPlayer(th, asize);
 		for (int i = 0; i < asize; ++i) {
 			player->in[i].set(a->at(i));
@@ -457,17 +610,13 @@ void playWithAudioUnit(Thread& th, V& v)
 		a = nullptr;
 	}
 	v.o = nullptr; // try to prevent leak.
-    
+
     std::atomic_thread_fence(std::memory_order_seq_cst);
-		
-	if (!gWatchdogRunning) {
-		pthread_create(&watchdog, nullptr, stopDonePlayers, nullptr);
-		gWatchdogRunning = true;
-	}
+
+	startWatchdog();
 
 	{
-		OSStatus err = noErr;
-		err = createGraph(player);
+		PlayStatus err = createGraph(player);
 		if (err) {
 			post("play failed: %d '%4.4s'\n", (int)err, (char*)&err);
 			throw errFailed;
@@ -481,21 +630,21 @@ void recordWithAudioUnit(Thread& th, V& v, Arg filename)
 	if (!v.isList()) wrongType("play : s", "List", v);
 
 	Locker lock(&gPlayerMutex);
-	
+
 	AUPlayer *player;
 
 	char path[1024];
-	ExtAudioFileRef xaf = nullptr;
-	
+	SoundFileWriter* recording = nullptr;
+
 	if (v.isZList()) {
 		makeRecordingPath(filename, path, 1024);
-		xaf = sfcreate(th, path, 1, 0., false);
-		if (!xaf) {
-			printf("couldn't create recording file \"%s\"\n", path);
+		recording = sfcreate(th, path, 1, 0., false);
+		if (!recording) {
+			post("couldn't create recording file \"%s\"\n", path);
 			return;
 		}
 
-		player = new AUPlayer(th, 1, xaf);
+		player = new AUPlayer(th, 1, recording);
 		player->in[0].set(v);
 		player->numChannels = 1;
 	} else {
@@ -507,17 +656,17 @@ void recordWithAudioUnit(Thread& th, V& v, Arg filename)
 			return;
 		}
 		Array* a = s->mArray();
-		
+
 		int numChannels = (int)a->size();
 
 		makeRecordingPath(filename, path, 1024);
-		xaf = sfcreate(th, path, numChannels, 0., false);
-		if (!xaf) {
-			printf("couldn't create recording file \"%s\"\n", path);
+		recording = sfcreate(th, path, numChannels, 0., false);
+		if (!recording) {
+			post("couldn't create recording file \"%s\"\n", path);
 			return;
 		}
-		
-		player = new AUPlayer(th, numChannels, xaf);
+
+		player = new AUPlayer(th, numChannels, recording);
 		for (int i = 0; i < numChannels; ++i) {
 			player->in[i].set(a->at(i));
 		}
@@ -528,25 +677,17 @@ void recordWithAudioUnit(Thread& th, V& v, Arg filename)
 
 	player->path = path;
 
-	{
-		OSStatus err = ExtAudioFileWriteAsync(xaf, 0, nullptr); // initialize async.
-		if (err) printf("init ExtAudioFileWriteAsync err %d\n", (int)err);
-    }
-	
+	sfbeginAsync(recording);
+
     std::atomic_thread_fence(std::memory_order_seq_cst);
-		
-	if (!gWatchdogRunning) {
-		pthread_create(&watchdog, nullptr, stopDonePlayers, nullptr);
-		gWatchdogRunning = true;
-	}
+
+	startWatchdog();
 
 	{
-		OSStatus err = noErr;
-		err = createGraph(player);
+		PlayStatus err = createGraph(player);
 		if (err) {
 			post("play failed: %d '%4.4s'\n", (int)err, (char*)&err);
 			throw errFailed;
 		}
 	}
 }
-

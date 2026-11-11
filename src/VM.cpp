@@ -423,8 +423,9 @@ void loadFile(Thread& th, const char* filename)
 	
 	AutoFree<char> buf = (char*)malloc(fileSize + 1);
 	const char* p = buf();
-	fread(buf(), 1, fileSize, f);
-	buf()[fileSize - 1] = 0;
+	size_t bytesRead = fread(buf(), 1, fileSize, f);
+	buf()[bytesRead] = 0;
+	fclose(f);
 		
 	try {
 		{

@@ -7,7 +7,7 @@
 
 # Shortcuts for the CMake build. The program ends up in build/sapf.
 
-.PHONY: all universal clean
+.PHONY: all universal portable test clean
 
 all:
 	cmake -S . -B build
@@ -16,6 +16,17 @@ all:
 universal:
 	cmake -S . -B build -DUNIVERSAL=ON
 	cmake --build build
+
+# The program built with the portable code the web version uses (no Accelerate or ExtAudioFile).
+portable:
+	cmake -S . -B build/portable -DSAPF_PORTABLE=ON
+	cmake --build build/portable
+
+# Unit tests through both builds, and the portable vector math and FFT checked against Accelerate.
+test: all portable
+	./build/accel_test | tail -1
+	@./build/sapf-run -p sapf-prelude.txt unit-tests.txt | grep -c Passed | xargs echo "Apple build, unit tests passed:"
+	@./build/portable/sapf-run -p sapf-prelude.txt unit-tests.txt | grep -c Passed | xargs echo "portable build, unit tests passed:"
 
 clean:
 	rm -rf build

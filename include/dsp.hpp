@@ -8,7 +8,7 @@
 #ifndef __taggeddoubles__dsp__
 #define __taggeddoubles__dsp__
 
-#include <Accelerate/Accelerate.h>
+#include "Accel.hpp"
 
 const int kMinFFTLogSize = 2;
 const int kMaxFFTLogSize = 16;

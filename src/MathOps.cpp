@@ -9,7 +9,7 @@
 #include "clz.hpp"
 #include <ctype.h>
 #include "primes.hpp"
-#include <Accelerate/Accelerate.h>
+#include "Accel.hpp"
 
 
 

@@ -51,7 +51,7 @@ void openFileExternally(const char* path)
 		gOpenFileHook(path);
 		return;
 	}
-#if !TARGET_OS_IPHONE
+#if SAPF_DESKTOP_MAC
 	char cmd[1100];
 	snprintf(cmd, 1100, "open \"%s\"", path);
 	system(cmd);
@@ -244,7 +244,7 @@ public:
 void Fun::runREPL(Thread& th)
 {
 	if (th.stackDepth() < NumArgs()) {
-		post("expected %qd args on stack. Only have %qd\n", (int64_t)NumArgs(), (int64_t)th.stack.size());
+		post("expected %lld args on stack. Only have %lld\n", (long long)NumArgs(), (long long)th.stack.size());
 		throw errStackUnderflow;
 	}
 
@@ -270,7 +270,7 @@ void Fun::runREPL(Thread& th)
 void Fun::run(Thread& th)
 {	
 	if (th.stackDepth() < NumArgs()) {
-		post("expected %qd args on stack. Only have %qd\n", (int64_t)NumArgs(), (int64_t)th.stack.size());
+		post("expected %lld args on stack. Only have %lld\n", (long long)NumArgs(), (long long)th.stack.size());
 		throw errStackUnderflow;
 	}
 

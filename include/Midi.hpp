@@ -12,4 +12,10 @@
 
 void AddMidiOps();
 
+#include "Platform.hpp"
+#if !SAPF_APPLE
+// without CoreMIDI the host feeds incoming MIDI bytes here, e.g. from Web MIDI.
+void sapfMidiInput(int srcIndex, const uint8_t* data, int length);
+#endif
+
 #endif /* defined(__taggeddoubles__Midi__) */

@@ -20,9 +20,9 @@
 #include "MathFuns.hpp"
 
 #include <pthread.h>
+#include "Platform.hpp"
 #include "RCObj.hpp"
-#include <os/lock.h>
-#include <TargetConditionals.h>
+#include "SpinLock.hpp"
 
 void post(const char* fmt, ...);
 
@@ -522,7 +522,7 @@ class Ref : public Object
 {
 	Z z;
 	O o;
-    mutable os_unfair_lock mSpinLock = OS_UNFAIR_LOCK_INIT;   
+    mutable SpinLock mSpinLock;   
 public:
 
 	Ref(V inV) : z(inV.f), o(inV.o()) { if (o) o->retain(); }
@@ -1042,7 +1042,7 @@ public:
 class Plug : public Object
 {
 	VIn in;
-    mutable os_unfair_lock mSpinLock = OS_UNFAIR_LOCK_INIT;   
+    mutable SpinLock mSpinLock;   
 	int mChangeCount;
 public:
 	
@@ -1066,7 +1066,7 @@ public:
 class ZPlug : public Object
 {
 	ZIn in;
-    mutable os_unfair_lock mSpinLock = OS_UNFAIR_LOCK_INIT;   
+    mutable SpinLock mSpinLock;   
 	int mChangeCount;
 public:
 	
@@ -1121,8 +1121,9 @@ public:
 	void alloc(int64_t inCap);
 
 	int64_t size() const { return mSize; }
-    void setSize(size_t inSize) { mSize = inSize; }
-    void addSize(size_t inDelta) { mSize += inDelta; }
+    void setSize(int64_t inSize) { mSize = inSize; }
+    // inDelta is negative when shrinking, so it must be signed (size_t is 32 bits on wasm32).
+    void addSize(int64_t inDelta) { mSize += inDelta; }
 	
 	void add(Arg value);
 	void put(int64_t i, Arg inItem);
@@ -1178,7 +1179,7 @@ class List : public Object
 {
 	P<List> mNext;
 public:
-    mutable os_unfair_lock mSpinLock = OS_UNFAIR_LOCK_INIT;   
+    mutable SpinLock mSpinLock;   
 	P<Gen> mGen;
 	P<Array> mArray;
 
@@ -1471,15 +1472,15 @@ const int kMaxArgs = 16;
 
 class SpinLocker
 {
-    os_unfair_lock& lock;   
+    SpinLock& lock;
 public:
-	SpinLocker(os_unfair_lock& inLock) : lock(inLock) 
+	SpinLocker(SpinLock& inLock) : lock(inLock)
 	{
-        os_unfair_lock_lock(&lock);
+        lock.lock();
 	}
 	~SpinLocker()
 	{
-		os_unfair_lock_unlock(&lock);
+		lock.unlock();
 	}
 };
 
@@ -1500,6 +1501,7 @@ P<Form> linearizeInheritance(Thread& th, size_t numArgs, V* args);
 
 ///////////
 
+#if SAPF_APPLE
 #include <CoreFoundation/CFBase.h>
 
 class CFReleaser
@@ -1510,6 +1512,7 @@ public:
 	~CFReleaser() { release(); }
 	void release() { if (p) { CFRelease(p); p = nullptr; }}
 };
+#endif
 
 class Freer
 {
