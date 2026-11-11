@@ -97,6 +97,13 @@ folder. Open ios/Sapf.xcodeproj, not SoundAsPureForm.xcodeproj (which builds the
 command line program for macOS). See ios/README.md for how to build and use it.
 
 
+WEB BROWSER
+
+The web folder has a version that runs in a web browser, with the same layout
+and features as the iPhone and iPad app. The interpreter is compiled to
+WebAssembly with Emscripten. See web/README.md for how to build and use it.
+
+
 COMMAND LINE
 
 sapf [-r sample-rate][-p prelude-file]

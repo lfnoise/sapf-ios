@@ -7,7 +7,7 @@
 
 # Shortcuts for the CMake build. The program ends up in build/sapf.
 
-.PHONY: all universal portable test clean
+.PHONY: all universal portable test web web-dev web-test clean
 
 all:
 	cmake -S . -B build
@@ -27,6 +27,16 @@ test: all portable
 	./build/accel_test | tail -1
 	@./build/sapf-run -p sapf-prelude.txt unit-tests.txt | grep -c Passed | xargs echo "Apple build, unit tests passed:"
 	@./build/portable/sapf-run -p sapf-prelude.txt unit-tests.txt | grep -c Passed | xargs echo "portable build, unit tests passed:"
+
+# The web version. Needs Emscripten and Node; see web/README.md.
+web:
+	cd web && npm install && npm run engine && npm run build
+
+web-dev:
+	cd web && npm run dev
+
+web-test:
+	cd web && npm test && npm run test:browser
 
 clean:
 	rm -rf build

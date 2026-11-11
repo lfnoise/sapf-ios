@@ -1,0 +1,88 @@
+# SAPF - Sound As Pure Form. Copyright (C) 2019 James McCartney.
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+#
+# Builds and tests the web version of sapf, and publishes it to GitHub Pages from main.
+#
+# Publishing needs Pages enabled for the repository with "GitHub Actions" as the source
+# (Settings > Pages). Until then the deploy job fails and nothing is published.
+
+name: Web
+
+on:
+  push:
+    branches: [main]
+    paths: [web/**, src/**, include/**, third_party/**, CMakeLists.txt, sapf-*.txt, unit-tests.txt, README.txt, .github/workflows/web.yml]
+  pull_request:
+    paths: [web/**, src/**, include/**, third_party/**, CMakeLists.txt, sapf-*.txt, unit-tests.txt, README.txt, .github/workflows/web.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  EMSCRIPTEN_VERSION: 7.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install Emscripten
+        working-directory: ${{ runner.temp }}
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install "$EMSCRIPTEN_VERSION"
+          ./emsdk activate "$EMSCRIPTEN_VERSION"
+          echo "EMSDK=$PWD" >> "$GITHUB_ENV"
+
+      - run: npm ci
+      - name: Build the engine
+        run: npm run engine
+      - name: Unit tests
+        run: npm test
+
+      - name: Browser tests
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: |
+          npm run build
+          node scripts/browser-test.mjs --prod
+
+      - name: Build for GitHub Pages
+        env:
+          SAPF_BASE: /${{ github.event.repository.name }}/
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: web/dist
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
