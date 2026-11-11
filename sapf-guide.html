@@ -436,9 +436,10 @@ few times and each chord is different:</p>
 <pre class="run">[48 55 60] [60 67 72] rand nnhz 0 sinosc .1 * +/ play</pre>
 
 <h3>Looking at a sound</h3>
-<p><code>sgram</code> draws a spectrogram of a finite signal and saves it as an image. <code>N</code> takes the first
-48000 samples, one second at 48 kHz; <code>120</code> is the quietest level to show, in dB.</p>
-<pre class="run">100 0 saw 48000 N 120 "saw" sgram</pre>
+<p><code>sgram</code> draws a spectrogram of a finite signal and saves it as an image. Here a sine wave’s frequency is
+swept between 2 and 14 kHz by a slow sine wave, an LFO, so the picture shows a wave. <code>T</code> takes the first
+4 seconds of the signal, and <code>100</code> is the quietest level to show, in dB.</p>
+<pre class="run">.5 0 sinosc 6000 * 8000 +  0 sinosc  4 T 100 "fm" sgram</pre>
 
 <h2 id="help">6. Getting help</h2>
 <ul>
