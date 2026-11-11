@@ -15,11 +15,13 @@ import { CodeEditor, type Position, type BlockRun } from './editor.ts';
 import { ConsoleBuffer } from './console.ts';
 import { AudioAnalyzer } from './analyzer.ts';
 import { WaveformView, SpectrumView, SpectrogramView, WaveformState, Plot } from './scopes.ts';
-import { DocumentStore, DIRECTORY, RECORDINGS, SPECTROGRAMS, PRELUDE, LOG, README, TMPDIR, SCRATCH, BUNDLED, RENAMED, GUIDE, title, baseName, extensionOf } from './documents.ts';
+import { DocumentStore, DIRECTORY, RECORDINGS, SPECTROGRAMS, SOUNDS, PRELUDE, LOG, README, TMPDIR, SCRATCH, BUNDLED, RENAMED, GUIDE, title, baseName, extensionOf } from './documents.ts';
 import { PreviewDialog } from './preview.ts';
 import { showFunctionList } from './functionList.ts';
 import { ExampleRunner } from './exampleRunner.ts';
 import { showMenu, confirmAction, closeMenu, type MenuEntry } from './menu.ts';
+import { WebMidi, type MidiRequest } from './midi.ts';
+import { importSound } from './soundImport.ts';
 
 const BASE = import.meta.env.BASE_URL;
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform) || navigator.userAgent.includes('Mac');
@@ -75,6 +77,7 @@ class App {
   spectrogram!: SpectrogramView;
   preview!: PreviewDialog;
   runner!: ExampleRunner;
+  midi!: WebMidi;
 
   currentDocument = SCRATCH;
   private documentList: string[] = [];
@@ -136,6 +139,7 @@ class App {
     this.engine = await SapfEngine.load(BASE, {
       SAPF_RECORDINGS: RECORDINGS,
       SAPF_SPECTROGRAMS: SPECTROGRAMS,
+      SAPF_SOUNDS: SOUNDS,
       SAPF_TMPDIR: TMPDIR,
       SAPF_PRELUDE: PRELUDE,
       SAPF_LOG: LOG,
@@ -243,6 +247,7 @@ class App {
     touch.addEventListener('change', () => this.updateEditingUI());
     WaveformState.shared.onChange(() => this.updateTabPicker());
     this.installShortcuts();
+    this.installSoundFileDrop();
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') { this.saveNow(); this.rememberPosition(); void this.documents.syncNow(); }
       else { this.refreshDocuments(); void this.resumeAudioIfInterrupted(); }
@@ -297,6 +302,7 @@ class App {
     const entries: MenuEntry[] = [
       { label: 'New Document', action: () => this.newDocument() },
       { label: 'Log', action: () => this.showLog() },
+      { label: 'Import Sound Files…', action: () => this.chooseSoundFiles() },
     ];
     if (this.modifiedBuiltIns.includes(this.currentDocument)) {
       entries.push({ label: 'Revert to Original…', destructive: true, action: () => void this.confirmRevert([this.currentDocument], false) });
@@ -794,12 +800,62 @@ class App {
     }
   }
 
+  // MARK: sound files
+
+  /** asks for sound files to import. */
+  private chooseSoundFiles(): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'audio/*,.wav,.wave,.aif,.aiff,.aifc,.caf,.flac,.mp3,.m4a,.aac,.ogg,.oga,.opus,.webm';
+    input.addEventListener('change', () => void this.importSoundFiles([...(input.files ?? [])]));
+    input.click();
+  }
+
+  /** sound files dropped anywhere on the window are imported (rather than their bytes typed into the editor). */
+  private installSoundFileDrop(): void {
+    const isSound = (f: File) => f.type.startsWith('audio/') || /\.(wave?|aiff?|aifc|caf|flac|mp3|m4a|aac|ogg|oga|opus)$/i.test(f.name);
+    const hasFiles = (e: DragEvent) => !!e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+    document.addEventListener('dragover', e => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      e.dataTransfer!.dropEffect = 'copy';
+    }, true);
+    document.addEventListener('drop', e => {
+      if (!hasFiles(e)) return;
+      const sounds = [...e.dataTransfer!.files].filter(isSound);
+      e.preventDefault();
+      e.stopPropagation();
+      if (sounds.length) void this.importSoundFiles(sounds);
+      else this.console.append('Only sound files can be dropped here. They are imported for sf>.\n');
+    }, true);
+  }
+
+  /** imports sound files into the Sounds folder, at the engine's sample rate, and says how to play them. */
+  async importSoundFiles(files: File[]): Promise<string[]> {
+    const names: string[] = [];
+    for (const file of files) {
+      try {
+        const sound = await importSound(file, this.engine.audioContext, SOUNDS, (path, bytes) => this.documents.writeBytes(path, bytes));
+        const channels = sound.channels === 1 ? '1 channel' : `${sound.channels} channels`;
+        this.console.append(`imported "${sound.name}" into Sounds${sound.replaced ? ', replacing the one there' : ''}: ${channels}, ${sound.seconds.toFixed(2)} s. Play it with:\n"${sound.name}" sf> play\n`);
+        names.push(sound.name);
+      } catch (e) {
+        this.console.append(`could not import ${file.name}: this browser can't read it as sound${e instanceof Error && e.message ? ` (${e.message})` : ''}\n`);
+      }
+    }
+    if (names.length) await this.documents.syncNow();
+    return names;
+  }
+
   // MARK: running
 
   private connectEngine(): void {
     this.engine.onOutput = text => this.console.append(text);
     this.engine.onBusyChange = busy => { this.busyIndicator.hidden = !busy; };
     this.engine.onOpenFile = path => this.open(path);
+    this.midi = new WebMidi((port, data) => this.engine.midiInput(port, data), text => this.console.append(text));
+    this.engine.onMidiRequest = (request, uid, port) => this.midi.request(request as MidiRequest, uid, port);
     this.engine.onHelp = (builtIn, userDefined) => {
       this.help.add(builtIn, userDefined);
       this.editor.vocabularyChanged();

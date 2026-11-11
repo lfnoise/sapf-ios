@@ -265,8 +265,8 @@ For a variable you’ve defined, you see its value. Turn this off with <strong>H
 <p>Everything is saved as you type. If you change one of the built-in documents, <strong>Revert to Original</strong>
 puts it back. <strong>Log</strong> shows everything you’ve run.</p>
 <p data-platform="ios">Your documents, recordings and spectrograms are in the Files app, under On My iPhone (or iPad) › sapf.</p>
-<p data-platform="web">Your documents, recordings and spectrograms are stored in this browser, on this device. Use the
-Download button when previewing a recording or spectrogram to keep a copy.</p>
+<p data-platform="web">Your documents, recordings, spectrograms and imported sounds are stored in this browser, on this
+device. Use the Download button when previewing a recording or spectrogram to keep a copy.</p>
 
 <h3>Plots, recordings and spectrograms</h3>
 <ul>
@@ -277,6 +277,16 @@ Download button when previewing a recording or spectrogram to keep a copy.</p>
   <li><code>sgram</code> draws a spectrogram of a finite signal, saves it in the Spectrograms folder and shows it. There
     is an example <a href="#sound">below</a>.</li>
 </ul>
+
+<h3 data-platform="web">Sound files and MIDI</h3>
+<p data-platform="web"><strong>Import Sound Files</strong> in the Documents menu, or dropping sound files onto the window,
+brings in WAV, AIFF, MP3, FLAC and anything else this browser can play. Each is saved in the Sounds folder, and
+<code>sf&gt;</code> reads it by name: <code>"drum loop" sf&gt; play</code>. <code>sf&gt;</code> also finds recordings by
+the name they were recorded under.</p>
+<p data-platform="web"><code>midiStart</code> asks to use your MIDI devices and lists them, each with a UID. Connect one to
+an input port (0 to 15) with <code>UID port midiConnectInput</code>, for example <code>123456 0 midiConnectInput</code>;
+then words like <code>mctl</code>, <code>mgate</code> and <code>mlastkey</code> follow it. MIDI works in Chrome, Edge and
+Firefox, but not Safari.</p>
 
 <h3 data-platform="ios">Touch screens and keyboards</h3>
 <h3 data-platform="web">Touch screens</h3>
@@ -299,7 +309,7 @@ while typing, the bar above the keyboard adds the symbols sapf uses, like <code>
 <p>The More menu (⋯) also has text size, the UI mode (light, dark, or following the system), and the audio buffer
 size. A bigger buffer rides out busy moments without glitches, at the cost of a little more delay before you hear a
 change.</p>
-<p data-platform="web">The web version doesn’t have MIDI, audio input, or sound file import.</p>
+<p data-platform="web">The web version doesn’t have audio input.</p>
 
 <h2 id="language">4. The language</h2>
 

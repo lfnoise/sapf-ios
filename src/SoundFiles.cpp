@@ -11,6 +11,9 @@
 #include <atomic>
 #include <mutex>
 #include <algorithm>
+#include <cmath>
+#include <string>
+#include <sys/stat.h>
 #include "Platform.hpp"
 
 extern char gSessionTime[256];
@@ -269,12 +272,14 @@ void sfclose(SoundFileWriter* w)
 #define DR_WAV_IMPLEMENTATION
 #include "../third_party/dr_wav.h"
 
+// The whole file is decoded, and converted to the thread's sample rate, when it's opened: reading happens lazily,
+// possibly on the audio thread, which must not do file I/O or heavy work.
 struct SoundFileReader
 {
-	drwav wav;
-	int numChannels;
-	std::vector<float> interleaved;
-	std::vector<uint8_t> fileData; // the whole file. reading happens lazily, possibly on the audio thread, which must not do file I/O.
+	int numChannels = 0;
+	std::vector<float> samples; // interleaved
+	size_t numFrames = 0;
+	size_t position = 0;
 };
 
 static bool readWholeFile(const char* path, std::vector<uint8_t>& out)
@@ -288,30 +293,78 @@ static bool readWholeFile(const char* path, std::vector<uint8_t>& out)
 	return true;
 }
 
+// Band limited sample rate conversion of interleaved frames, with a Blackman windowed sinc 16 zero crossings wide
+// on each side, cut off just below the lower of the two Nyquist frequencies.
+static std::vector<float> resampleFrames(const std::vector<float>& in, size_t inFrames, int numChannels,
+                                         double inRate, double outRate, size_t& outFrames)
+{
+	const double ratio = outRate / inRate;
+	const double cutoff = std::min(1., ratio) * 0.97;
+	const int kZeroCrossings = 16;
+	const int kPhases = 512; // table entries per zero crossing
+	std::vector<float> kernel(kZeroCrossings * kPhases + 2, 0.f);
+	for (int i = 0; i <= kZeroCrossings * kPhases; ++i) {
+		double x = (double)i / kPhases;
+		double window = 0.42 + 0.5 * cos(M_PI * x / kZeroCrossings) + 0.08 * cos(2. * M_PI * x / kZeroCrossings);
+		double sinc = i == 0 ? 1. : sin(M_PI * x) / (M_PI * x);
+		kernel[i] = (float)(sinc * window);
+	}
+
+	outFrames = (size_t)std::floor((double)inFrames * ratio);
+	std::vector<float> out(outFrames * numChannels);
+	std::vector<double> sum(numChannels);
+	const double halfWidth = kZeroCrossings / cutoff; // in input frames
+	for (size_t j = 0; j < outFrames; ++j) {
+		double t = (double)j / ratio;
+		int64_t first = std::max<int64_t>(0, (int64_t)std::ceil(t - halfWidth));
+		int64_t last = std::min<int64_t>((int64_t)inFrames - 1, (int64_t)std::floor(t + halfWidth));
+		std::fill(sum.begin(), sum.end(), 0.);
+		for (int64_t i = first; i <= last; ++i) {
+			double x = std::abs(t - (double)i) * cutoff * kPhases;
+			size_t k = (size_t)x;
+			if (k >= (size_t)kZeroCrossings * kPhases) continue;
+			double h = kernel[k] + (x - (double)k) * (kernel[k + 1] - kernel[k]);
+			const float* frame = &in[(size_t)i * numChannels];
+			for (int c = 0; c < numChannels; ++c) sum[c] += h * frame[c];
+		}
+		float* frame = &out[j * numChannels];
+		for (int c = 0; c < numChannels; ++c) frame[c] = (float)(sum[c] * cutoff);
+	}
+	return out;
+}
+
 static SoundFileReader* sfopenRead(Thread& th, const char* path, int64_t offset, int& outNumChannels)
 {
-	SoundFileReader* r = new SoundFileReader;
-	if (!readWholeFile(path, r->fileData)) {
+	std::vector<uint8_t> fileData;
+	if (!readWholeFile(path, fileData)) {
 		post("failed to open file '%s'.\n", path);
-		delete r;
 		return nullptr;
 	}
-	if (!drwav_init_memory(&r->wav, r->fileData.data(), r->fileData.size(), nullptr)) {
+	drwav wav;
+	if (!drwav_init_memory(&wav, fileData.data(), fileData.size(), nullptr)) {
 		post("failed to open file '%s'. only WAV files can be read in this version.\n", path);
+		return nullptr;
+	}
+	SoundFileReader* r = new SoundFileReader;
+	r->numChannels = wav.channels;
+	double fileRate = wav.sampleRate;
+	r->samples.resize((size_t)wav.totalPCMFrameCount * wav.channels);
+	r->numFrames = (size_t)drwav_read_pcm_frames_f32(&wav, wav.totalPCMFrameCount, r->samples.data());
+	r->samples.resize(r->numFrames * wav.channels);
+	drwav_uninit(&wav);
+
+	if (r->numChannels < 1) {
+		post("failed to open file '%s'. it has no channels.\n", path);
 		delete r;
 		return nullptr;
 	}
-	if ((double)r->wav.sampleRate != th.rate.sampleRate) {
-		post("warning: '%s' has sample rate %u, which differs from the current rate %g. it will play at the wrong speed.\n",
-			path, (unsigned)r->wav.sampleRate, th.rate.sampleRate);
+	if (fileRate > 0. && fileRate != th.rate.sampleRate) {
+		size_t frames = 0;
+		r->samples = resampleFrames(r->samples, r->numFrames, r->numChannels, fileRate, th.rate.sampleRate, frames);
+		r->numFrames = frames;
 	}
-	if (offset > 0 && !drwav_seek_to_pcm_frame(&r->wav, (drwav_uint64)offset)) {
-		post("seek failed\n");
-		drwav_uninit(&r->wav);
-		delete r;
-		return nullptr;
-	}
-	r->numChannels = r->wav.channels;
+	// the offset is in frames at the thread's rate, as with ExtAudioFile.
+	r->position = (size_t)std::clamp<int64_t>(offset, 0, (int64_t)r->numFrames);
 	outNumChannels = r->numChannels;
 	return r;
 }
@@ -319,18 +372,17 @@ static SoundFileReader* sfopenRead(Thread& th, const char* path, int64_t offset,
 static int sfreadFrames(SoundFileReader* r, double* const* chans, int numFrames)
 {
 	int nc = r->numChannels;
-	r->interleaved.resize((size_t)numFrames * nc);
-	drwav_uint64 got = drwav_read_pcm_frames_f32(&r->wav, (drwav_uint64)numFrames, r->interleaved.data());
-	const float* in = r->interleaved.data();
-	for (int f = 0; f < (int)got; ++f) {
+	int n = (int)std::min<size_t>((size_t)std::max(numFrames, 0), r->numFrames - r->position);
+	const float* in = r->samples.data() + r->position * nc;
+	for (int f = 0; f < n; ++f) {
 		for (int c = 0; c < nc; ++c) chans[c][f] = *in++;
 	}
-	return (int)got;
+	r->position += n;
+	return n;
 }
 
 static void sfcloseRead(SoundFileReader* r)
 {
-	drwav_uninit(&r->wav);
 	delete r;
 }
 
@@ -620,9 +672,35 @@ bool SFReader::pull(Thread& th)
 	return mFinished;
 }
 
+static bool isFile(const std::string& path)
+{
+	struct stat st;
+	return stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode);
+}
+
+// A name that isn't found as given (relative to the current directory) is looked for where >sf writes, so
+// "take1" >sf and then "take1" sf> reads it back, and in $SAPF_SOUNDS. ".wav" is added if it has no extension.
+static std::string findSoundFile(const char* name)
+{
+	std::string given = name;
+	if (given.empty() || given[0] == '/' || isFile(given)) return given;
+	size_t slash = given.rfind('/');
+	bool hasExtension = given.find('.', slash == std::string::npos ? 0 : slash + 1) != std::string::npos;
+	for (const char* var : { "SAPF_SOUNDS", "SAPF_RECORDINGS" }) {
+		const char* dir = getenv(var);
+		if (!dir || !*dir) continue;
+		std::string path = std::string(dir) + "/" + given;
+		if (isFile(path)) return path;
+		if (!hasExtension && isFile(path + ".wav")) return path + ".wav";
+	}
+	if (!hasExtension && isFile(given + ".wav")) return given + ".wav";
+	return given;
+}
+
 void sfread(Thread& th, Arg filename, int64_t offset, int64_t frames)
 {
-	const char* path = ((String*)filename.o())->s;
+	std::string found = findSoundFile(((String*)filename.o())->s);
+	const char* path = found.c_str();
 
 	int numChannels = 0;
 	SoundFileReader* reader = sfopenRead(th, path, offset, numChannels);

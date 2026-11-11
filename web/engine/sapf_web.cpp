@@ -62,6 +62,7 @@ static std::string gPendingOutput;
 static bool gOutputTruncated = false;
 static std::vector<std::string> gPendingResults;   // JSON objects
 static std::vector<std::string> gPendingOpenPaths;
+static std::vector<std::string> gPendingMidiRequests; // JSON arrays
 static std::atomic<int> gQueuedRequests { 0 };
 static std::atomic<int> gAudioState { 0 };           // 0 starting, 1 ready, -1 failed
 
@@ -79,6 +80,18 @@ static void openFileOnPage(const char* path)
 {
 	SpinLocker lock(gOutboxLock);
 	gPendingOpenPaths.emplace_back(path);
+}
+
+static void appendJSONString(std::string& out, const std::string& s);
+
+// The MIDI words ask the page, which has the Web MIDI devices (see Midi.hpp).
+static void midiRequestToPage(const char* request, int uid, int index)
+{
+	std::string json = "[";
+	appendJSONString(json, request);
+	json += "," + std::to_string(uid) + "," + std::to_string(index) + "]";
+	SpinLocker lock(gOutboxLock);
+	gPendingMidiRequests.push_back(json);
 }
 
 static void appendJSONString(std::string& out, const std::string& s)
@@ -366,6 +379,7 @@ EMSCRIPTEN_KEEPALIVE double sapf_start(const char* preludePath, const char* late
 
 	gPostHook = postToPage;
 	gOpenFileHook = openFileOnPage;
+	gMidiRequestHook = midiRequestToPage;
 
 	EmscriptenWebAudioCreateAttributes attributes = {};
 	std::string hint = latencyHint && *latencyHint ? latencyHint : "interactive";
@@ -550,7 +564,7 @@ EMSCRIPTEN_KEEPALIVE void sapf_timing(float* out, int resetPeakLoad)
 }
 
 // Everything that happened since the last poll, as JSON:
-//   { "busy": n, "output": "...", "results": [ {...}, ... ], "open": ["path", ...] }
+//   { "busy": n, "output": "...", "results": [ {...}, ... ], "open": ["path", ...], "midi": [["connect", uid, index], ...] }
 // The returned string stays valid until the next call. Main thread only.
 EMSCRIPTEN_KEEPALIVE const char* sapf_poll()
 {
@@ -558,12 +572,14 @@ EMSCRIPTEN_KEEPALIVE const char* sapf_poll()
 	std::string output;
 	std::vector<std::string> results;
 	std::vector<std::string> openPaths;
+	std::vector<std::string> midiRequests;
 	bool truncated;
 	{
 		SpinLocker lock(gOutboxLock);
 		output.swap(gPendingOutput);
 		results.swap(gPendingResults);
 		openPaths.swap(gPendingOpenPaths);
+		midiRequests.swap(gPendingMidiRequests);
 		truncated = gOutputTruncated;
 		gOutputTruncated = false;
 	}
@@ -581,6 +597,11 @@ EMSCRIPTEN_KEEPALIVE const char* sapf_poll()
 	for (size_t i = 0; i < openPaths.size(); ++i) {
 		if (i) json += ',';
 		appendJSONString(json, openPaths[i]);
+	}
+	json += "],\"midi\":[";
+	for (size_t i = 0; i < midiRequests.size(); ++i) {
+		if (i) json += ',';
+		json += midiRequests[i];
 	}
 	json += "]}";
 	return json.c_str();

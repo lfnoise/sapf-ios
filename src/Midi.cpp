@@ -214,7 +214,7 @@ static void midiProcessPacket(MIDIPacket *pkt, int srcIndex)
 				break;
 			case 0xD0 : //touch
 				a = pkt->data[i+1];
-				post("midi touch %d %d\n", chan+1, a);
+				if (gMidiDebug) post("midi touch %d %d %d\n", srcIndex, chan+1, a);
 				gMidiState[srcIndex][chan].touch = a;
 				i += 2;
 				break;
@@ -551,43 +551,57 @@ void sapfMidiInput(int srcIndex, const uint8_t* data, int length)
 	midiProcessPacket(&pkt, srcIndex);
 }
 
-static void midiNotAvailable()
+void (*gMidiRequestHook)(const char* request, int uid, int index) = nullptr;
+
+static bool askHost(const char* request, int uid = 0, int index = 0)
 {
-	post("MIDI devices are not available in this version of sapf.\n");
+	if (!gMidiRequestHook) {
+		post("MIDI devices are not available in this version of sapf.\n");
+		return false;
+	}
+	gMidiRequestHook(request, uid, index);
+	return true;
 }
 
 static void midiStart_(Thread& th, Prim* prim)
 {
-	gMIDIInitialized = true;
-	midiNotAvailable();
+	memset(gMidiState, 0, sizeof(gMidiState));
+	gMIDIInitialized = askHost("start");
 }
 
 static void midiRestart_(Thread& th, Prim* prim)
 {
-	midiNotAvailable();
+	askHost("restart");
 }
 
 static void midiStop_(Thread& th, Prim* prim)
 {
 	gMIDIInitialized = false;
+	askHost("stop");
 }
 
 static void midiList_(Thread& th, Prim* prim)
 {
-	midiNotAvailable();
+	askHost("list");
 }
 
 static void midiConnectInput_(Thread& th, Prim* prim)
 {
-	th.popInt("midiConnectInput : port");
-	th.popInt("midiConnectInput : sourceUID");
-	midiNotAvailable();
+	int index = (int)th.popInt("midiConnectInput : port");
+	int uid = (int)th.popInt("midiConnectInput : sourceUID");
+	if (index < 0 || index >= kMaxMidiPorts) {
+		post("midiConnectInput : port must be from 0 to %d\n", kMaxMidiPorts - 1);
+		return;
+	}
+	askHost("connect", uid, index);
 }
 
 static void midiDisconnectInput_(Thread& th, Prim* prim)
 {
-	th.popInt("midiDisconnectInput : port");
-	th.popInt("midiDisconnectInput : sourceUID");
+	int index = (int)th.popInt("midiDisconnectInput : port");
+	int uid = (int)th.popInt("midiDisconnectInput : sourceUID");
+	if (index < 0 || index >= kMaxMidiPorts) return;
+	askHost("disconnect", uid, index);
 }
 
 #endif

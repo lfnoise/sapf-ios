@@ -265,6 +265,73 @@ try {
   check('sgram writes to Spectrograms and shows the image', await app(() => window.sapf.documents.exists('/work/Spectrograms/sg-test-144.jpg') && !!document.querySelector('.preview-dialog img')));
   await app(() => window.sapf.preview.close());
 
+  // sound files for sf>: a 441 Hz sine, 1 s, amplitude .5, as a 16 bit WAV at 22050 Hz.
+  const sineAt22k = () => {
+    const rate = 22050, frames = rate, bytes = new Uint8Array(44 + frames * 2), v = new DataView(bytes.buffer);
+    const text = (at, s) => [...s].forEach((ch, i) => v.setUint8(at + i, ch.charCodeAt(0)));
+    text(0, 'RIFF'); v.setUint32(4, 36 + frames * 2, true); text(8, 'WAVE'); text(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true);
+    v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); text(36, 'data'); v.setUint32(40, frames * 2, true);
+    for (let i = 0; i < frames; ++i) v.setInt16(44 + i * 2, Math.round(16383 * Math.sin(2 * Math.PI * 441 * i / rate)), true);
+    return bytes;
+  };
+  // the frames, peak and frequency (from upward zero crossings) of the signal sf> reads.
+  const readSound = name => page.evaluate(async n => {
+    await window.sapf.engine.evaluate(`clear "${n}" sf>`);
+    const { plot } = await window.sapf.engine.plotTopOfStack(60);
+    if (!plot) return null;
+    const x = plot.channels[0];
+    let peak = 0, ups = 0;
+    for (let i = 1; i < x.length; ++i) { peak = Math.max(peak, Math.abs(x[i])); if (x[i - 1] < 0 && x[i] >= 0) ++ups; }
+    return { frames: plot.frameCount, peak, hz: ups * plot.sampleRate / plot.frameCount, rate: plot.sampleRate };
+  }, name);
+  const soundOK = s => !!s && Math.abs(s.frames - s.rate) < s.rate * 0.002 && Math.abs(s.peak - 0.5) < 0.01 && Math.abs(s.hz - 441) < 2;
+
+  const imported = await page.evaluate(async src => {
+    const file = new File([new Uint8Array(src)], 'imp-test.wav', { type: 'audio/wav' });
+    return window.sapf.importSoundFiles([file]);
+  }, Array.from(sineAt22k()));
+  check('Import Sound Files saves it in Sounds and says how to play it',
+    imported[0] === 'imp-test' && await app(() => window.sapf.documents.exists('/work/Sounds/imp-test.wav')) && (await consoleText()).includes('"imp-test" sf> play'));
+  let sound = await readSound('imp-test');
+  check('sf> finds an imported sound by name, converted to the engine\'s rate', soundOK(sound), JSON.stringify(sound));
+  await page.evaluate(src => window.sapf.engine.module.FS.writeFile('/work/Sounds/rate-test.wav', new Uint8Array(src)), Array.from(sineAt22k()));
+  sound = await readSound('rate-test');
+  check('sf> converts a WAV file at another sample rate', soundOK(sound), JSON.stringify(sound));
+  sound = await readSound('rec-test');
+  check('sf> finds a recording by the name it was recorded under', !!sound && sound.frames > 0 && sound.peak > 0.1, JSON.stringify(sound));
+  const notImported = await page.evaluate(async () => window.sapf.importSoundFiles([new File(['not a sound'], 'junk.wav', { type: 'audio/wav' })]));
+  check('a file that is not sound is not imported, and says so', notImported.length === 0 && (await consoleText()).includes('could not import junk.wav'));
+
+  // MIDI, with a stand-in for the browser's Web MIDI
+  await app(() => {
+    const input = { id: 'test-input', name: 'Test Keys', manufacturer: 'Tester', type: 'input', state: 'connected', onmidimessage: null, close: async () => {} };
+    window.midiTestInput = input;
+    const access = { inputs: new Map([[input.id, input]]), outputs: new Map(), addEventListener() {} };
+    Object.defineProperty(navigator, 'requestMIDIAccess', { configurable: true, value: async () => access });
+  });
+  await run('midiStart');
+  await app(() => window.sapf.midi.settled);
+  const uid = /MIDI Source {2}0 'Tester', 'Test Keys' UID: (\d+)/.exec(await consoleText())?.[1];
+  check('midiStart lists the MIDI sources with their UIDs', !!uid && (await consoleText()).includes('midi sources 1 destinations 0'));
+  await run(`${uid} 3 midiConnectInput`);
+  await app(() => window.sapf.midi.settled);
+  await app(() => {
+    const send = bytes => window.midiTestInput.onmidimessage?.({ data: new Uint8Array(bytes) });
+    send([0xB1, 7, 127]);   // controller 7 on channel 2
+    send([0x91, 60, 100]);  // note on, channel 2
+  });
+  await run('clear 3 2 7 0 10 mctl1 = midiCtl  3 2 mlastkey1 = midiKey');
+  const ctl = await app(() => window.sapf.engine.describeWord('midiCtl'));
+  const key = await app(() => window.sapf.engine.describeWord('midiKey'));
+  check('a connected source drives the MIDI unit generators on its input port', ctl === '10' && key === '60', `${ctl} ${key}`);
+  await run('12345 0 midiConnectInput');
+  await app(() => window.sapf.midi.settled);
+  check('connecting an unknown UID says so', (await consoleText()).includes('there is no MIDI source with UID 12345'));
+  await run(`${uid} 3 midiDisconnectInput`);
+  await app(() => window.sapf.midi.settled);
+  check('midiDisconnectInput stops listening to it', await app(() => window.midiTestInput.onmidimessage === null));
+
   // the log, README and All Functions
   check('evaluated code is logged', await app(() => window.sapf.documents.readText('/work/sapf-log.txt').includes('440 = freq')));
   await run('logfile');

@@ -15,6 +15,8 @@ import type { SapfModule } from './engine.ts';
 export const DIRECTORY = '/work';
 export const RECORDINGS = `${DIRECTORY}/Recordings`;
 export const SPECTROGRAMS = `${DIRECTORY}/Spectrograms`;
+/** imported sound files, which sf> finds by name. */
+export const SOUNDS = `${DIRECTORY}/Sounds`;
 export const SCRATCH = `${DIRECTORY}/Scratch.sapf`;
 export const PRELUDE = `${DIRECTORY}/Prelude.sapf`;
 /** every block run, with a timestamp line each hour. Not in the documents list. */
@@ -111,6 +113,7 @@ export class DocumentStore {
 
     this.mkdirs(RECORDINGS);
     this.mkdirs(SPECTROGRAMS);
+    this.mkdirs(SOUNDS);
     this.mkdirs(TMPDIR);
     for (const [from, to] of Object.entries(RENAMED)) {
       const [oldPath, newPath] = [`${DIRECTORY}/${from}`, `${DIRECTORY}/${to}`];
@@ -176,6 +179,14 @@ export class DocumentStore {
 
   readBytes(path: string): Uint8Array {
     return this.fs.readFile(path);
+  }
+
+  /** writes a file, replacing any there. Returns whether one was replaced. */
+  writeBytes(path: string, bytes: Uint8Array): boolean {
+    const replaced = this.exists(path);
+    this.fs.writeFile(path, bytes);
+    this.scheduleSync();
+    return replaced;
   }
 
   writeText(path: string, text: string): void {

@@ -41,7 +41,8 @@ Most of this matches [the iOS app](../ios/README.md).
   - Clear Stack and Clear Console;
   - **Run All Examples**, which runs every example block and the unit tests and writes `example-report.txt`.
 - **Phones and tablets.** On a touch screen the app starts in reading mode on a phone: taps show help and pick the block to run, without bringing up the keyboard. The keyboard button switches to editing, where a key bar above the keyboard has the commands and the symbols sapf uses.
-- **Sound files.** `record`, `>sf`, `>sfo` and `sgram` write to the Recordings and Spectrograms folders and show what they made, with Download.
+- **Sound files.** `record`, `>sf`, `>sfo` and `sgram` write to the Recordings and Spectrograms folders and show what they made, with Download. **Import Sound Files** in the Documents menu, or dropping files on the window, brings in anything the browser can decode (WAV, AIFF, MP3, AAC, FLAC, Ogg, ...). Each is converted to the engine's sample rate and saved as a WAV file in the Sounds folder, where `sf>` finds it by name: `"drum loop" sf> play`.
+- **MIDI.** Web MIDI, in Chrome, Edge, Opera and Firefox (not Safari). `midiStart` asks for permission and lists the sources and destinations as the Mac does, each with a UID; `UID port midiConnectInput` connects a source to an input port (0-15) for `mctl`, `mgate`, `mlastkey` and the rest. A connected source that's unplugged comes back connected when it's plugged in again.
 - **Offline.** After the first visit the app works without a network, and it can be installed as an app.
 
 Your documents are kept in the browser (IndexedDB), per site.
@@ -103,7 +104,7 @@ Stop acts immediately from the page, even during a long evaluation. So do draggi
 - **Load readout:** the browser's audio thread has only a millisecond clock. So the load readout is measured over windows of about 170 ms, and **dropouts are not detected** (the count stays at 0).
 - **Audio interruptions:** if the browser suspends audio while the page is hidden, sounds pick up where they were when you come back.
 - **Keeping code warm:** there is nothing to keep warm.
-- **Sound files:** `sf>` reads WAV and AIFF files from the documents folder, without sample-rate conversion. A file at a different rate plays at the wrong speed, with a warning. There's no way yet to bring your own sound files in.
-- **MIDI:** the MIDI words exist, but no devices are connected. `midiStart` says so. The bridge has an entry point for incoming MIDI bytes (`sapf_midi_input`) for Web MIDI later.
+- **Sound files:** the engine reads only WAV files, so other formats are converted when they're imported. A WAV file at another sample rate is converted when `sf>` reads it. A name `sf>` doesn't find as given (relative to the documents folder) is looked for in Sounds and then Recordings, with `.wav` added if it has no extension. Imported sounds are kept in the browser's storage for the site; there's no way yet to delete them in the app.
+- **MIDI:** input only, as on the Mac (sapf has no words that send MIDI). Web MIDI's port ids are strings, so a source's UID is a hash of its id, which stays the same from visit to visit. System exclusive messages aren't requested.
 - **Long evaluations:** as on iOS, a long-running evaluation can't be cancelled. Stop silences it and the page stays responsive, but later evaluations wait for it to finish, or for a reload.
 - **Previews and sharing:** Quick Look becomes an in-page preview, and sharing becomes Download (or the system share sheet, for All Functions).

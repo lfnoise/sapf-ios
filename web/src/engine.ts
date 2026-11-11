@@ -67,6 +67,8 @@ interface PollResult {
   output: string;
   results: RawResult[];
   open: string[];
+  /** requests from the MIDI words: [request, source UID, input port]. */
+  midi: [string, number, number][];
 }
 
 export interface AudioTiming {
@@ -83,6 +85,8 @@ export class SapfEngine {
   onOutput: (text: string) => void = () => {};
   /** a file the interpreter wants shown (recordings, spectrograms, the README, the log). */
   onOpenFile: (path: string) => void = () => {};
+  /** what the MIDI words ask for (see midi.ts). */
+  onMidiRequest: (request: string, uid: number, port: number) => void = () => {};
   /** whether requests are queued or running. */
   onBusyChange: (busy: boolean) => void = () => {};
   /** new help lines: built-in ones once at startup, user defined ones as they are defined. */
@@ -246,6 +250,13 @@ export class SapfEngine {
     this.module._sapf_set_pointer(x, y, down ? 1 : 0);
   }
 
+  /** incoming MIDI bytes, for the MIDI unit generators reading input port (0-15). Immediate. */
+  midiInput(port: number, data: Uint8Array): void {
+    const p = this.ensureScratch(data.length);
+    new Uint8Array(this.module.wasmMemory.buffer, p, data.length).set(data);
+    this.module._sapf_midi_input(port, p, data.length);
+  }
+
   set muted(muted: boolean) {
     this.module._sapf_set_muted(muted ? 1 : 0);
   }
@@ -297,6 +308,7 @@ export class SapfEngine {
       resolve?.(result);
     }
     for (const path of r.open) this.onOpenFile(path);
+    for (const [request, uid, port] of r.midi ?? []) this.onMidiRequest(request, uid, port);
     this.setBusy(r.busy > 0);
   }
 
