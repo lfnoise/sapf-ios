@@ -104,6 +104,10 @@ export class AudioAnalyzer {
 
     const wasPlaying = this.playingCount > 0;
     this.playingCount = this.engine.copyOutputSamples(this.history);
+    // An unstable filter can put NaN or infinity in the output. Show it as silence: a NaN would otherwise stay in the
+    // smoothed spectrum (and the spectrogram made from it) forever, leaving the displays blank after the sound stops.
+    const h = this.history;
+    for (let i = 0; i < h.length; ++i) if (!Number.isFinite(h[i])) h[i] = 0;
     if (this.playingCount > 0 && !wasPlaying) this.maxRenderLoad = 0;
     this.samples.set(this.history.subarray(this.history.length - FFT_SIZE));
 
@@ -128,7 +132,8 @@ export class AudioAnalyzer {
     const n = FFT_SIZE;
     const half = n / 2;
     for (let i = 0; i < n; ++i) {
-      this.re[i] = this.samples[i] * this.window[i];
+      // clamp to +-1e6 (120 dB) so a blowing-up filter's huge samples can't overflow the single-precision FFT.
+      this.re[i] = Math.min(Math.max(this.samples[i], -1e6), 1e6) * this.window[i];
       this.im[i] = 0;
     }
     fft(this.re, this.im, this.cos, this.sin);
@@ -138,9 +143,10 @@ export class AudioAnalyzer {
     for (let i = 0; i < half; ++i) {
       // bin 0 has no imaginary part; vDSP packs the Nyquist bin there, and the iOS app zeroes it.
       const power = (this.re[i] * this.re[i] + (i === 0 ? 0 : this.im[i] * this.im[i])) * scale;
-      const v = Math.max(10 * Math.log10(Math.max(power, 1e-12)), MIN_DB);
-      // fast attack, slow release, so the display doesn't flicker.
-      const old = this.spectrumDB[i];
+      const db = 10 * Math.log10(Math.max(power, 1e-12));
+      const v = Number.isFinite(db) ? Math.max(db, MIN_DB) : MIN_DB;
+      // fast attack, slow release, so the display doesn't flicker. (A bad value must never stay in here.)
+      const old = Number.isFinite(this.spectrumDB[i]) ? this.spectrumDB[i] : MIN_DB;
       this.spectrumDB[i] = v > old ? v : old + (v - old) * 0.25;
     }
   }

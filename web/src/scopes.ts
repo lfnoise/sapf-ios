@@ -534,6 +534,11 @@ export class WaveformView extends ScopeBaseView {
         this.envelopeMax = new Float32Array(blocks);
       }
       engine.copyOutputEnvelope(this.envelopeMin, this.envelopeMax);
+      // as in the analyzer, show NaN or infinity from an unstable filter as silence rather than blanking the trace.
+      for (let i = 0; i < blocks; ++i) {
+        if (!Number.isFinite(this.envelopeMin[i])) this.envelopeMin[i] = 0;
+        if (!Number.isFinite(this.envelopeMax[i])) this.envelopeMax[i] = 0;
+      }
       const columns = this.columnCount;
       const perColumn = blocks / columns;
       ranges = [];

@@ -81,6 +81,13 @@ final class AudioAnalyzer {
             SapfEngine.shared.copyOutputSamples($0.baseAddress!, count: $0.count)
         }
         if playingCount > 0 && !wasPlaying { maxRenderLoad = 0 }
+        // An unstable filter can put NaN or infinity in the output. Show it as silence, and clamp huge samples to
+        // +-1e6 (120 dB) so they can't overflow the single-precision FFT: a NaN would otherwise stay in the smoothed
+        // spectrum (and the spectrogram made from it) forever, leaving the displays blank afterwards.
+        for i in history.indices {
+            let v = history[i]
+            history[i] = v.isFinite ? min(max(v, -1e6), 1e6) : 0
+        }
         samples.withUnsafeMutableBufferPointer { dst in
             history.withUnsafeBufferPointer { src in
                 dst.baseAddress!.update(from: src.baseAddress! + (src.count - dst.count), count: dst.count)
@@ -137,8 +144,8 @@ final class AudioAnalyzer {
 
         // Fast attack, slow release, so the display doesn't flicker.
         for i in 0..<half {
-            let v = max(magnitudes[i], Self.minDB)
-            let old = spectrumDB[i]
+            let v = magnitudes[i].isFinite ? max(magnitudes[i], Self.minDB) : Self.minDB
+            let old = spectrumDB[i].isFinite ? spectrumDB[i] : Self.minDB
             spectrumDB[i] = v > old ? v : old + (v - old) * 0.25
         }
     }
