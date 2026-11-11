@@ -225,8 +225,10 @@ try {
   // Expand Selection, with the keyboard
   await app(() => { const e = window.sapf.editor; e.setText('x (1 [2 3] +) play\ny\n\nz'); e.view.dispatch({ selection: { anchor: 6 } }); e.view.focus(); });
   const steps = [];
+  // the editor's shortcut key: Command on a Mac, Control elsewhere (as on GitHub's Linux machines).
+  const modKey = (await app(() => /Mac|iPhone|iPad/.test(navigator.platform))) ? 'Meta' : 'Control';
   for (let i = 0; i < 5; ++i) {
-    await page.keyboard.down('Meta'); await page.keyboard.press('b'); await page.keyboard.up('Meta');
+    await page.keyboard.down(modKey); await page.keyboard.press('b'); await page.keyboard.up(modKey);
     steps.push(await app(() => { const s = window.sapf.editor.view.state; const r = s.selection.main; return s.doc.sliceString(r.from, r.to); }));
   }
   check('Expand Selection (Cmd-B) grows by brackets, then the block', JSON.stringify(steps) === JSON.stringify(['2 3', '[2 3]', '1 [2 3] +', '(1 [2 3] +)', 'x (1 [2 3] +) play\ny']), JSON.stringify(steps));
