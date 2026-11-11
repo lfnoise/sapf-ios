@@ -14,7 +14,15 @@ BUILD_DIR="$REPO_DIR/build/web"
 if ! command -v emcmake >/dev/null 2>&1; then
 	EMSDK="${EMSDK:-$HOME/emsdk}"
 	if [ -f "$EMSDK/emsdk_env.sh" ]; then
-		. "$EMSDK/emsdk_env.sh" >/dev/null 2>&1
+		# emsdk_env.sh finds its own folder only in bash, zsh and ksh; elsewhere (dash, the sh of Ubuntu and so of
+		# GitHub's runners) it uses the current folder. So source it from there.
+		cd "$EMSDK"
+		. ./emsdk_env.sh >/dev/null
+		cd "$WEB_DIR"
+		if ! command -v emcmake >/dev/null 2>&1; then
+			echo "emcmake still not found after sourcing $EMSDK/emsdk_env.sh." >&2
+			exit 1
+		fi
 	else
 		echo "Emscripten not found. Install emsdk (https://emscripten.org/docs/getting_started/downloads.html) or set EMSDK." >&2
 		exit 1
