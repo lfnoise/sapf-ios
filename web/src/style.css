@@ -314,6 +314,14 @@ button { font: inherit; color: inherit; }
 .editor .bar-gutter .cm-gutterElement { padding: 0; }
 .editor .cm-panels { background: var(--secondary-background); color: var(--text); border-color: var(--separator); }
 .editor .cm-panels input, .editor .cm-panels button { font: inherit; font-size: 13px; }
+/* CodeMirror's own field and button styles assume a light theme: its fields inherit the panel's text colour
+   but keep the browser's white background, and its buttons have a light gradient. Use the app's colours. */
+.editor .cm-panels .cm-textfield { background: var(--background); color: var(--text); border: 1px solid var(--separator); border-radius: 6px; }
+.editor .cm-panels .cm-textfield::placeholder { color: var(--tertiary-text); }
+.editor .cm-panels .cm-button { background: var(--fill); background-image: none; color: var(--text); border: 1px solid var(--separator); border-radius: 6px; }
+.editor .cm-panels .cm-button:active { background: var(--fill-strong); }
+.editor .cm-panels input[type=checkbox] { accent-color: var(--accent); }
+.editor .cm-panels button[name=close] { color: var(--secondary-text); }
 .editor .cm-searchMatch { background: rgba(255, 204, 0, 0.35); }
 .editor .cm-searchMatch-selected { background: rgba(255, 149, 0, 0.55); }
 
