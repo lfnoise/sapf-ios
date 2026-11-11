@@ -225,7 +225,9 @@ try {
   await page.click('.tool-button.documents');
   const docMenu = await app(() => [...document.querySelectorAll('.menu-item')].map(b => b.textContent.trim()));
   check('the Documents menu lists documents and offers Revert for a changed built-in',
-    ['Scratch', 'Examples', 'Builtin Examples', 'Prelude', 'Untitled'].every(n => docMenu.some(t => t.endsWith(n))) && docMenu.some(t => t.includes('Revert to Original')), JSON.stringify(docMenu));
+    ['Scratch', 'Examples', 'Builtin Function Examples', 'Prelude', 'Untitled'].every(n => docMenu.some(t => t.endsWith(n))) && docMenu.some(t => t.includes('Revert to Original')), JSON.stringify(docMenu));
+  const order = ['Scratch', 'Examples', 'Builtin Function Examples', 'Prelude', 'Untitled'].map(n => docMenu.findIndex(t => t.replace(/^\W+/, '') === n));
+  check('built-in documents are listed first, Examples before Builtin Function Examples', order.every((i, k) => i >= 0 && (k === 0 || i > order[k - 1])), JSON.stringify(docMenu));
   await app(() => [...document.querySelectorAll('.menu-item')].find(b => b.textContent.includes('Revert to Original')).click());
   await sleep(100);
   await app(() => [...document.querySelectorAll('.dialog-button')].find(b => b.textContent === 'Revert').click());
@@ -241,6 +243,21 @@ try {
   const after = await app(() => ({ doc: window.sapf.currentDocument, text: window.sapf.editor.text, sel: window.sapf.editor.view.state.selection.main.head }));
   check('documents, the current document and its position persist across reload',
     after.doc === '/work/Untitled.sapf' && after.text === '1 2 3 + +\n\n4 5 *\n' && after.sel === 12, JSON.stringify(after));
+
+  // a built-in document saved under its old name is renamed, keeping its edits, and stays the current document
+  await app(() => {
+    const fs = window.sapf.engine.module.FS;
+    fs.unlink('/work/Builtin Function Examples.sapf');
+    fs.writeFile('/work/Builtin Examples.sapf', '; my edits\n');
+    window.sapf.loadDocument('/work/Scratch.sapf');
+    localStorage.setItem('currentDocument', JSON.stringify('Builtin Examples.sapf'));
+  });
+  await app(() => window.sapf.documents.syncNow());
+  await page.reload();
+  await ready();
+  const renamed = await app(() => ({ doc: window.sapf.currentDocument, text: window.sapf.editor.text, old: window.sapf.documents.exists('/work/Builtin Examples.sapf') }));
+  check('a built-in saved under its old name is renamed, with its edits', renamed.doc === '/work/Builtin Function Examples.sapf' && renamed.text === '; my edits\n' && !renamed.old, JSON.stringify(renamed));
+  await app(() => { window.sapf.documents.restoreOriginal('/work/Builtin Function Examples.sapf', 'sapf-bif-examples.txt'); window.sapf.loadDocument('/work/Untitled.sapf'); });
 
   // UI Mode
   await page.click('.tool-button.more');

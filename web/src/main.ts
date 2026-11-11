@@ -15,7 +15,7 @@ import { CodeEditor, type Position } from './editor.ts';
 import { ConsoleBuffer } from './console.ts';
 import { AudioAnalyzer } from './analyzer.ts';
 import { WaveformView, SpectrumView, SpectrogramView, WaveformState, Plot } from './scopes.ts';
-import { DocumentStore, DIRECTORY, RECORDINGS, SPECTROGRAMS, PRELUDE, LOG, README, TMPDIR, SCRATCH, BUNDLED, title, baseName, extensionOf } from './documents.ts';
+import { DocumentStore, DIRECTORY, RECORDINGS, SPECTROGRAMS, PRELUDE, LOG, README, TMPDIR, SCRATCH, BUNDLED, RENAMED, title, baseName, extensionOf } from './documents.ts';
 import { PreviewDialog } from './preview.ts';
 import { showFunctionList } from './functionList.ts';
 import { ExampleRunner } from './exampleRunner.ts';
@@ -120,6 +120,7 @@ class App {
     status.textContent = 'Loading your documents…';
     this.documents = new DocumentStore(this.engine.module, BASE);
     await this.documents.setUp();
+    this.followRenamedDocuments();
     try { (this.engine.module.FS as unknown as { chdir(p: string): void }).chdir(DIRECTORY); } catch { /* not fatal */ }
 
     this.analyzer = new AudioAnalyzer(this.engine);
@@ -523,6 +524,20 @@ class App {
   }
 
   // MARK: documents
+
+  /** the saved current document and positions refer to documents by name, so follow built-ins that were renamed. */
+  private followRenamedDocuments(): void {
+    let changed = false;
+    for (const [from, to] of Object.entries(RENAMED)) {
+      if (load('currentDocument', '') === from) save('currentDocument', to);
+      if (this.positions[from] && !this.positions[to]) {
+        this.positions[to] = this.positions[from];
+        delete this.positions[from];
+        changed = true;
+      }
+    }
+    if (changed) save('documentPositions', this.positions);
+  }
 
   refreshDocuments(): void {
     this.documentList = this.documents.list();

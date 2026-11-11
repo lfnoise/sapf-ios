@@ -23,12 +23,17 @@ export const LOG = `${DIRECTORY}/sapf-log.txt`;
 export const README = '/cache/README.txt';
 export const TMPDIR = '/tmp';
 
-/** documents copied from the bundled files, and the bundled file names. */
+/** documents copied from the bundled files, and the bundled file names, in the order the Documents menu lists them. */
 export const BUNDLED: [string, string][] = [
   [`${DIRECTORY}/Examples.sapf`, 'sapf-examples.txt'],
-  [`${DIRECTORY}/Builtin Examples.sapf`, 'sapf-bif-examples.txt'],
+  [`${DIRECTORY}/Builtin Function Examples.sapf`, 'sapf-bif-examples.txt'],
   [PRELUDE, 'sapf-prelude.txt'],
 ];
+
+/** built-in documents that were renamed: old file name to new. Existing copies are renamed, keeping any edits. */
+export const RENAMED: Record<string, string> = {
+  'Builtin Examples.sapf': 'Builtin Function Examples.sapf',
+};
 
 export const WELCOME = `; Welcome to sapf.
 ; Put the cursor in a block of code and press Run (or Cmd-Return / Ctrl-Return).
@@ -104,6 +109,10 @@ export class DocumentStore {
     this.mkdirs(RECORDINGS);
     this.mkdirs(SPECTROGRAMS);
     this.mkdirs(TMPDIR);
+    for (const [from, to] of Object.entries(RENAMED)) {
+      const [oldPath, newPath] = [`${DIRECTORY}/${from}`, `${DIRECTORY}/${to}`];
+      if (this.exists(oldPath) && !this.exists(newPath)) this.fs.rename(oldPath, newPath);
+    }
     for (const [path, resource] of BUNDLED) {
       if (!this.exists(path)) this.restoreOriginal(path, resource);
     }
@@ -132,7 +141,7 @@ export class DocumentStore {
     return BUNDLED.filter(([path, resource]) => this.isModified(path, resource)).map(b => b[0]);
   }
 
-  /** all editable documents: Scratch first, then the rest in Finder order. */
+  /** all editable documents: Scratch first, then the built-in ones in their order, then the rest in Finder order. */
   list(): string[] {
     let names: string[] = [];
     try {
@@ -145,7 +154,8 @@ export class DocumentStore {
       .filter(n => ['sapf', 'txt'].includes(extensionOf(n)) && n !== baseName(LOG))
       .sort(collator.compare)
       .map(n => `${DIRECTORY}/${n}`);
-    return [SCRATCH, ...docs.filter(p => p !== SCRATCH)];
+    const builtIns = BUNDLED.map(b => b[0]).filter(p => docs.includes(p));
+    return [SCRATCH, ...builtIns, ...docs.filter(p => p !== SCRATCH && !builtIns.includes(p))];
   }
 
   newDocumentPath(): string {

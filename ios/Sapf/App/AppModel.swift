@@ -22,12 +22,16 @@ struct DocumentStore {
     /// documents list, so it can't be edited while blocks are appended to it.
     static let log = directory.appendingPathComponent("sapf-log.txt")
 
-    /// Documents copied from the app bundle, and their original resource names.
+    /// Documents copied from the app bundle, and their original resource names, in the order the
+    /// Documents menu lists them.
     static let bundled: [(URL, String)] = [
         (directory.appendingPathComponent("Examples.sapf"), "sapf-examples"),
-        (directory.appendingPathComponent("Builtin Examples.sapf"), "sapf-bif-examples"),
+        (directory.appendingPathComponent("Builtin Function Examples.sapf"), "sapf-bif-examples"),
         (prelude, "sapf-prelude"),
     ]
+
+    /// Built-in documents that were renamed: old file name to new. Existing copies are renamed, keeping any edits.
+    static let renamed = ["Builtin Examples.sapf": "Builtin Function Examples.sapf"]
 
     static func setUp() {
         let fm = FileManager.default
@@ -39,6 +43,12 @@ struct DocumentStore {
         }
         try? fm.createDirectory(at: recordings, withIntermediateDirectories: true)
         try? fm.createDirectory(at: spectrograms, withIntermediateDirectories: true)
+        for (from, to) in renamed {
+            let (old, new) = (directory.appendingPathComponent(from), directory.appendingPathComponent(to))
+            if fm.fileExists(atPath: old.path) && !fm.fileExists(atPath: new.path) {
+                try? fm.moveItem(at: old, to: new)
+            }
+        }
         for (url, resource) in bundled where !fm.fileExists(atPath: url.path) {
             restoreOriginal(url, resource: resource)
         }
@@ -79,14 +89,18 @@ struct DocumentStore {
         return FileManager.default.contentsEqual(atPath: url.path, andPath: source.path) == false
     }
 
-    /// All editable documents: Scratch first, then the rest alphabetically.
+    /// All editable documents: Scratch first, then the built-in ones in their order, then the rest alphabetically.
     static func list() -> [URL] {
         let urls = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
         let docs = urls.filter {
             ["sapf", "txt"].contains($0.pathExtension.lowercased()) && $0.lastPathComponent != log.lastPathComponent
         }
             .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
-        return [scratch] + docs.filter { $0.lastPathComponent != scratch.lastPathComponent }
+        // By name: URLs for the same file can differ (e.g. /private/var and /var).
+        let builtInNames = bundled.map { $0.0.lastPathComponent }
+        let builtIns = builtInNames.compactMap { name in docs.first { $0.lastPathComponent == name } }
+        let others = docs.filter { $0.lastPathComponent != scratch.lastPathComponent && !builtInNames.contains($0.lastPathComponent) }
+        return [scratch] + builtIns + others
     }
 
     static func newDocumentURL() -> URL {
@@ -309,6 +323,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         applyUIMode()
 
         DocumentStore.setUp()
+        followRenamedDocuments()
         setenv("SAPF_RECORDINGS", DocumentStore.recordings.path, 1)
         setenv("SAPF_SPECTROGRAMS", DocumentStore.spectrograms.path, 1)
         setenv("SAPF_TMPDIR", NSTemporaryDirectory(), 1)
@@ -409,6 +424,20 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     }
 
     // MARK: Documents
+
+    /// The saved current document and positions refer to documents by name, so follow built-ins that were renamed.
+    private func followRenamedDocuments() {
+        for (from, to) in DocumentStore.renamed {
+            if savedDocumentName == from { savedDocumentName = to }
+            if let position = positions[from], positions[to] == nil {
+                positions[to] = position
+                positions[from] = nil
+                if let data = try? JSONEncoder().encode(positions) {
+                    UserDefaults.standard.set(data, forKey: "documentPositions")
+                }
+            }
+        }
+    }
 
     func refreshDocuments() {
         documents = DocumentStore.list()

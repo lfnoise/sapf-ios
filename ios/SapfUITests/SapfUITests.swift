@@ -232,12 +232,12 @@ final class SapfUITests: XCTestCase {
     }
 
     func testRevertBuiltInFile() {
-        openDocument("Builtin Examples")
+        openDocument("Builtin Function Examples")
         app.buttons["Documents"].firstMatch.tap()
         XCTAssertFalse(app.buttons["Revert to Original…"].exists, "nothing to revert yet")
         // Close the menu by choosing the current document in it. The title button of the same name is
         // behind the menu and can't be tapped.
-        app.collectionViews.buttons["Builtin Examples"].firstMatch.tap()
+        app.collectionViews.buttons["Builtin Function Examples"].firstMatch.tap()
 
         if app.buttons["Edit"].exists { app.buttons["Edit"].tap() } // phones start out reading
         app.textViews.firstMatch.tap()
