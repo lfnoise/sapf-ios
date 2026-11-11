@@ -26,3 +26,5 @@ xcshareddata/
 *.xcuserstate
 ios/Sapf.xcodeproj/xcuserdata/
 ios/Sapf.xcodeproj/project.xcworkspace/xcuserdata/
+# The iOS app's shared scheme, so command-line builds and tests find it in a fresh clone.
+!ios/Sapf.xcodeproj/xcshareddata/

@@ -10,8 +10,14 @@ final class SapfUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = ["-currentDocument", "Scratch.sapf"]
+        // Start each test from a fresh install's documents, not whatever earlier runs left behind.
+        app.launchArguments = ["-resetDocuments", "YES", "-currentDocument", "Scratch.sapf"]
         app.launch()
+    }
+
+    /// Quick Look's close button: "Done" on older systems, an ✕ with this identifier on newer ones.
+    private var previewCloseButton: XCUIElement {
+        app.buttons.matching(NSPredicate(format: "identifier == 'QLOverlayDoneButtonAccessibilityIdentifier' OR label == 'Done'")).firstMatch
     }
 
     private func screenshot(_ name: String) {
@@ -229,7 +235,9 @@ final class SapfUITests: XCTestCase {
         openDocument("Builtin Examples")
         app.buttons["Documents"].firstMatch.tap()
         XCTAssertFalse(app.buttons["Revert to Original…"].exists, "nothing to revert yet")
-        app.buttons["Builtin Examples"].firstMatch.tap() // close the menu
+        // Close the menu by choosing the current document in it. The title button of the same name is
+        // behind the menu and can't be tapped.
+        app.collectionViews.buttons["Builtin Examples"].firstMatch.tap()
 
         if app.buttons["Edit"].exists { app.buttons["Edit"].tap() } // phones start out reading
         app.textViews.firstMatch.tap()
@@ -237,6 +245,7 @@ final class SapfUITests: XCTestCase {
         sleep(2) // saved after a second
 
         app.buttons["Documents"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Revert to Original…"].waitForExistence(timeout: 5), "the changed file can be reverted")
         app.buttons["Revert to Original…"].firstMatch.tap()
         app.buttons["Revert"].firstMatch.tap()
         sleep(1)
@@ -258,12 +267,10 @@ final class SapfUITests: XCTestCase {
     func testReadmeFromMoreMenu() {
         app.buttons["More"].firstMatch.tap()
         app.buttons["README"].firstMatch.tap()
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'sapf'")).firstMatch.waitForExistence(timeout: 5)
-                      || app.textViews.containing(NSPredicate(format: "value CONTAINS 'sapf'")).firstMatch.waitForExistence(timeout: 1),
-                      "the README is showing")
+        XCTAssertTrue(app.navigationBars["README"].waitForExistence(timeout: 5), "the README is showing")
         sleep(1)
         screenshot("readme")
-        app.buttons["Done"].firstMatch.tap()
+        previewCloseButton.tap()
     }
 
     func testListAllFunctions() {
@@ -284,7 +291,11 @@ final class SapfUITests: XCTestCase {
         _ = newDocument(with: "440 0 sinosc .2 * play\n\n220 0 sinosc .1 * play")
         app.buttons["More"].firstMatch.tap()
         app.buttons["Find"].firstMatch.tap()
-        app.typeText("sinosc")
+        // The find bar's field doesn't always have the keyboard yet, so tap it before typing.
+        let field = app.searchFields["find.searchField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3), "the find bar is showing")
+        field.tap()
+        field.typeText("sinosc")
         let count = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS '1/2' OR label CONTAINS '1 of 2'")).firstMatch
         XCTAssertTrue(count.waitForExistence(timeout: 3), "both matches found")
         screenshot("editor-find")
@@ -296,11 +307,11 @@ final class SapfUITests: XCTestCase {
         app.buttons["Hide keyboard"].firstMatch.tap()
         app.buttons["Run block"].firstMatch.tap()
         // The logfile word opens the log as a preview, not as a document.
-        XCTAssertTrue(app.buttons["Done"].firstMatch.waitForExistence(timeout: 5), "logfile shows the log")
+        XCTAssertTrue(previewCloseButton.waitForExistence(timeout: 5), "logfile shows the log")
         let logged = NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", marker, marker)
         XCTAssertTrue(app.descendants(matching: .any).matching(logged).firstMatch.exists, "the block is in the log")
         screenshot("log")
-        app.buttons["Done"].firstMatch.tap()
+        previewCloseButton.tap()
         app.buttons["Documents"].firstMatch.tap()
         XCTAssertFalse(app.buttons["sapf-log"].exists, "the log isn't an editable document")
     }

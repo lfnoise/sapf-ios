@@ -31,6 +31,12 @@ struct DocumentStore {
 
     static func setUp() {
         let fm = FileManager.default
+        // The UI tests launch with -resetDocuments YES so each starts with a fresh install's documents.
+        if UserDefaults.standard.bool(forKey: "resetDocuments") {
+            for item in (try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? [] {
+                try? fm.removeItem(at: item)
+            }
+        }
         try? fm.createDirectory(at: recordings, withIntermediateDirectories: true)
         try? fm.createDirectory(at: spectrograms, withIntermediateDirectories: true)
         for (url, resource) in bundled where !fm.fileExists(atPath: url.path) {
