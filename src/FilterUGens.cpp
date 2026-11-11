@@ -797,8 +797,8 @@ struct LPF : public Gen
 				Z a1 = a0inv * (-2. * cs);
 				Z a2 = a0inv * (1. - alpha);
 				Z b1 = a0inv * (1. - cs);
-				Z b0 = a0inv * (.5 * b1);
-				Z b2 = a0inv * b0;
+				Z b0 = .5 * b1; // b1 is already divided by a0
+				Z b2 = b0;
 				for (int i = 0; i < n; ++i) {
 				
 					Z x0 = *in;
