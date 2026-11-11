@@ -10,9 +10,46 @@ final class SapfUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
         app = XCUIApplication()
-        // Start each test from a fresh install's documents, not whatever earlier runs left behind.
-        app.launchArguments = ["-resetDocuments", "YES", "-currentDocument", "Scratch.sapf"]
+        // Start each test from a fresh install's documents, not whatever earlier runs left behind, and
+        // without the guide that opens the first time.
+        app.launchArguments = ["-resetDocuments", "YES", "-currentDocument", "Scratch.sapf", "-guideShown", "YES"]
         app.launch()
+    }
+
+    func testGuide() {
+        app.terminate()
+        app.launchArguments = ["-resetDocuments", "YES", "-currentDocument", "Scratch.sapf", "-guideShown", "NO"]
+        app.launch()
+        let guide = app.webViews["Guide"]
+        XCTAssertTrue(guide.waitForExistence(timeout: 10), "the guide opens the first time")
+        let run = guide.buttons["Run this example"].firstMatch
+        XCTAssertTrue(run.waitForExistence(timeout: 10), "its examples have Run buttons")
+        run.tap()
+        if app.buttons["Console"].exists { app.buttons["Console"].tap() }
+        let console = app.textViews["Console"]
+        expectation(for: NSPredicate(format: "value CONTAINS '800 0 sinosc .3 * play'"), evaluatedWith: console)
+        waitForExpectations(timeout: 5)
+        screenshot("guide")
+        app.navigationBars.buttons["Stop"].tap()
+
+        guide.links["List All Functions"].firstMatch.tap()
+        XCTAssertTrue(app.textViews["All Functions"].waitForExistence(timeout: 5), "the guide links to List All Functions")
+        // The function list's Done, not the guide's, which is labelled Done too.
+        app.navigationBars["All Functions"].buttons["Done"].tap()
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: app.textViews["All Functions"])
+        waitForExpectations(timeout: 5)
+
+        app.buttons["Close Guide"].tap()
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: guide)
+        waitForExpectations(timeout: 5) // Done closes the guide
+        // On a phone the Guide is in the ⋯ menu; on an iPad it's on the toolbar too.
+        if app.navigationBars.buttons["Guide"].exists {
+            app.navigationBars.buttons["Guide"].tap()
+        } else {
+            app.buttons["More"].firstMatch.tap()
+            app.buttons["Guide"].firstMatch.tap()
+        }
+        XCTAssertTrue(guide.waitForExistence(timeout: 5), "it opens again")
     }
 
     /// Quick Look's close button: "Done" on older systems, an ✕ with this identifier on newer ones.

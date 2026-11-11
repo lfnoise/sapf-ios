@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sapf Guide</title>
+<!--
+    SAPF - Sound As Pure Form
+    Copyright (C) 2019 James McCartney
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+    The guide shown by the iOS and web apps. It is self-contained (no external files), so it works offline.
+    Inside an app, code examples get Run buttons and the links marked data-action ask the app to do things:
+    the page sends {action, ...} to window.webkit.messageHandlers.sapf on iOS, or to the parent window on the web.
+-->
+<style>
+  :root {
+    --background: #ffffff;
+    --text: #1d1d1f;
+    --secondary-text: #5f6368;
+    --code-background: #f4f4f6;
+    --code-text: #1d1d1f;
+    --comment: #6b7a8a;
+    --rule: #dcdce0;
+    --accent: #0a66d8;
+    --run: #1f8f3a;
+    --note-background: #eef4fd;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --background: #1c1c1e;
+      --text: #f2f2f7;
+      --secondary-text: #a1a1a8;
+      --code-background: #2c2c2e;
+      --code-text: #f2f2f7;
+      --comment: #8e9aa8;
+      --rule: #3a3a3c;
+      --accent: #5aa2ff;
+      --run: #43c463;
+      --note-background: #1f2a3a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --background: #1c1c1e;
+    --text: #f2f2f7;
+    --secondary-text: #a1a1a8;
+    --code-background: #2c2c2e;
+    --code-text: #f2f2f7;
+    --comment: #8e9aa8;
+    --rule: #3a3a3c;
+    --accent: #5aa2ff;
+    --run: #43c463;
+    --note-background: #1f2a3a;
+    color-scheme: dark;
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 46em; margin: 0 auto; padding: 8px 16px 64px; }
+  h1 { font-size: 1.9em; margin: 0.6em 0 0.2em; letter-spacing: -0.01em; }
+  h2 { font-size: 1.4em; margin: 2em 0 0.4em; padding-top: 0.6em; border-top: 1px solid var(--rule); }
+  h3 { font-size: 1.1em; margin: 1.6em 0 0.3em; }
+  p, li { max-width: 40em; }
+  a { color: var(--accent); }
+  .lede { font-size: 1.12em; color: var(--secondary-text); margin-top: 0; }
+  code, pre, kbd { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+  code { background: var(--code-background); padding: 0.1em 0.3em; border-radius: 4px; }
+  kbd { border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.35em; white-space: nowrap; }
+  pre {
+    position: relative;
+    background: var(--code-background);
+    color: var(--code-text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    /* long lines wrap at spaces, clear of the Run button, rather than scrolling under it. */
+    white-space: pre-wrap;
+    line-height: 1.45;
+    tab-size: 4;
+  }
+  pre .comment { color: var(--comment); }
+  .hosted pre.run { padding-right: 76px; }
+  .run-button {
+    position: absolute; top: 6px; right: 6px;
+    display: inline-flex; align-items: center; gap: 4px;
+    font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--run); background: var(--background);
+    border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; cursor: pointer;
+  }
+  .run-button:active { opacity: 0.6; }
+  .note { background: var(--note-background); border-radius: 8px; padding: 10px 14px; margin: 1em 0; }
+  .note p { margin: 0.3em 0; }
+  nav.contents ol { padding-left: 1.4em; }
+  nav.contents li { margin: 0.15em 0; }
+  table { border-collapse: collapse; margin: 0.8em 0; }
+  th, td { text-align: left; vertical-align: top; padding: 5px 14px 5px 0; border-bottom: 1px solid var(--rule); }
+  th { font-weight: 600; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 1em 0; }
+  .action-button {
+    font: 600 15px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--accent); background: var(--code-background);
+    border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; cursor: pointer; text-decoration: none;
+  }
+  /* actions need the app; outside it they read as plain text. */
+  :root:not(.hosted) [data-action] { color: inherit; pointer-events: none; text-decoration: none; }
+  :root:not(.hosted) .actions { display: none; }
+  [data-platform] { display: none; }
+  :root[data-platform-shown="ios"] [data-platform="ios"],
+  :root[data-platform-shown="web"] [data-platform="web"] { display: revert; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>sapf Guide</h1>
+<p class="lede">sapf, “sound as pure form”, is a language for creating and transforming sound. This guide explains the
+idea behind it, how to use the app, and the language itself.</p>
+
+<div class="actions">
+  <a href="#" class="action-button" data-action="functions">List All Functions</a>
+  <a href="#" class="action-button" data-action="open" data-document="Examples">Open Examples</a>
+  <a href="#" class="action-button" data-action="open" data-document="Builtin Function Examples">Open Builtin Function Examples</a>
+</div>
+
+<nav class="contents" aria-label="Contents">
+  <ol>
+    <li><a href="#idea">The idea</a></li>
+    <li><a href="#first-sound">Your first sound</a></li>
+    <li><a href="#app">Using the app</a></li>
+    <li><a href="#language">The language</a></li>
+    <li><a href="#sound">Making sound</a></li>
+    <li><a href="#help">Getting help</a></li>
+    <li><a href="#next">Where to go next</a></li>
+  </ol>
+</nav>
+
+<h2 id="idea">1. The idea</h2>
+
+<p>In sapf, a sound is a value. You build it by combining functions, the way you would build a number with arithmetic,
+and then you listen to it. A short program can describe a rich, changing sound.</p>
+
+<p>Four ideas make that possible:</p>
+<ul>
+  <li><strong>Postfix, on a stack.</strong> Values go onto a stack and functions take their arguments from it, as in
+    FORTH or Joy. You write <code>2 3 +</code> rather than <code>2 + 3</code>, and a program reads left to right as a
+    pipeline: start with a value, then transform it, step by step.</li>
+  <li><strong>Lazy, possibly infinite sequences.</strong> Audio signals and streams of control values are lists that
+    are computed only as they're needed, so they can go on forever.</li>
+  <li><strong>Automatic mapping.</strong> As in APL, functions apply themselves across lists. Give an oscillator a list
+    of two frequencies and you get two oscillators, which play in stereo. You almost never write a loop.</li>
+  <li><strong>Immutable values.</strong> Nearly nothing can be changed once made, so sounds can be computed on several
+    threads at once safely.</li>
+</ul>
+
+<h2 id="first-sound">2. Your first sound</h2>
+
+<p><span data-platform="ios">Tap</span><span data-platform="web">Click</span> <strong>Run</strong> beside this
+example to hear a sine wave, and <strong>Stop</strong> (■ in the toolbar) to stop it.</p>
+
+<pre class="run">800 0 sinosc .3 * play</pre>
+
+<p>Read it left to right:</p>
+<ol>
+  <li><code>800</code> and <code>0</code> go onto the stack: a frequency of 800 Hz and a starting phase of 0.</li>
+  <li><code>sinosc</code> takes them and leaves a sine wave signal on the stack.</li>
+  <li><code>.3 *</code> multiplies the signal by 0.3, making it quieter.</li>
+  <li><code>play</code> sends it to the speakers.</li>
+</ol>
+
+<p>Now something that moves. Here the frequency of the sine wave is itself a signal: a slow sawtooth wave sweeping it
+between 300 and 700 Hz.</p>
+
+<pre class="run">.5 0 lfsaw 200 * 500 + 0 sinosc .2 * play</pre>
+
+<p>And a classic: “analog bubbles”, from SuperCollider. The list <code>[8 7.23]</code> makes two of everything, one
+for each speaker.</p>
+
+<pre class="run">.4 0 lfsaw 2 * [8 7.23] 0 lfsaw .25 * 5/3 + + ohz 0 sinosc .04 * .2 0 4 combn play</pre>
+
+<h2 id="app">3. Using the app</h2>
+
+<h3>The window</h3>
+<p>The editor holds your code. Next to it, or below it on a narrow screen, are the <strong>console</strong> and three
+<strong>scopes</strong>:</p>
+<ul>
+  <li>The <strong>console</strong> shows the code you ran (after <code>sapf&gt;</code>), anything it printed, and then
+    what’s left on the stack.</li>
+  <li><strong>Scope</strong> shows the sound as it plays, like an oscilloscope.
+    <span data-platform="ios">Pinch to zoom; double-tap to go back.</span><span data-platform="web">Scroll or pinch to
+    zoom; double-click to go back.</span></li>
+  <li><strong>Spectrum</strong> shows how loud each frequency is, and <strong>Sonogram</strong> shows the spectrum over
+    time.</li>
+</ul>
+<p>Dragging on any of the scopes controls <code>mousex</code> and <code>mousey</code>, so you can play a sound with your
+<span data-platform="ios">finger</span><span data-platform="web">mouse or finger</span>:</p>
+<pre class="run">300 1000 xmousex 0 sinosc .2 * play</pre>
+<p>Drag the divider between the editor and the panel to give either more room. On a small screen, the panel shows one
+of these at a time; choose with the buttons at its top.</p>
+
+<h3>Running code</h3>
+<p>Code runs a <strong>block</strong> at a time. A block is a run of lines with no blank line between them. Blank lines
+inside brackets don’t end a block, so a long expression in brackets can be spread over several lines.</p>
+<ul>
+  <li>Put the cursor in a block and press <strong>Run</strong> (▶ in the toolbar), or <kbd><span class="mod">⌘</span>Return</kbd>.</li>
+  <li>Or use the ▶ in the margin beside each block. <span data-platform="ios">Touch and hold</span><span data-platform="web">Right-click</span>
+    it to select or copy the block instead.</li>
+  <li>If text is selected, Run runs just the selection. <kbd>Shift-Return</kbd> runs the current line.</li>
+  <li><strong>Stop</strong> (■ in the toolbar), <kbd><span class="mod">⌘</span>.</kbd>, or the word <code>stop</code>
+    stops every sound.</li>
+</ul>
+<p>Each run starts with the stack left by the one before. <strong>Clear Stack</strong> in the More menu (⋯) empties
+it, as does the word <code>clear</code>.</p>
+
+<h3>Help on any word</h3>
+<p><span data-platform="ios">Tap</span><span data-platform="web">Click</span> a word in the editor to see its help.
+For a variable you’ve defined, you see its value. Turn this off with <strong>Help on Tap</strong> in the More menu.</p>
+
+<h3>Documents</h3>
+<p>The <strong>Documents</strong> menu (the folder button, or the document’s name at the top) lists your documents:</p>
+<ul>
+  <li><strong>Scratch</strong>, for trying things out.</li>
+  <li><strong>Examples</strong>: hundreds of example sounds, from simple to elaborate.</li>
+  <li><strong>Builtin Function Examples</strong>: short examples of the built-in functions.</li>
+  <li><strong>Prelude</strong>: definitions loaded each time sapf starts. You can add your own; changes take effect the
+    next time the app starts.</li>
+  <li>Documents you make with <strong>New Document</strong>.</li>
+</ul>
+<p>Everything is saved as you type. If you change one of the built-in documents, <strong>Revert to Original</strong>
+puts it back. <strong>Log</strong> shows everything you’ve run.</p>
+<p data-platform="ios">Your documents, recordings and spectrograms are in the Files app, under On My iPhone (or iPad) › sapf.</p>
+<p data-platform="web">Your documents, recordings and spectrograms are stored in this browser, on this device. Use the
+Download button when previewing a recording or spectrogram to keep a copy.</p>
+
+<h3>Plots, recordings and spectrograms</h3>
+<ul>
+  <li><strong>Plot Top of Stack</strong> (More menu, or <kbd>Shift-<span class="mod">⌘</span>P</kbd>) draws the signal on
+    top of the stack in the Scope, so you can look at it without playing it.</li>
+  <li><code>record</code> plays a sound and records it. When you stop it, the recording is saved in the Recordings
+    folder and shown so you can listen to it: <code>440 0 sinosc .3 * "my-sound" record</code>.</li>
+  <li><code>sgram</code> draws a spectrogram of a finite signal, saves it in the Spectrograms folder and shows it. There
+    is an example <a href="#sound">below</a>.</li>
+</ul>
+
+<h3 data-platform="ios">Touch screens and keyboards</h3>
+<h3 data-platform="web">Touch screens</h3>
+<p>On a touch screen the editor starts out for reading, so tapping shows help without bringing up the keyboard. The
+bar under the editor has Run, Stop, Expand Selection, Plot and Find. Tap the keyboard button in the toolbar to edit;
+while typing, the bar above the keyboard adds the symbols sapf uses, like <code>[ ] \ @ `</code>.</p>
+
+<h3>Keyboard shortcuts</h3>
+<table>
+  <tr><th>Run the block, or the selection</th><td><kbd><span class="mod">⌘</span>Return</kbd></td></tr>
+  <tr><th>Run the line</th><td><kbd>Shift-Return</kbd></td></tr>
+  <tr><th>Stop all sound</th><td><kbd><span class="mod">⌘</span>.</kbd></td></tr>
+  <tr><th>Expand the selection to the enclosing brackets, then the block</th><td><kbd><span class="mod">⌘</span>B</kbd></td></tr>
+  <tr><th>Plot the top of the stack</th><td><kbd>Shift-<span class="mod">⌘</span>P</kbd></td></tr>
+  <tr><th>Find</th><td><kbd><span class="mod">⌘</span>F</kbd></td></tr>
+  <tr data-platform="ios"><th>Bigger and smaller text</th><td><kbd>⌘+</kbd> <kbd>⌘−</kbd></td></tr>
+</table>
+
+<h3>Settings</h3>
+<p>The More menu (⋯) also has text size, the UI mode (light, dark, or following the system), and the audio buffer
+size. A bigger buffer rides out busy moments without glitches, at the cost of a little more delay before you hear a
+change.</p>
+<p data-platform="web">The web version doesn’t have MIDI, audio input, or sound file import.</p>
+
+<h2 id="language">4. The language</h2>
+
+<p>The examples in this section print their results in the console. Comments after <code>--&gt;</code> show what you
+should see. Most start with <code>clear</code>, which empties the stack, so you see only their own results.</p>
+
+<h3>The stack</h3>
+<p>Numbers go onto the stack. A word like <code>+</code> takes its arguments off the stack and puts its result back.</p>
+<pre class="run">clear 2 3 +        ; --> 5</pre>
+<pre class="run">clear 2 3 4 * +    ; --> 14   (3 times 4, then plus 2)</pre>
+<p>There is no operator precedence: everything happens in the order written. A few words rearrange the stack:
+<code>aa</code> duplicates the top item, <code>ba</code> swaps the top two, <code>clear</code> removes everything, and
+<code>cleard</code> removes everything but the top.</p>
+<pre class="run">clear 3 aa *   ; --> 9</pre>
+
+<h3>Comments and parentheses</h3>
+<p>A semicolon starts a comment that runs to the end of the line. Parentheses group code to make it easier to read;
+they don’t change what it does.</p>
+<pre class="run">clear (2 3 +) 4 *   ; --> 20</pre>
+
+<h3>Numbers</h3>
+<p>Besides the usual <code>1</code>, <code>2.5</code>, <code>.5</code> and <code>3.4e-3</code>, numbers can have a
+suffix that scales them: <code>k</code> (×1000), <code>M</code> (×1,000,000), <code>h</code> (×100), <code>c</code>
+(×0.01), <code>m</code> (×0.001), <code>u</code> (×0.000001) and <code>pi</code>. A fraction with no spaces is a single
+number.</p>
+<pre class="run">clear 1.5k 53m 5/4 2pi   ; --> 1500 0.053 1.25 6.28319</pre>
+
+<h3>Words and variables</h3>
+<p>Everything that isn’t a number, string or bracket is a word. When a word runs, sapf looks up its value: a function is
+applied, and anything else is put on the stack. <code>=</code> before a word binds the value on top of the stack to it.</p>
+<pre class="run">clear 5 = x   x x *   ; --> 25</pre>
+<p>Bind several values at once with parentheses, or take values out of a list with brackets:</p>
+<pre class="run">clear 1 2 3 = (a b c)   c b a   ; --> 3 2 1</pre>
+<pre class="run">clear [4 5 6] = [d e f]   f e d   ; --> 6 5 4</pre>
+<p>Bindings can’t be changed, except at the top level, outside any brackets. Inside brackets, a binding lasts until the
+closing bracket.</p>
+<p>Strings are written in double quotes: <code>"hello"</code>.</p>
+
+<h3>Lists</h3>
+<p>Square brackets make a list. The code inside runs, and whatever it leaves on the stack becomes the list.</p>
+<pre class="run">clear [1 2 + 3 4 *]   ; --> [3 12]</pre>
+<p>There are two kinds of list. A plain list, <code>[…]</code>, is a <strong>stream</strong> and can hold anything. A list
+written <code>#[…]</code> is a <strong>signal</strong> and holds only numbers; audio is made of signals.</p>
+<p>Lists are lazy, so they can be infinite. <code>ord</code> is all the counting numbers, and <code>N</code> takes the
+first few items of a list.</p>
+<pre class="run">clear ord 5 N        ; --> [1 2 3 4 5]
+1 5 to               ; --> [1 2 3 4 5]</pre>
+
+<h3>Functions</h3>
+<p>A backslash, argument names, and a body in brackets make a function. It isn’t run until it’s applied with
+<code>!</code>, or bound to a word and that word is used.</p>
+<pre class="run">clear 3 4 \a b [a b + a b *] !   ; --> 7 12</pre>
+<pre class="run">clear \x [x x *] = square
+7 square   ; --> 49</pre>
+<p>A string after the arguments is the function’s help, shown when you <span data-platform="ios">tap</span><span
+data-platform="web">click</span> its name:</p>
+<pre>\a b "(a b --> sum product) the sum and product of a and b." [a b + a b *] = sumprod</pre>
+<p>The body runs on an empty stack: it sees only its arguments, not the rest of the caller’s stack.</p>
+
+<h3>Automatic mapping</h3>
+<p>Most functions that expect a single number apply themselves to each item when given a list instead.</p>
+<pre class="run">clear [1 2 3] 10 *          ; --> [10 20 30]
+[1 2 3] [10 20 30] +        ; --> [11 22 33]
+[0 2] 4 to                  ; --> [[0 1 2 3 4] [2 3 4]]</pre>
+<p>This works over infinite lists too: <code>ord 2 *</code> is all the even numbers.</p>
+
+<h3>The each operator, @</h3>
+<p><code>@</code> after a value makes the next function apply to each of its items, rather than to the whole list.</p>
+<pre class="run">clear [[1 2 3] [4 5 6]] reverse     ; --> [[4 5 6] [1 2 3]]
+[[1 2 3] [4 5 6]] @ reverse         ; --> [[3 2 1] [6 5 4]]</pre>
+<p>Putting <code>@</code> on one argument gives an outer product:</p>
+<pre class="run">clear [1 2] @ [10 20] +   ; --> [[11 21] [12 22]]</pre>
+<p><code>@1</code> and <code>@2</code> say which list is the outer loop, and <code>@@</code> maps two levels deep.</p>
+
+<h3>Reducing and scanning</h3>
+<p>Put <code>/</code> after a two-argument math operator to combine a whole list, <code>\</code> to keep the running
+results, and <code>^</code> to apply it to each neighbouring pair.</p>
+<pre class="run">clear [1 2 3 4] +/       ; --> 10
+[1 2 3 4] +\             ; --> [1 3 6 10]
+[1 2 3 4 5 6] +^         ; --> [1 3 5 7 9 11]</pre>
+
+<h3>Forms</h3>
+<p>A form is a set of named values, written in braces with each name after a colon. A comma before a name gets that
+value out of the form on the stack. A form can inherit from another by putting it first.</p>
+<pre class="run">clear {:freq 440 :amp .2} = note
+note ,freq   ; --> 440
+{note :amp .5} = loud
+loud ,freq loud ,amp   ; --> 440 0.5</pre>
+
+<h3>Quoting</h3>
+<p>A mark before a word changes what happens to it:</p>
+<table>
+  <tr><th><code>`sin</code></th><td>puts the function <code>sin</code> on the stack, without applying it</td></tr>
+  <tr><th><code>'sin</code></th><td>puts the symbol <code>sin</code> on the stack</td></tr>
+  <tr><th><code>,name</code></th><td>gets the value named <code>name</code> from the form on the stack</td></tr>
+  <tr><th><code>.name</code></th><td>gets the value named <code>name</code> from the form on the stack and applies it</td></tr>
+  <tr><th><code>=name</code></th><td>binds the value on top of the stack to <code>name</code></td></tr>
+</table>
+
+<h2 id="sound">5. Making sound</h2>
+
+<div class="note">
+  <p>Sounds play until you stop them, and each Run adds another, so press Stop between examples.</p>
+</div>
+
+<h3>Oscillators, filters and effects</h3>
+<p>Functions that make or process signals are called unit generators. Oscillators such as <code>sinosc</code>,
+<code>saw</code> and <code>lfsaw</code> take a frequency and a phase. Filters such as <code>lpf</code> (low pass) and
+<code>rlpf</code> (resonant low pass) take a signal and a cutoff frequency. Here, a sawtooth wave through a low pass
+filter whose cutoff is swept by another oscillator:</p>
+<pre class="run">100 0 saw  .25 0 sinosc 1500 * 2000 +  .1 rlpf  .2 * play</pre>
+<p>Any argument can be a signal, which is how sounds change over time.</p>
+
+<h3>Stereo and multi-channel expansion</h3>
+<p>Give a unit generator a list, and it makes one for each item. Two items are left and right. These two sawtooth waves
+are 1 Hz apart, so they beat against each other:</p>
+<pre class="run">[300 301] 0 saw .3 * play</pre>
+<p>A list of more than two channels is mixed down to stereo.</p>
+
+<h3>Rhythm and envelopes</h3>
+<p><code>impulse</code> makes a click at a given rate, and <code>decay</code> turns each click into a fading envelope.
+Multiply a tone by the envelope for a repeating note:</p>
+<pre class="run">4 0 impulse .2 decay  1000 0 sinosc *  .3 * play</pre>
+
+<h3>Pitches and chords</h3>
+<p><code>nnhz</code> converts MIDI note numbers to frequencies, and automatic mapping does the rest. <code>+/</code> adds
+the three sine waves into one chord:</p>
+<pre class="run">[60 64 67] nnhz 0 sinosc .1 * +/ play</pre>
+
+<h3>Randomness</h3>
+<p><code>rand</code> picks a random number between two values; given lists, it picks one for each pair. Run this a
+few times and each chord is different:</p>
+<pre class="run">[48 55 60] [60 67 72] rand nnhz 0 sinosc .1 * +/ play</pre>
+
+<h3>Looking at a sound</h3>
+<p><code>sgram</code> draws a spectrogram of a finite signal and saves it as an image. <code>N</code> takes the first
+48000 samples, one second at 48 kHz; <code>120</code> is the quietest level to show, in dB.</p>
+<pre class="run">100 0 saw 48000 N 120 "saw" sgram</pre>
+
+<h2 id="help">6. Getting help</h2>
+<ul>
+  <li><span data-platform="ios">Tap</span><span data-platform="web">Click</span> any word in the editor to see its help.</li>
+  <li><strong><a href="#" data-action="functions">List All Functions</a></strong>, also in the More menu, lists every
+    built-in function and every one you’ve defined, with its help. You can search it.</li>
+  <li>In code, <code>`sinosc help</code> prints the help for one function (note the backquote), and <code>helpall</code>
+    prints it all.</li>
+</ul>
+<p>A function’s help starts with its arguments and results, like <code>(freq phase --&gt; out)</code>. Before that,
+unit generators and many other functions have a list of letters, one per argument, saying how it maps over lists:</p>
+<table>
+  <tr><th><code>z</code></th><td>a signal or a number. A stream (a plain list) here makes one of the function for each item.</td></tr>
+  <tr><th><code>k</code></th><td>a single number. Any list here, signal or stream, makes one of the function for each item.</td></tr>
+  <tr><th><code>a</code></th><td>taken as it is, with no mapping.</td></tr>
+</table>
+<p>So <code>sinosc</code>, whose help begins <code>@zz (freq phase --&gt; out)</code>, takes signals for both its
+frequency and phase, and makes several oscillators when given a list.</p>
+
+<h2 id="next">7. Where to go next</h2>
+<ul>
+  <li><strong><a href="#" data-action="open" data-document="Examples">Examples</a></strong>: run them, change the
+    numbers, and listen to what happens. That’s the best way to learn sapf.</li>
+  <li><strong><a href="#" data-action="open" data-document="Builtin Function Examples">Builtin Function Examples</a></strong>:
+    a short example of each built-in function.</li>
+  <li><strong><a href="#" data-action="functions">List All Functions</a></strong>: everything sapf can do.</li>
+  <li><strong><a href="#" data-action="open" data-document="Prelude">Prelude</a></strong>: functions written in sapf
+    itself, which show how larger pieces are put together.</li>
+  <li>The <strong><a href="#" data-action="readme">README</a></strong>: the language reference, with more detail on
+    each part of the language.</li>
+</ul>
+
+</main>
+<script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var root = document.documentElement;
+    var theme = params.get('theme');
+    if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
+
+    // The app shows this page in a web view (iOS) or a frame (web), and listens for messages.
+    var handler = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.sapf;
+    var send = null;
+    if (handler) send = function (m) { handler.postMessage(m); };
+    else if (window.parent !== window) send = function (m) { window.parent.postMessage({ sapfGuide: m }, '*'); };
+    if (send) root.classList.add('hosted');
+
+    var platform = (window.sapfHost && window.sapfHost.platform) || params.get('platform') || 'web';
+    root.dataset.platformShown = platform;
+    var mac = /Mac|iPhone|iPad/.test(navigator.platform) || navigator.userAgent.indexOf('Mac') >= 0;
+    var mods = document.querySelectorAll('.mod');
+    for (var i = 0; i < mods.length; ++i) mods[i].textContent = mac ? '⌘' : 'Ctrl-';
+
+    // grey out comments in the code.
+    var pres = document.querySelectorAll('pre');
+    for (var j = 0; j < pres.length; ++j) {
+      var pre = pres[j];
+      var code = pre.textContent;
+      pre.dataset.code = code;
+      pre.textContent = '';
+      code.split('\n').forEach(function (line, n) {
+        if (n > 0) pre.appendChild(document.createTextNode('\n'));
+        var k = line.indexOf(';');
+        pre.appendChild(document.createTextNode(k < 0 ? line : line.slice(0, k)));
+        if (k >= 0) {
+          var span = document.createElement('span');
+          span.className = 'comment';
+          span.textContent = line.slice(k);
+          pre.appendChild(span);
+        }
+      });
+      if (send && pre.classList.contains('run')) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'run-button';
+        b.textContent = '▶ Run';
+        b.setAttribute('aria-label', 'Run this example');
+        b.addEventListener('click', (function (c) { return function () { send({ action: 'run', code: c }); }; })(code));
+        pre.appendChild(b);
+      }
+    }
+
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('[data-action]');
+      if (!a) return;
+      e.preventDefault();
+      if (!send) return;
+      var m = { action: a.dataset.action };
+      if (a.dataset.document) m.document = a.dataset.document;
+      send(m);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && send) send({ action: 'close' });
+    });
+  })();
+</script>
+</body>
+</html>

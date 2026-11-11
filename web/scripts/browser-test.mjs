@@ -119,6 +119,26 @@ try {
   check('audio worklet running', await app(() => window.sapf.engine.audioState === 1));
   check('Scratch opens first, with run buttons beside its blocks', await app(() => window.sapf.currentDocument === '/work/Scratch.sapf' && document.querySelectorAll('.run-block').length === 3));
 
+  // the guide: shown over the editor on the first visit (in prod the first visit was the tab before the reload)
+  if (!prod) check('the guide opens on the first visit', await app(() => !document.querySelector('.guide-pane').hidden));
+  await app(() => window.sapf.showGuide());
+  const guide = await (await page.$('.guide-pane iframe')).contentFrame();
+  await guide.waitForSelector('.run-button', { timeout: 10000 });
+  check('the guide has Run buttons on its examples', (await guide.$$eval('.run-button', b => b.length)) > 20);
+  await guide.click('.run-button'); // the first one: 800 0 sinosc .3 * play
+  await sleep(800);
+  const guidePeak = await scopePeak();
+  check("a Run button in the guide plays its example", guidePeak > 0.25 && guidePeak < 0.35, `peak ${guidePeak.toFixed(3)}`);
+  await page.click('.tool-button.stop');
+  await sleep(300);
+  check('Stop in the toolbar silences it, with the guide showing', (await scopePeak()) < 1e-6);
+  await guide.click('[data-action="functions"]');
+  await sleep(300);
+  check('the guide links to List All Functions', await app(() => document.querySelectorAll('.function-list p.entry').length > 300));
+  await app(() => document.querySelector('.function-list-dialog').close());
+  await page.click('.guide-bar .text-button');
+  check('Done closes the guide', await app(() => document.querySelector('.guide-pane').hidden));
+
   // the margin run button
   await page.click('.run-block');
   await sleep(800);

@@ -184,6 +184,10 @@ struct ContentView: View {
                         ReadingBar(editor: model.editor).frame(height: 46)
                     }
                 }
+                // Over the editor, so the console and scopes stay in view while you try its examples.
+                .overlay {
+                    if model.showsGuide { GuidePane() }
+                }
             if wide {
                 Divider()
                 sideColumn(height: height)
@@ -283,6 +287,11 @@ struct ContentView: View {
         // Left side, so that on a small phone it doesn't push Stop off the right.
         ToolbarItemGroup(placement: .navigationBarLeading) {
             Menu { documentMenu } label: { Label("Documents", systemImage: "folder") }
+            // A phone's toolbar has no room for it: it would push Stop into an overflow menu. There, the
+            // Guide is first in the ⋯ menu.
+            if sizeClass != .compact {
+                Button { model.showsGuide ? model.closeGuide() : model.showGuide() } label: { Label("Guide", systemImage: "book") }
+            }
             if model.isEditing {
                 Button { model.stopEditing() } label: { Label("Hide keyboard", systemImage: "keyboard.chevron.compact.down") }
             } else {
@@ -304,6 +313,7 @@ struct ContentView: View {
             Menu {
                 if sizeClass == .compact {
                     runButton
+                    Button { model.showGuide() } label: { Label("Guide", systemImage: "book") }
                 }
                 Toggle(isOn: $model.showsHelpOnTap) { Label("Help on Tap", systemImage: "questionmark.bubble") }
                 Section {
@@ -336,7 +346,10 @@ struct ContentView: View {
                 }
                 .keyboardShortcut("p", modifiers: [.command, .shift])
                 Section {
-                    Button { model.previewURL = DocumentStore.readme } label: { Label("README", systemImage: "book") }
+                    if sizeClass != .compact {
+                        Button { model.showGuide() } label: { Label("Guide", systemImage: "book") }
+                    }
+                    Button { model.previewURL = DocumentStore.readme } label: { Label("README", systemImage: "doc.text") }
                     Button { model.showAllFunctions() } label: { Label("List All Functions", systemImage: "list.bullet.rectangle") }
                     Button { model.clearStack() } label: { Label("Clear Stack", systemImage: "square.stack.3d.up.slash") }
                     Button { model.console.clear() } label: { Label("Clear Console", systemImage: "trash") }

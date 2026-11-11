@@ -35,7 +35,10 @@ export const RENAMED: Record<string, string> = {
   'Builtin Examples.sapf': 'Builtin Function Examples.sapf',
 };
 
-export const WELCOME = `; Welcome to sapf.
+/** the guide, in the bundled files. */
+export const GUIDE = 'sapf-guide.html';
+
+export const WELCOME = `; Welcome to sapf. The Guide (the book button) explains it, with examples to try.
 ; Put the cursor in a block of code and press Run (or Cmd-Return / Ctrl-Return).
 ; Click a word to see its help. Stop sounds with the stop button (or Cmd-. / Ctrl-.).
 ; Drag on the waveform or spectrum to control mousex and mousey.
@@ -113,6 +116,8 @@ export class DocumentStore {
       const [oldPath, newPath] = [`${DIRECTORY}/${from}`, `${DIRECTORY}/${to}`];
       if (this.exists(oldPath) && !this.exists(newPath)) this.fs.rename(oldPath, newPath);
     }
+    // fetch the guide now so the service worker keeps it for offline use.
+    void fetch(`${this.assetBase}sapf/${GUIDE}`).catch(() => {});
     for (const [path, resource] of BUNDLED) {
       if (!this.exists(path)) this.restoreOriginal(path, resource);
     }

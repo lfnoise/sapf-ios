@@ -15,7 +15,7 @@ import { CodeEditor, type Position } from './editor.ts';
 import { ConsoleBuffer } from './console.ts';
 import { AudioAnalyzer } from './analyzer.ts';
 import { WaveformView, SpectrumView, SpectrogramView, WaveformState, Plot } from './scopes.ts';
-import { DocumentStore, DIRECTORY, RECORDINGS, SPECTROGRAMS, PRELUDE, LOG, README, TMPDIR, SCRATCH, BUNDLED, RENAMED, title, baseName, extensionOf } from './documents.ts';
+import { DocumentStore, DIRECTORY, RECORDINGS, SPECTROGRAMS, PRELUDE, LOG, README, TMPDIR, SCRATCH, BUNDLED, RENAMED, GUIDE, title, baseName, extensionOf } from './documents.ts';
 import { PreviewDialog } from './preview.ts';
 import { showFunctionList } from './functionList.ts';
 import { ExampleRunner } from './exampleRunner.ts';
@@ -53,7 +53,14 @@ const icons = {
   run: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>',
   stop: '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="5.5" y="5.5" width="13" height="13" rx="2" fill="currentColor"/></svg>',
   more: svg('<circle cx="12" cy="12" r="9.5"/><circle cx="8" cy="12" r=".6" fill="currentColor"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><circle cx="16" cy="12" r=".6" fill="currentColor"/>'),
+  book: svg('<path d="M12 6.5C10 5 7.5 4.5 3.5 4.5v13c4 0 6.5.5 8.5 2 2-1.5 4.5-2 8.5-2v-13c-4 0-6.5.5-8.5 2z"/><path d="M12 6.5v13"/>'),
 };
+
+/** what the guide page asks for, in messages posted to this window. */
+type GuideMessage =
+  | { action: 'run'; code: string }
+  | { action: 'stop' | 'functions' | 'readme' | 'close' }
+  | { action: 'open'; document: string };
 
 class App {
   engine!: SapfEngine;
@@ -101,6 +108,8 @@ class App {
   private busyIndicator!: HTMLElement;
   private banner!: HTMLElement;
   private tabPicker!: HTMLElement;
+  private guidePane!: HTMLElement;
+  private guideFrame!: HTMLIFrameElement;
 
   async start(): Promise<void> {
     this.applyUIMode();
@@ -138,6 +147,8 @@ class App {
 
     await started;
     this.layout();
+    // the first time, open the guide, unless launched to do something else.
+    if (!load('guideShown', false) && !this.params.has('evaluate') && !this.params.has('runExamples')) this.showGuide();
     void this.handleLaunchParameters();
   }
 
@@ -171,7 +182,8 @@ class App {
     this.editorWrap = document.createElement('div');
     this.editorWrap.className = 'editor-wrap';
     this.readingBar = this.editor.makeBar(false);
-    this.editorWrap.append(this.editor.element, this.readingBar);
+    this.guidePane = this.buildGuidePane();
+    this.editorWrap.append(this.editor.element, this.readingBar, this.guidePane);
     this.keyBar = this.editor.makeBar(true);
     this.keyBar.hidden = true;
     document.body.append(this.keyBar);
@@ -232,6 +244,7 @@ class App {
     };
     const documents = button('documents', 'Documents', icons.folder, b => showMenu(b, this.documentMenu(), 'Documents'));
     documents.setAttribute('aria-haspopup', 'menu');
+    const guide = button('guide', 'Guide', icons.book, () => this.guidePane.hidden ? this.showGuide() : this.closeGuide());
     this.editButton = button('edit-toggle', 'Edit', icons.keyboard, () => this.setEditing(!this.editor.isEditing));
     this.titleButton = document.createElement('button');
     this.titleButton.type = 'button';
@@ -250,7 +263,7 @@ class App {
 
     const leading = document.createElement('div');
     leading.className = 'toolbar-group';
-    leading.append(documents, this.editButton);
+    leading.append(documents, guide, this.editButton);
     const trailing = document.createElement('div');
     trailing.className = 'toolbar-group trailing';
     trailing.append(this.busyIndicator, this.runButton, stop, more);
@@ -301,6 +314,7 @@ class App {
       { label: 'Find', shortcut: `${mod}F`, action: () => this.editor.showFind() },
       { label: 'Plot Top of Stack', shortcut: `⇧${mod}P`, action: () => void this.plotTopOfStack() },
       'separator',
+      { label: 'Guide', action: () => this.showGuide() },
       { label: 'README', action: () => this.preview.show(README) },
       { label: 'List All Functions', action: () => showFunctionList(this.help.allHelpText()) },
       { label: 'Clear Stack', action: () => void this.clearStack() },
@@ -310,6 +324,61 @@ class App {
       { caption: `sapf ${this.engine.version} · ${Math.round(this.engine.sampleRate)} Hz` },
     );
     return entries;
+  }
+
+  // MARK: the guide
+
+  /**
+   * The guide pane, over the editor: a bar with Done, and the guide page in a frame, loaded when first shown. The
+   * toolbar, with Stop, and the console and scopes stay in view.
+   */
+  private buildGuidePane(): HTMLElement {
+    const pane = document.createElement('section');
+    pane.className = 'guide-pane';
+    pane.hidden = true;
+    pane.setAttribute('aria-label', 'Guide');
+    pane.innerHTML = '<div class="guide-bar"><span class="guide-title">sapf Guide</span><button type="button" class="text-button bold">Done</button></div>';
+    pane.querySelector('.text-button')!.addEventListener('click', () => this.closeGuide());
+    this.guideFrame = document.createElement('iframe');
+    this.guideFrame.title = 'sapf Guide';
+    pane.append(this.guideFrame);
+    window.addEventListener('message', e => {
+      if (e.source !== this.guideFrame.contentWindow || e.origin !== location.origin) return;
+      const m = (e.data as { sapfGuide?: GuideMessage } | null)?.sapfGuide;
+      if (m) this.guideAsked(m);
+    });
+    return pane;
+  }
+
+  showGuide(): void {
+    closeMenu();
+    if (!this.guideFrame.src) {
+      const theme = this.uiMode === 'Auto' ? '' : `&theme=${this.uiMode.toLowerCase()}`;
+      this.guideFrame.src = `${BASE}sapf/${GUIDE}?platform=web${theme}`;
+    }
+    this.editor.hideTooltip();
+    this.editor.blur();
+    this.guidePane.hidden = false;
+    save('guideShown', true);
+  }
+
+  closeGuide(): void {
+    this.guidePane.hidden = true;
+  }
+
+  private guideAsked(m: GuideMessage): void {
+    switch (m.action) {
+      case 'run': if (typeof m.code === 'string') this.evaluate(m.code); break;
+      case 'stop': this.stop(); break;
+      case 'functions': showFunctionList(this.help.allHelpText()); break;
+      case 'readme': this.preview.show(README); break;
+      case 'close': this.closeGuide(); break;
+      case 'open': {
+        const path = this.documents.list().find(p => title(p) === m.document);
+        if (path) { this.closeGuide(); this.loadDocument(path); }
+        break;
+      }
+    }
   }
 
   private buildDivider(): HTMLElement {
@@ -510,9 +579,12 @@ class App {
   }
 
   private applyUIMode(): void {
-    const root = document.documentElement;
-    if (this.uiMode === 'Auto') root.removeAttribute('data-theme');
-    else root.dataset.theme = this.uiMode.toLowerCase();
+    // the guide, if it's loaded, follows too.
+    for (const root of [document.documentElement, this.guideFrame?.contentDocument?.documentElement]) {
+      if (!root) continue;
+      if (this.uiMode === 'Auto') root.removeAttribute('data-theme');
+      else root.dataset.theme = this.uiMode.toLowerCase();
+    }
   }
 
   /** a browser picks its own audio buffer; this asks for a latency to match, which takes effect on reload. */
@@ -708,7 +780,12 @@ class App {
       if (!modKey) return;
       const inField = (e.target as HTMLElement).closest?.('input, textarea, dialog');
       if (e.key === '.') { e.preventDefault(); this.stop(); }
-      else if (e.key === 'Enter' && !inField) { e.preventDefault(); this.editor.evaluate(true); }
+      else if (e.key === 'Enter' && !inField) {
+        // not the block hidden under the guide.
+        if (!this.guidePane.hidden) return;
+        e.preventDefault();
+        this.editor.evaluate(true);
+      }
       else if (e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); void this.plotTopOfStack(); }
       else return;
       closeMenu();

@@ -46,6 +46,10 @@ After adding or removing source files, regenerate it:
   without bringing the keyboard back. On a phone, reading is the starting mode.
 - **Drag the handle** above the bottom panel to resize it. While typing on a phone, the panel
   shrinks to a waveform, which has its own handle.
+- **The Guide** (the book button in the toolbar, or the ⋯ menu) explains the idea behind sapf, the
+  app and the language, with examples you can run from it. It opens over the editor, so the console
+  and scopes stay in view, and it links to List All Functions and the example documents. It opens
+  by itself the first time the app starts. It is `sapf-guide.html`, shared with the web version.
 - **README** in the ⋯ menu shows sapf's README (also `readme`), without the sections on installing
   and running from the command line.
 - Every block you run is appended to `sapf-log.txt` in Documents, with a timestamp line at the start

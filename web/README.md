@@ -23,6 +23,7 @@ Most of this matches [the iOS app](../ios/README.md).
 - **The waveform:**
   - The scroll wheel, a pinch, or a trackpad pinch zooms from milliseconds to 30 seconds. Double-click resets the zoom.
   - **Plot Top of Stack** (⇧⌘P / Shift+Ctrl+P) draws the value on top of the stack. Switch between Output and Plot at the top of the view, and close the plot with ✕.
+- **The Guide** (the book button, or the ⋯ menu) explains the idea behind sapf, the app and the language, with examples you can run from it. It covers the editor, leaving the console and scopes in view, and links to List All Functions and the example documents. It opens by itself on the first visit. It is `../sapf-guide.html`, shared with the iOS app.
 - **Documents.** The title and the folder button open the Documents menu, where you can:
   - make a **New Document**;
   - see the **Log** of everything you've run;
@@ -35,7 +36,7 @@ Most of this matches [the iOS app](../ios/README.md).
   - UI Mode (Auto, Light, Dark);
   - the audio buffer size;
   - Find;
-  - the README;
+  - the Guide and the README;
   - List All Functions (with Find);
   - Clear Stack and Clear Console;
   - **Run All Examples**, which runs every example block and the unit tests and writes `example-report.txt`.

@@ -16,7 +16,7 @@ const repoDir = path.resolve(webDir, '..');
 const outDir = path.join(webDir, 'public', 'sapf');
 
 // same files the iOS app bundles.
-const files = ['sapf-prelude.txt', 'sapf-examples.txt', 'sapf-bif-examples.txt', 'unit-tests.txt', 'README.txt'];
+const files = ['sapf-prelude.txt', 'sapf-examples.txt', 'sapf-bif-examples.txt', 'unit-tests.txt', 'README.txt', 'sapf-guide.html'];
 
 fs.mkdirSync(outDir, { recursive: true });
 const manifest = {};

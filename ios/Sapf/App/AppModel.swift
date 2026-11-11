@@ -54,7 +54,7 @@ struct DocumentStore {
         }
         if !fm.fileExists(atPath: scratch.path) {
             let welcome = """
-            ; Welcome to sapf.
+            ; Welcome to sapf. The Guide (the book button) explains it, with examples to try.
             ; Put the cursor in a block of code and press Run (or Cmd-Return).
             ; Tap a word to see its help. Stop sounds with the stop button (or Cmd-.).
             ; Drag a finger on the waveform or spectrum to control mousex and mousey.
@@ -352,6 +352,8 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         refreshDocuments()
         let saved = DocumentStore.directory.appendingPathComponent(savedDocumentName)
         load(FileManager.default.fileExists(atPath: saved.path) ? saved : DocumentStore.scratch)
+        // The first time, open the guide. (The UI tests launch with -guideShown YES.)
+        if !UserDefaults.standard.bool(forKey: "guideShown") { showGuide() }
     }
 
     private func observeAudioSession() {
@@ -533,6 +535,50 @@ final class AppModel: ObservableObject, CodeTextViewActions {
 
     func showAllFunctions() {
         functionListText = SapfEngine.shared.allHelpText()
+    }
+
+    // MARK: Guide
+
+    /// Whether the guide is showing, over the editor.
+    @Published private(set) var showsGuide = false
+
+    lazy var guide: GuideController = {
+        let guide = GuideController()
+        guide.onMessage = { [weak self] message in self?.guideAsked(message) }
+        return guide
+    }()
+
+    func showGuide() {
+        // Put the keyboard away, but stay in editing mode (iPads edit all the time).
+        editor.resignFirstResponder()
+        showsGuide = true
+        UserDefaults.standard.set(true, forKey: "guideShown")
+    }
+
+    func closeGuide() {
+        showsGuide = false
+    }
+
+    private func guideAsked(_ message: [String: Any]) {
+        switch message["action"] as? String {
+        case "run":
+            if let code = message["code"] as? String { evaluate(code) }
+        case "stop":
+            stop()
+        case "functions":
+            showAllFunctions()
+        case "readme":
+            previewURL = DocumentStore.readme
+        case "close":
+            closeGuide()
+        case "open":
+            if let name = message["document"] as? String, let url = documents.first(where: { title(for: $0) == name }) {
+                closeGuide()
+                load(url)
+            }
+        default:
+            break
+        }
     }
 
     /// Shows the log of everything run, read-only.
