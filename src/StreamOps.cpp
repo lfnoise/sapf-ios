@@ -1492,18 +1492,17 @@ static P<String> vlistToString(Thread& th, P<List> const& list)
 	P<List> packedList = list->pack(th);
 	size_t n = packedList->length(th);
 	char* s = (char*)malloc(n+1);
-	
-	P<String> string = new String(s, "dummy");
-	
+
 	Array* a = packedList->mArray();
 	V* v = a->v();
-	
+
 	for (size_t i = 0; i < n; ++i) {
 		s[i] = toascii((int)v[i].asFloat());
 	}
 	s[n] = 0;
-	
-	return string;
+
+	// the String takes the buffer and hashes it, so it must be filled in first.
+	return new String(s, "dummy");
 }
 
 static P<String> zlistToString(Thread& th, P<List> const& list)
@@ -1514,18 +1513,17 @@ static P<String> zlistToString(Thread& th, P<List> const& list)
 	P<List> packedList = list->pack(th);
 	size_t n = packedList->length(th);
 	char* s = (char*)malloc(n+1);
-	
-	P<String> string = new String(s, "dummy");
-	
+
 	Array* a = packedList->mArray();
 	Z* z = a->z();
-	
+
 	for (size_t i = 0; i < n; ++i) {
 		s[i] = toascii((int)z[i]);
 	}
 	s[n] = 0;
-	
-	return string;
+
+	// the String takes the buffer and hashes it, so it must be filled in first.
+	return new String(s, "dummy");
 }
 
 static void V_(Thread& th, Prim* prim)

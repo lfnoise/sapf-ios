@@ -272,8 +272,8 @@ rsp play
 \[
 	12 = p 
 	1m brown = source
-	\[ji-major pick 120 * = freq  \[source ((p 1 1 nby freq *) (p .5 nrand2s) +) (p 1 1 nby 1/) (p .5 4.5 nrands) klank] 2X] 1 7 2 xftx 
-] = all-harm-klank .3 *
+	\[ji-major pick 120 * = freq  \[source ((p 1 1 nby freq *) (p .5 nrand2s) +) (p 1 1 nby 1/) (p .5 4.5 nrands) klank] 2X] 1 7 2 xftx .3 *
+] = all-harm-klank
 all-harm-klank play
 
 ;;;; similar to above, but tuned to odd harmonics only, shorter ring times, and using a different noise source
