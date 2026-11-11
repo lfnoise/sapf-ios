@@ -261,6 +261,11 @@ button { font: inherit; color: inherit; }
 
 .panel-divider .grip { width: 36px; height: 5px; border-radius: 3px; background: var(--secondary-text); opacity: 0.6; }
 .panel-divider:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* beside a panel at the side, and between the console and the scopes when they're side by side. */
+.panel-divider.vertical { flex-basis: 12px; cursor: col-resize; border-top: none; border-left: 0.5px solid var(--separator); }
+.panel-divider.vertical .grip { width: 5px; height: 36px; }
+/* between the scopes and the console inside a panel: slimmer, in the panel's colour. */
+.panel-divider.inner { flex-basis: 10px; background: var(--secondary-background); }
 
 .tabbed { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; background: var(--secondary-background); }
 .tabbed > .console, .tabbed > .scope { flex: 1 1 auto; }

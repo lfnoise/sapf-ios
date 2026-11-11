@@ -328,6 +328,27 @@ try {
   check('a built-in saved under its old name is renamed, with its edits', renamed.doc === '/work/Builtin Function Examples.sapf' && renamed.text === '; my edits\n' && !renamed.old, JSON.stringify(renamed));
   await app(() => { window.sapf.documents.restoreOriginal('/work/Builtin Function Examples.sapf', 'sapf-bif-examples.txt'); window.sapf.loadDocument('/work/Untitled.sapf'); });
 
+  // the wide layout's dividers drag all the way, in several steps
+  const dragBy = async (selector, dx, dy) => {
+    const b = await (await page.$(selector)).boundingBox();
+    const [x, y] = [b.x + b.width / 2, b.y + b.height / 2];
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    for (let i = 1; i <= 5; ++i) await page.mouse.move(x + (dx * i) / 5, y + (dy * i) / 5);
+    await page.mouse.up();
+  };
+  const widthOf = s => page.$eval(s, e => e.getBoundingClientRect().width);
+  const heightOf = s => page.$eval(s, e => e.getBoundingClientRect().height);
+  const sideBefore = await widthOf('.panel');
+  await dragBy('.panel-divider[aria-label="Side panel width"]', -100, 0);
+  const sideAfter = await widthOf('.panel');
+  check('dragging the side panel divider resizes it', Math.abs(sideAfter - sideBefore - 100) < 3, `${sideBefore} -> ${sideAfter}`);
+  const scopesBefore = await heightOf('.scope-stack');
+  await dragBy('.panel-divider[aria-label="Scopes height"]', 0, -100);
+  const scopesAfter = await heightOf('.scope-stack');
+  check('dragging the divider between the scopes and the console resizes them', Math.abs(scopesBefore - scopesAfter - 100) < 3, `${scopesBefore} -> ${scopesAfter}`);
+  await app(() => { localStorage.removeItem('sideFraction'); localStorage.removeItem('sideScopeFraction'); });
+
   // UI Mode
   await page.click('.tool-button.more');
   await app(() => [...document.querySelectorAll('.menu-item')].find(b => b.textContent.trim() === 'Dark').click());

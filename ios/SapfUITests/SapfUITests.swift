@@ -56,6 +56,19 @@ final class SapfUITests: XCTestCase {
         XCTAssertTrue(guide.waitForExistence(timeout: 5), "it opens again")
     }
 
+    func testSidePanelDividerDrags() {
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let divider = app.otherElements["Side panel width"]
+        XCTAssertTrue(divider.waitForExistence(timeout: 5), "the wide layout has a divider beside the panel")
+        let before = divider.frame.midX
+        let start = divider.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        start.press(forDuration: 0.2, thenDragTo: start.withOffset(CGVector(dx: -100, dy: 0)))
+        sleep(1)
+        XCTAssertEqual(divider.frame.midX, before - 100, accuracy: 8, "dragging it widens the panel")
+        screenshot("side-panel-dragged")
+    }
+
     func testBlockStopButtons() {
         _ = newDocument(with: "440 0 sinosc .1 * play\n\n660 0 sinosc .1 * play")
         app.buttons["Hide keyboard"].firstMatch.tap()

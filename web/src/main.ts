@@ -97,6 +97,12 @@ class App {
   private audioBufferFrames = load('audioBufferFrames', 1024);
   private uiMode: UIMode = load('uiMode', 'Auto');
   private panelFraction = load('panelFraction', 0.4);
+  /** the side panel's share of the width in the wide layout, once its divider has been dragged. */
+  private sideFraction = load<number | null>('sideFraction', null);
+  /** the scopes' share of the height, above the console in the side panel. */
+  private sideScopeFraction = load('sideScopeFraction', 0.5);
+  /** the scopes' share of the width, beside the console in the panel below. */
+  private rowScopeFraction = load('rowScopeFraction', 0.45);
   private typingScopeHeight = load('typingScopeHeight', 80);
   private panelTab: PanelTab = (sessionStorage.getItem('panelTab') as PanelTab) || 'Console';
 
@@ -107,6 +113,12 @@ class App {
   private readingBar!: HTMLElement;
   private keyBar!: HTMLElement;
   private divider!: HTMLElement;
+  private sideDivider!: HTMLElement;
+  private sideScopeDivider!: HTMLElement;
+  private rowScopeDivider!: HTMLElement;
+  /** the three scopes together, and one view at a time with a picker, for the layouts that show them so. */
+  private scopeStackEl = Object.assign(document.createElement('div'), { className: 'scope-stack' });
+  private tabbedBox = Object.assign(document.createElement('div'), { className: 'tabbed' });
   private panel!: HTMLElement;
   private titleButton!: HTMLButtonElement;
   private editButton!: HTMLButtonElement;
@@ -198,6 +210,7 @@ class App {
     document.body.append(this.keyBar);
 
     this.divider = this.buildDivider();
+    this.buildWideDividers();
     this.panel = document.createElement('div');
     this.panel.className = 'panel';
     this.tabPicker = this.buildTabPicker();
@@ -413,32 +426,71 @@ class App {
     }
   }
 
-  private buildDivider(): HTMLElement {
+  /**
+   * A divider to drag, or move with the arrow keys. A vertical one stands between things side by side. Moving it by
+   * d pixels (right or down) makes the thing it sizes sign * d bigger: size() measures that thing, resize() sets it.
+   */
+  private makeDivider(label: string, options: { vertical?: boolean; inner?: boolean; sign: 1 | -1; size: () => number; resize: (px: number) => void }): HTMLElement {
+    const { vertical = false, inner = false, sign, size, resize } = options;
     const d = document.createElement('div');
-    d.className = 'panel-divider';
+    d.className = 'panel-divider' + (vertical ? ' vertical' : '') + (inner ? ' inner' : '');
     d.setAttribute('role', 'separator');
-    d.setAttribute('aria-label', 'Panel size');
+    d.setAttribute('aria-label', label);
+    d.setAttribute('aria-orientation', vertical ? 'vertical' : 'horizontal');
     d.tabIndex = 0;
     d.innerHTML = '<span class="grip"></span>';
-    let startY = 0;
-    let startHeight = 0;
+    const at = (e: PointerEvent) => (vertical ? e.clientX : e.clientY);
+    let start = 0;
+    let startSize = 0;
     d.addEventListener('pointerdown', e => {
       d.setPointerCapture(e.pointerId);
-      startY = e.clientY;
-      startHeight = this.panel.getBoundingClientRect().height;
+      start = at(e);
+      startSize = size();
     });
     d.addEventListener('pointermove', e => {
       if (!d.hasPointerCapture(e.pointerId)) return;
-      this.setPanelHeight(startHeight - (e.clientY - startY));
+      resize(startSize + sign * (at(e) - start));
     });
     d.addEventListener('keydown', e => {
-      const h = this.panel.getBoundingClientRect().height;
-      if (e.key === 'ArrowUp') this.setPanelHeight(h + 40);
-      else if (e.key === 'ArrowDown') this.setPanelHeight(h - 40);
-      else return;
+      const keys: Record<string, number> = vertical ? { ArrowLeft: -40, ArrowRight: 40 } : { ArrowUp: -40, ArrowDown: 40 };
+      const step = keys[e.key];
+      if (step === undefined) return;
       e.preventDefault();
+      resize(size() + sign * step);
     });
     return d;
+  }
+
+  /** the divider above the panel when it's below the editor. */
+  private buildDivider(): HTMLElement {
+    return this.makeDivider('Panel size', { sign: -1, size: () => this.panel.getBoundingClientRect().height, resize: h => this.setPanelHeight(h) });
+  }
+
+  /**
+   * The wide layout's dividers: between the editor and the panel at the side, and between the scopes and the console
+   * in it. And, when the panel is below, between the console and the scopes beside it.
+   */
+  private buildWideDividers(): void {
+    const fraction = (px: number, min: number, total: number, reserve: number) => Math.min(Math.max(px, min), Math.max(min, total - reserve)) / total;
+    this.sideDivider = this.makeDivider('Side panel width', {
+      vertical: true,
+      sign: -1,
+      size: () => this.panel.getBoundingClientRect().width,
+      resize: w => { this.sideFraction = fraction(w, 260, this.metrics().width, 320); save('sideFraction', this.sideFraction); this.layout(); },
+    });
+    this.sideScopeDivider = this.makeDivider('Scopes height', {
+      inner: true,
+      sign: 1,
+      size: () => this.scopeStackEl.getBoundingClientRect().height ?? 0,
+      resize: h => { this.sideScopeFraction = fraction(h, 120, this.metrics().height, 120); save('sideScopeFraction', this.sideScopeFraction); this.layout(); },
+    });
+    this.rowScopeDivider = this.makeDivider('Scopes width', {
+      vertical: true,
+      inner: true,
+      sign: -1,
+      size: () => this.scopeStackEl.getBoundingClientRect().width ?? 0,
+      resize: w => { this.rowScopeFraction = fraction(w, 200, this.metrics().width, 200); save('rowScopeFraction', this.rowScopeFraction); this.layout(); },
+    });
   }
 
   /** dragging the divider: the panel's share of the height, or the waveform's height while typing on a phone. */
@@ -507,54 +559,61 @@ class App {
     this.runButton.hidden = this.isCompact();
     const keep = [this.editorWrap];
 
+    // Elements already in place are left there, not removed and put back: that would end a drag of a divider, and
+    // lose the keyboard. So the scope stack and the tabbed box are made once and reused.
+    const setChildren = (parent: HTMLElement, children: HTMLElement[]) => {
+      const current = parent.children;
+      if (current.length === children.length && children.every((c, i) => current[i] === c)) return;
+      parent.replaceChildren(...children);
+    };
     const tabbed = (): HTMLElement => {
-      const box = document.createElement('div');
-      box.className = 'tabbed';
       const view = { Console: this.console.element, Scope: this.waveform.element, Spectrum: this.spectrum.element, Sonogram: this.spectrogram.element }[this.panelTab];
-      box.append(this.tabPicker, view);
+      setChildren(this.tabbedBox, [this.tabPicker, view]);
       this.updateTabPicker();
-      return box;
+      return this.tabbedBox;
     };
     const scopeStack = (): HTMLElement => {
-      const s = document.createElement('div');
-      s.className = 'scope-stack';
-      s.append(this.waveform.element, this.spectrum.element, this.spectrogram.element);
-      return s;
+      setChildren(this.scopeStackEl, [this.waveform.element, this.spectrum.element, this.spectrogram.element]);
+      this.scopeStackEl.style.width = '';
+      this.scopeStackEl.style.height = '';
+      return this.scopeStackEl;
     };
+    const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), Math.max(min, max));
 
-    this.panel.replaceChildren();
     this.panel.className = 'panel';
     this.panel.style.width = '';
     this.panel.style.height = '';
     if (wide) {
       this.panel.classList.add('side');
-      this.panel.style.width = `${Math.min(Math.max(300, width * 0.38), 520)}px`;
+      // until you drag its divider, as wide as the iOS app's.
+      const side = this.sideFraction === null ? Math.min(Math.max(300, width * 0.38), 520) : this.sideFraction * width;
+      this.panel.style.width = `${clamp(side, 260, width - 320)}px`;
       if (height >= 600) {
         const stack = scopeStack();
-        stack.style.height = `${height * 0.5}px`;
-        this.panel.append(stack, this.console.element);
+        stack.style.height = `${clamp(this.sideScopeFraction * height, 120, height - 120)}px`;
+        setChildren(this.panel, [stack, this.sideScopeDivider, this.console.element]);
       } else {
-        this.panel.append(tabbed());
+        setChildren(this.panel, [tabbed()]);
       }
-      this.content.replaceChildren(...keep, this.panel);
+      setChildren(this.content, [...keep, this.sideDivider, this.panel]);
     } else if (typing) {
       // typing on a phone: keep a small live waveform so you can still see what's playing.
       const h = Math.min(Math.max(this.typingScopeHeight, 40), Math.max(40, height * 0.6));
       this.panel.style.height = `${h}px`;
-      this.panel.append(this.waveform.element);
-      this.content.replaceChildren(...keep, this.divider, this.panel);
+      setChildren(this.panel, [this.waveform.element]);
+      setChildren(this.content, [...keep, this.divider, this.panel]);
     } else {
       const panelHeight = Math.min(Math.max(this.panelFraction * height, 120), Math.max(120, height - 140));
       this.panel.style.height = `${panelHeight}px`;
       if (width >= 600) {
         this.panel.classList.add('row');
         const stack = scopeStack();
-        stack.style.width = `${width * 0.45}px`;
-        this.panel.append(this.console.element, stack);
+        stack.style.width = `${clamp(this.rowScopeFraction * width, 200, width - 200)}px`;
+        setChildren(this.panel, [this.console.element, this.rowScopeDivider, stack]);
       } else {
-        this.panel.append(tabbed());
+        setChildren(this.panel, [tabbed()]);
       }
-      this.content.replaceChildren(...keep, this.divider, this.panel);
+      setChildren(this.content, [...keep, this.divider, this.panel]);
     }
     this.positionKeyBar();
   }

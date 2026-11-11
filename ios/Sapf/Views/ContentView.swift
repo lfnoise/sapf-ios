@@ -96,6 +96,51 @@ struct PanelDivider: View {
     private func clamp(_ h: CGFloat) -> CGFloat { min(max(h, range.lowerBound), range.upperBound) }
 }
 
+/// A divider you can drag between two views. A vertical one stands between views side by side. Moving
+/// it by d points (right or down) makes `size`, the size of the view it resizes, `sign` × d bigger.
+struct ResizeDivider: View {
+    var vertical: Bool
+    var sign: CGFloat
+    @Binding var size: CGFloat
+    let range: ClosedRange<CGFloat>
+    /// Inside the panel, in the panel's colour, rather than between the editor and the panel.
+    var inner = false
+    var label: String
+    @State private var startSize: CGFloat?
+
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(Color(uiColor: .separator))
+                .frame(width: vertical ? 0.5 : nil, height: vertical ? nil : 0.5)
+            Capsule()
+                .fill(Color.secondary.opacity(0.6))
+                .frame(width: vertical ? 5 : 36, height: vertical ? 36 : 5)
+        }
+        .frame(width: vertical ? 12 : nil, height: vertical ? nil : 12)
+        .frame(maxWidth: vertical ? nil : .infinity, maxHeight: vertical ? .infinity : nil)
+        .background(Color(uiColor: inner ? .secondarySystemBackground : .systemBackground))
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                .onChanged { drag in
+                    let start = startSize ?? size
+                    startSize = start
+                    size = clamp(start + sign * (vertical ? drag.translation.width : drag.translation.height))
+                }
+                .onEnded { _ in startSize = nil }
+        )
+        .accessibilityElement()
+        .accessibilityLabel(label)
+        .accessibilityValue("\(Int(size)) points")
+        .accessibilityAdjustableAction { direction in
+            size = clamp(size + (direction == .increment ? 40 : -40))
+        }
+    }
+
+    private func clamp(_ s: CGFloat) -> CGFloat { min(max(s, range.lowerBound), range.upperBound) }
+}
+
 /// All three visualizers stacked.
 struct ScopeStack: View {
     var body: some View {
@@ -126,6 +171,12 @@ struct ContentView: View {
     /// The bottom panel's share of the height, and the waveform's height while typing on a phone.
     @AppStorage("panelFraction") private var panelFraction = 0.4
     @AppStorage("typingScopeHeight") private var typingScopeHeight = 80.0
+    /// The side panel's share of the width in the wide layout; negative until its divider is dragged.
+    @AppStorage("sideFraction") private var sideFraction = -1.0
+    /// The scopes' share of the height, above the console in the side panel.
+    @AppStorage("sideScopeFraction") private var sideScopeFraction = 0.5
+    /// The scopes' share of the width, beside the console in the panel below.
+    @AppStorage("rowScopeFraction") private var rowScopeFraction = 0.45
 
     var body: some View {
         NavigationStack {
@@ -189,9 +240,15 @@ struct ContentView: View {
                     if model.showsGuide { GuidePane() }
                 }
             if wide {
-                Divider()
+                // Until its divider is dragged, the side panel is 38% of the width, from 300 to 520 points.
+                let range: ClosedRange<CGFloat> = 260...max(260, size.width - 320)
+                let saved = sideFraction < 0 ? min(max(300, size.width * 0.38), 520) : CGFloat(sideFraction) * size.width
+                let sideWidth = min(max(saved, range.lowerBound), range.upperBound)
+                ResizeDivider(vertical: true, sign: -1,
+                              size: Binding(get: { sideWidth }, set: { sideFraction = Double($0 / size.width) }),
+                              range: range, label: "Side panel width")
                 sideColumn(height: height)
-                    .frame(width: min(max(300, size.width * 0.38), 520))
+                    .frame(width: sideWidth)
             } else if size.width < 600 && keyboard > 120 {
                 // Typing on a phone: keep a small live waveform so you can still see what's playing.
                 let range: ClosedRange<CGFloat> = 40...max(40, height * 0.6)
@@ -211,9 +268,13 @@ struct ContentView: View {
     @ViewBuilder
     private func sideColumn(height: CGFloat) -> some View {
         if height >= 600 {
+            let range: ClosedRange<CGFloat> = 120...max(120, height - 120)
+            let scopesHeight = min(max(CGFloat(sideScopeFraction) * height, range.lowerBound), range.upperBound)
             VStack(spacing: 0) {
-                ScopeStack().frame(height: height * 0.5)
-                Divider()
+                ScopeStack().frame(height: scopesHeight)
+                ResizeDivider(vertical: false, sign: 1,
+                              size: Binding(get: { scopesHeight }, set: { sideScopeFraction = Double($0 / height) }),
+                              range: range, inner: true, label: "Scopes height")
                 ConsoleView(buffer: model.console)
             }
         } else {
@@ -224,10 +285,14 @@ struct ContentView: View {
     @ViewBuilder
     private func bottomPanel(width: CGFloat) -> some View {
         if width >= 600 {
+            let range: ClosedRange<CGFloat> = 200...max(200, width - 200)
+            let scopesWidth = min(max(CGFloat(rowScopeFraction) * width, range.lowerBound), range.upperBound)
             HStack(spacing: 0) {
                 ConsoleView(buffer: model.console)
-                Divider()
-                ScopeStack().frame(width: width * 0.45)
+                ResizeDivider(vertical: true, sign: -1,
+                              size: Binding(get: { scopesWidth }, set: { rowScopeFraction = Double($0 / width) }),
+                              range: range, inner: true, label: "Scopes width")
+                ScopeStack().frame(width: scopesWidth)
             }
         } else {
             TabbedPanel(console: model.console, plotCount: model.plotCount)
