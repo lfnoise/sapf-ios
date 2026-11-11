@@ -1244,7 +1244,7 @@ struct RLPF : public Gen
 				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
-				Z alpha = sn * std::max(0., *rq) * .5; // a negative rq makes it unstable
+				Z alpha = sn * std::max(1e-3, *rq) * .5; // rq <= 0 makes it unstable or undamped
 				Z a0 = 1. + alpha;
 				Z a1 = -2. * cs;
 				Z a2 = 1. - alpha;
@@ -1326,7 +1326,7 @@ struct RLPF2 : public Gen
 				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
-				Z alpha = sn * std::max(0., *rq) * .5; // a negative rq makes it unstable
+				Z alpha = sn * std::max(1e-3, *rq) * .5; // rq <= 0 makes it unstable or undamped
 				Z a0 = 1. + alpha;
 				Z a0r = 1./a0;
 				Z a1 = -2. * cs;
@@ -1414,7 +1414,7 @@ struct RHPF : public Gen
 				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
-				Z alpha = sn * std::max(0., *rq) * .5; // a negative rq makes it unstable
+				Z alpha = sn * std::max(1e-3, *rq) * .5; // rq <= 0 makes it unstable or undamped
 				Z a0 = 1. + alpha;
 				Z a1 = -2. * cs;
 				Z a2 = 1. - alpha;
@@ -1496,7 +1496,7 @@ struct RHPF2 : public Gen
 				Z w0 = biquadW0(*freq, freqmul);
 				Z sn, cs;
 				tsincosx(w0, sn, cs);
-				Z alpha = sn * std::max(0., *rq) * .5; // a negative rq makes it unstable
+				Z alpha = sn * std::max(1e-3, *rq) * .5; // rq <= 0 makes it unstable or undamped
 				Z a0 = 1. + alpha;
 				Z a0r = 1./a0;
 				Z a1 = -2. * cs;
@@ -1587,7 +1587,7 @@ struct BPF : public Gen
 
 				// bw * log(2) is the first term of the taylor series for 2*sinh(log(2)/2 * bw) == 1/Q. 
 				// the log(2) is combined with the .5 term in the formula for alpha.
-				Z alpha = sn * std::max(0., *bw) * log2o2; // a negative bw makes it unstable
+				Z alpha = sn * std::max(1e-3, *bw) * log2o2; // bw <= 0 makes it unstable or undamped
 
 				Z a0 = 1. + alpha;
 				Z a1 = -2. * cs;
@@ -1667,7 +1667,7 @@ struct BSF : public Gen
 
 				// bw * log(2) is the first term of the taylor series for 2*sinh(log(2)/2 * bw) == 1/Q. 
 				// the log(2) is combined with the .5 term in the formula for alpha.
-				Z alpha = sn * std::max(0., *bw) * log2o2; // a negative bw makes it unstable
+				Z alpha = sn * std::max(1e-3, *bw) * log2o2; // bw <= 0 makes it unstable or undamped
 
 				Z a0 = 1. + alpha;
 				Z a0r = 1./a0;
@@ -1749,7 +1749,7 @@ struct APF : public Gen
 				
 				// bw * log(2) is the first term of the taylor series for 2*sinh(log(2)/2 * bw) == 1/Q. 
 				// the log(2) is combined with the .5 term in the formula for alpha.
-				Z alpha = sn * std::max(0., *bw) * log2o2; // a negative bw makes it unstable  
+				Z alpha = sn * std::max(1e-3, *bw) * log2o2; // bw <= 0 makes it unstable or undamped  
 				
 				Z a0 = 1. + alpha;
 				Z a0r = 1./a0;
@@ -1832,7 +1832,7 @@ struct PEQ : public Gen
 
 				// bw * log(2) is the first term of the taylor series for 2*sinh(log(2)/2 * bw) == 1/Q. 
 				// the log(2) is combined with the .5 term in the formula for alpha.
-				Z alpha = sn * std::max(0., *bw) * log2o2; // a negative bw makes it unstable
+				Z alpha = sn * std::max(1e-3, *bw) * log2o2; // bw <= 0 makes it unstable or undamped
 				Z alphaA = alpha * A;
 				Z alphaOverA = alpha / A;
 				
@@ -2170,7 +2170,7 @@ struct RLowShelf : public Gen
 
 				// bw * log(2) is the first term of the taylor series for 2*sinh(log(2)/2 * bw) == 1/Q. 
 				// the log(2) is combined with the .5 term in the formula for alpha.
-				Z alpha = sn * std::max(0., *bw) * log2o2; // a negative bw makes it unstable
+				Z alpha = sn * std::max(1e-3, *bw) * log2o2; // bw <= 0 makes it unstable or undamped
 				Z alpha2Asqrt = 2. * alpha * Asqrt;
 				Z Am1cs = Am1*cs;
 				Z Ap1cs = Ap1*cs;
@@ -2429,8 +2429,9 @@ struct Resonz : public Gen
 			
 			for (int i = 0; i < n; ++i) {				
 				Z w0 = *freq * freqmul;
-				// the pole radius. Outside 0..1 (a negative rq or frequency, or a huge w0 * rq) the filter is unstable.
-				Z R = std::clamp(1. - .5 * w0 * *rq, 0., 1.);
+				// the pole radius. Outside 0..1 (a negative rq or frequency, or a huge w0 * rq) the filter is unstable, and at
+				// 1 it is undamped, so rq has a floor of .001 and a negative frequency is treated like a positive one.
+				Z R = std::clamp(1. - .5 * std::abs(w0) * std::max(1e-3, *rq), 0., 1.);
 				Z cs = tcos(w0);
 				Z a1 = 2. * R * cs;
 				Z a2 = -(R * R);
