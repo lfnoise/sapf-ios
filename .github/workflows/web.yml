@@ -11,9 +11,9 @@ name: Web
 on:
   push:
     branches: [main]
-    paths: [web/**, src/**, include/**, third_party/**, CMakeLists.txt, sapf-*.txt, unit-tests.txt, README.txt, .github/workflows/web.yml]
+    paths: [web/**, src/**, include/**, third_party/**, CMakeLists.txt, sapf-*.txt, unit-tests.txt, README.txt, sapf-guide.html, .github/workflows/web.yml]
   pull_request:
-    paths: [web/**, src/**, include/**, third_party/**, CMakeLists.txt, sapf-*.txt, unit-tests.txt, README.txt, .github/workflows/web.yml]
+    paths: [web/**, src/**, include/**, third_party/**, CMakeLists.txt, sapf-*.txt, unit-tests.txt, README.txt, sapf-guide.html, .github/workflows/web.yml]
   workflow_dispatch:
 
 permissions:
