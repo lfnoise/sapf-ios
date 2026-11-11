@@ -65,6 +65,10 @@ export function showMenu(at: HTMLElement | { x: number; y: number }, entries: Me
       close();
       entry.action();
     });
+    // one highlight, which follows the pointer as in a native menu: the item it's over takes the keyboard focus
+    // (the first item has it to start with), and loses it when the pointer leaves.
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && !b.disabled) b.focus({ preventScroll: true }); });
+    b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && document.activeElement === b) b.blur(); });
     menu.append(b);
     buttons.push(b);
   }
