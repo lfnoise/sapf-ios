@@ -29,8 +29,12 @@ final class SapfUITests: XCTestCase {
         let console = app.textViews["Console"]
         expectation(for: NSPredicate(format: "value CONTAINS '800 0 sinosc .3 * play'"), evaluatedWith: console)
         waitForExpectations(timeout: 5)
+        let stop = guide.buttons["Stop this example"].firstMatch
+        XCTAssertTrue(stop.waitForExistence(timeout: 3), "a Stop button appears under the example's Run button while it plays")
         screenshot("guide")
-        app.navigationBars.buttons["Stop"].tap()
+        stop.tap()
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: stop)
+        waitForExpectations(timeout: 3)
 
         guide.links["List All Functions"].firstMatch.tap()
         XCTAssertTrue(app.textViews["All Functions"].waitForExistence(timeout: 5), "the guide links to List All Functions")
@@ -50,6 +54,33 @@ final class SapfUITests: XCTestCase {
             app.buttons["Guide"].firstMatch.tap()
         }
         XCTAssertTrue(guide.waitForExistence(timeout: 5), "it opens again")
+    }
+
+    func testBlockStopButtons() {
+        _ = newDocument(with: "440 0 sinosc .1 * play\n\n660 0 sinosc .1 * play")
+        app.buttons["Hide keyboard"].firstMatch.tap()
+        let runButtons = app.buttons.matching(identifier: "Run block")
+        runButtons.element(boundBy: 0).tap()
+        runButtons.element(boundBy: 0).tap()
+        runButtons.element(boundBy: 1).tap()
+        if app.buttons["Console"].exists { app.buttons["Console"].tap() }
+        let console = app.textViews["Console"]
+        expectation(for: NSPredicate(format: "value MATCHES %@", "(?s).*440 0 sinosc.*440 0 sinosc.*660 0 sinosc.*"), evaluatedWith: console)
+        waitForExpectations(timeout: 5) // all three presses ran, even the quick second one
+        let stopButtons = app.buttons.matching(identifier: "Stop block")
+        expectation(for: NSPredicate(format: "count == 2"), evaluatedWith: stopButtons)
+        waitForExpectations(timeout: 3)
+        screenshot("block-stop-buttons")
+        // The first block ran twice: its stop button stops the latest run, and stays for the earlier one.
+        stopButtons.element(boundBy: 0).tap()
+        sleep(1)
+        XCTAssertEqual(stopButtons.count, 2, "still one for the first block's earlier run")
+        stopButtons.element(boundBy: 0).tap()
+        expectation(for: NSPredicate(format: "count == 1"), evaluatedWith: stopButtons)
+        waitForExpectations(timeout: 3)
+        app.navigationBars.buttons["Stop"].tap()
+        expectation(for: NSPredicate(format: "count == 0"), evaluatedWith: stopButtons)
+        waitForExpectations(timeout: 3)
     }
 
     /// Quick Look's close button: "Done" on older systems, an ✕ with this identifier on newer ones.

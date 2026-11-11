@@ -187,10 +187,32 @@ export class SapfEngine {
     return done;
   }
 
-  /** Evaluate code at top level. Errors and the stack are printed. Resolves when it has run. */
-  async evaluate(code: string): Promise<boolean> {
-    const r = await this.request(id => this.withString(code, p => this.module._sapf_evaluate(p, id)));
+  /**
+   * Evaluate code at top level. Errors and the stack are printed. Resolves when it has run. The sounds it starts
+   * are tagged with tag (from newPlayTag(), or 0 for none), so stopTag() can stop just them.
+   */
+  async evaluate(code: string, tag = 0): Promise<boolean> {
+    const r = await this.request(id => this.withString(code, p => this.module._sapf_evaluate(p, id, tag)));
     return r.ok;
+  }
+
+  private lastPlayTag = 0;
+  /** a tag for an evaluation, unique for as long as the page is open. */
+  newPlayTag(): number {
+    return ++this.lastPlayTag;
+  }
+
+  /** stop the sounds started by the evaluation with this tag, and only those. Immediate. */
+  stopTag(tag: number): void {
+    if (tag) this.module._sapf_stop_tag(tag);
+  }
+
+  /** the tags of the sounds playing. A sound that has just ended may still be listed for up to a second. */
+  playingTags(): Set<number> {
+    const max = 64;
+    const p = this.ensureScratch(max * 4);
+    const n = this.module._sapf_playing_tags(p, max);
+    return new Set(new Int32Array(this.module.wasmMemory.buffer, p, n));
   }
 
   /** Plot the top of the stack without removing it: the samples, or a message saying why not. */

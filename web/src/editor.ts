@@ -11,7 +11,7 @@
 //   value), Expand Selection, double-click a bracket to select through its match, find, and where you were in each
 //   document. While reading (on touch screens) taps don't bring up the keyboard; they show help and pick the block.
 
-import { EditorState, StateEffect, StateField, Compartment, Prec, RangeSetBuilder, type Extension } from '@codemirror/state';
+import { EditorState, StateEffect, StateField, Compartment, Prec, RangeSetBuilder, MapMode, type Extension } from '@codemirror/state';
 import {
   EditorView, Decoration, ViewPlugin, keymap, drawSelection, highlightSpecialChars, gutter, GutterMarker,
   type DecorationSet, type ViewUpdate,
@@ -25,7 +25,12 @@ import type { HelpTable } from './help.ts';
 import { showMenu } from './menu.ts';
 
 export interface EditorActions {
-  evaluate(code: string): void;
+  /** run code; the sounds it starts are tagged with tag (0 for none). */
+  evaluate(code: string, tag?: number): void;
+  /** a new tag for a run of a block. */
+  newTag(): number;
+  /** stop the sounds started by the run with this tag. */
+  stopTag(tag: number): void;
   stop(): void;
   plot(): void;
   describeWord(word: string): Promise<string | null>;
@@ -135,13 +140,67 @@ const flashField = StateField.define<DecorationSet>({
   provide: f => EditorView.decorations.from(f),
 });
 
-// MARK: gutter: run buttons and the block bar
+// MARK: which block started which sounds
 
+/**
+ * The runs of each block: where the block's code started, kept up to date through edits, and the tags its runs'
+ * sounds were given, oldest first. A block's Stop button stops the sounds of its latest run that is still playing,
+ * and only those, so pressing it again and again stops them last in, first out.
+ */
+export interface BlockRun { pos: number; tags: number[] }
+const addRun = StateEffect.define<{ range: Range; pos: number; tag: number }>();
+const setRuns = StateEffect.define<BlockRun[]>();
+const runsField = StateField.define<BlockRun[]>({
+  create: () => [],
+  update(runs, tr) {
+    if (tr.docChanged) {
+      runs = runs.flatMap(r => {
+        const pos = tr.changes.mapPos(r.pos, 1, MapMode.TrackDel);
+        return pos === null ? [] : [{ pos, tags: r.tags }];
+      });
+    }
+    for (const e of tr.effects) {
+      if (e.is(setRuns)) runs = e.value;
+      if (!e.is(addRun)) continue;
+      const { range, pos, tag } = e.value;
+      const inBlock = (r: BlockRun) => r.pos >= range.from && r.pos < range.to;
+      const earlier = runs.filter(inBlock).flatMap(r => r.tags);
+      runs = [...runs.filter(r => !inBlock(r)), { pos, tags: [...earlier, tag] }];
+    }
+    return runs;
+  },
+});
+
+/** the tag of a block's latest run that's still playing, or 0. */
+function latestPlaying(run: BlockRun | undefined, playing: Set<number>): number {
+  if (!run) return 0;
+  for (let i = run.tags.length - 1; i >= 0; --i) if (playing.has(run.tags[i])) return run.tags[i];
+  return 0;
+}
+
+/** the tags of the sounds playing, from the engine. */
+const setPlaying = StateEffect.define<Set<number>>();
+const playingField = StateField.define<Set<number>>({
+  create: () => new Set(),
+  update(playing, tr) {
+    for (const e of tr.effects) if (e.is(setPlaying)) playing = e.value;
+    return playing;
+  },
+});
+
+// MARK: gutter: run and stop buttons and the block bar
+
+const runIcon = '<svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><path d="M6 3.5v17l14-8.5z" fill="currentColor"/></svg>';
+const stopIcon = '<svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>';
+
+/** a block's run button, with a stop button under it while the sound from its last run is playing. */
 class RunMarker extends GutterMarker {
   readonly codeStart: number;
-  constructor(codeStart: number) { super();
-    this.codeStart = codeStart; }
-  eq(other: RunMarker) { return other.codeStart === this.codeStart; }
+  readonly stopTag: number;
+  constructor(codeStart: number, stopTag: number) { super();
+    this.codeStart = codeStart;
+    this.stopTag = stopTag; }
+  eq(other: RunMarker) { return other.codeStart === this.codeStart && other.stopTag === this.stopTag; }
   toDOM() {
     const b = document.createElement('button');
     b.type = 'button';
@@ -149,8 +208,19 @@ class RunMarker extends GutterMarker {
     b.dataset.codeStart = String(this.codeStart);
     b.setAttribute('aria-label', 'Run block');
     b.title = 'Run block (right-click or touch and hold for more)';
-    b.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><path d="M6 3.5v17l14-8.5z" fill="currentColor"/></svg>';
-    return b;
+    b.innerHTML = runIcon;
+    if (!this.stopTag) return b;
+    const stack = document.createElement('div');
+    stack.className = 'run-stack';
+    const s = document.createElement('button');
+    s.type = 'button';
+    s.className = 'stop-block';
+    s.dataset.tag = String(this.stopTag);
+    s.setAttribute('aria-label', 'Stop block');
+    s.title = 'Stop the sound this block started';
+    s.innerHTML = stopIcon;
+    stack.append(b, s);
+    return stack;
   }
 }
 
@@ -220,14 +290,20 @@ export class CodeEditor {
       field,
       highlighter(field),
       flashField,
+      runsField,
+      playingField,
       gutter({
         class: 'run-gutter',
         markers: view => {
           const builder = new RangeSetBuilder<GutterMarker>();
+          const runs = view.state.field(runsField);
+          const playing = view.state.field(playingField);
           for (const block of view.state.field(field).structure.blocks) {
             if (block.codeStart === null) continue;
             const line = view.state.doc.lineAt(block.codeStart);
-            builder.add(line.from, line.from, new RunMarker(block.codeStart));
+            const run = runs.find(r => r.pos >= block.range.from && r.pos < block.range.to);
+            const stopTag = latestPlaying(run, playing);
+            builder.add(line.from, line.from, new RunMarker(block.codeStart, stopTag));
           }
           return builder.finish();
         },
@@ -285,9 +361,17 @@ export class CodeEditor {
     return this.view.state.doc.toString();
   }
 
-  setText(text: string): void {
+  /** shows a document. runs are its blocks' last runs, from blockRuns when it was last shown, so its Stop buttons work. */
+  setText(text: string, runs: BlockRun[] = []): void {
     this.hideTooltip();
+    const playing = this.view.state.field(playingField);
     this.view.setState(this.makeState(text));
+    this.view.dispatch({ effects: [setRuns.of(runs.filter(r => r.pos <= text.length)), setPlaying.of(playing)] });
+  }
+
+  /** the blocks' last runs, to give back to setText when this document is shown again. */
+  get blockRuns(): BlockRun[] {
+    return this.view.state.field(runsField);
   }
 
   /** the help table changed: recolor. */
@@ -347,11 +431,32 @@ export class CodeEditor {
   }
 
   evaluate(wholeBlock = true): void {
+    const sel = this.view.state.selection.main;
+    const block = sel.empty && wholeBlock ? this.structure.blockAt(sel.head) : null;
+    if (block && block.codeStart !== null) {
+      this.runBlock(block.range, block.codeStart);
+      return;
+    }
     const range = this.codeToEvaluate(wholeBlock);
     const code = this.text.slice(range.from, range.to);
     if (!code.trim()) return;
     this.flash(range);
     this.actions.evaluate(code);
+  }
+
+  /** runs a whole block, tagging its sounds so the Stop button beside it can stop them. */
+  private runBlock(range: Range, codeStart: number): void {
+    const tag = this.actions.newTag();
+    this.view.dispatch({ effects: addRun.of({ range, pos: codeStart, tag }) });
+    this.flash(range);
+    this.actions.evaluate(this.text.slice(range.from, range.to), tag);
+  }
+
+  /** the engine's list of the tags of the sounds playing changed. Shows and hides the blocks' Stop buttons. */
+  setPlayingTags(tags: Set<number>): void {
+    const old = this.view.state.field(playingField);
+    if (old.size === tags.size && [...tags].every(t => old.has(t))) return;
+    this.view.dispatch({ effects: setPlaying.of(tags) });
   }
 
   private blockWithCodeStart(codeStart: number) {
@@ -363,8 +468,7 @@ export class CodeEditor {
     const block = this.blockWithCodeStart(codeStart);
     if (!block) return;
     this.hideTooltip();
-    this.flash(block.range);
-    this.actions.evaluate(this.text.slice(block.range.from, block.range.to));
+    this.runBlock(block.range, codeStart);
   }
 
   selectBlock(codeStart: number): void {
@@ -406,8 +510,19 @@ export class CodeEditor {
   private installEventHandlers(): void {
     const view = this.view;
 
-    // run buttons in the margin
+    // run and stop buttons in the margin
     this.element.addEventListener('click', e => {
+      const s = (e.target as HTMLElement).closest<HTMLButtonElement>('.stop-block');
+      if (s) {
+        e.preventDefault();
+        const tag = Number(s.dataset.tag);
+        this.actions.stopTag(tag);
+        // hide it now, rather than when the engine next says what's playing.
+        const playing = new Set(this.view.state.field(playingField));
+        playing.delete(tag);
+        this.view.dispatch({ effects: setPlaying.of(playing) });
+        return;
+      }
       const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.run-block');
       if (!b) return;
       e.preventDefault();

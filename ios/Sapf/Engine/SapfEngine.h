@@ -62,6 +62,20 @@ NS_ASSUME_NONNULL_BEGIN
 /// Compiles and runs code, then prints the stack, exactly like entering a line in the terminal REPL.
 - (void)evaluate:(NSString *)code;
 
+/// Like evaluate:, tagging the sounds it starts with `tag` (from newPlayTag, or 0 for none), so that
+/// stopTag: can stop just them.
+- (void)evaluate:(NSString *)code tag:(int)tag;
+
+/// A tag for an evaluation, unique while the app runs. Main thread.
+- (int)newPlayTag;
+
+/// Stops the sounds started by the evaluation with this tag, and only those.
+- (void)stopTag:(int)tag;
+
+/// The tags of the sounds playing. A sound that has just ended may still be listed for up to a
+/// second. Doesn't lock; safe from any thread.
+- (NSSet<NSNumber *> *)playingTags;
+
 /// Stops all sounds (like the 'stop' word).
 - (void)stopAll;
 

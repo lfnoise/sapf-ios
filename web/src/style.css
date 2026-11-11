@@ -367,6 +367,29 @@ button { font: inherit; color: inherit; }
 
 .run-block:hover { background: var(--fill); }
 
+/* while a block's sound plays, a stop button hangs just below its run button, over the next line's margin. */
+.run-stack { position: relative; display: inline-flex; }
+.stop-block {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1;
+  width: 26px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--red);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  user-select: none;
+}
+.stop-block:hover { background: var(--fill); }
+.editor .run-gutter, .editor .cm-gutters { overflow: visible; }
+
 .block-bar { width: 3px; height: 100%; background: var(--green); opacity: 0.55; }
 .block-bar.first { margin-top: 2px; height: calc(100% - 2px); border-top-left-radius: 2px; border-top-right-radius: 2px; }
 .block-bar.last { height: calc(100% - 2px); border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; }

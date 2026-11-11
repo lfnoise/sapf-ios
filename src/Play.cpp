@@ -42,6 +42,8 @@ const int kMaxScopeTaps = 64;
 struct ScopeTap
 {
 	std::atomic<bool> inUse{false};
+	// the tag of the run that started the player (see setPlayTag), so playingTags() needn't lock.
+	std::atomic<int> tag{0};
 	std::atomic<uint64_t> writePos{0};
 	float buf[kScopeBufferSize];
 
@@ -170,14 +172,24 @@ static void noteRenderTime(double startSeconds, int numFrames)
 
 
 
+// the tag for players made now. Set by the interpreter thread, which is also the one that makes players.
+static std::atomic<int> gPlayTag{0};
+
+void setPlayTag(int tag)
+{
+	gPlayTag.store(tag, std::memory_order_relaxed);
+}
+
 struct AUPlayer
 {
 	AUPlayer(Thread& inThread, int inNumChannels, SoundFileWriter* inRecording = nullptr)
-		: th(inThread), count(0), done(false), prev(nullptr), next(gAllPlayers), numChannels(inNumChannels), recording(inRecording)
+		: th(inThread), count(0), done(false), prev(nullptr), next(gAllPlayers), numChannels(inNumChannels), recording(inRecording),
+		  tag(gPlayTag.load(std::memory_order_relaxed))
 	{
 		gAllPlayers = this;
 		if (next) next->prev = this;
 		scopeTap = claimScopeTap();
+		if (scopeTap) scopeTap->tag.store(tag, std::memory_order_release);
 	}
 
 	~AUPlayer() {
@@ -207,6 +219,7 @@ struct AUPlayer
 	std::string path;
 	ScopeTap* scopeTap = nullptr;
 	double nextSampleTime = -1.;
+	int tag;
 #if SAPF_SHARED_MIXER
 	// with the shared mixer each player renders into its own buffers first.
 	std::vector<float> scratch;
@@ -241,6 +254,33 @@ void stopPlaying()
 		stopPlayer(player);
 		player = next;
 	}
+}
+
+void stopPlayingTag(int tag)
+{
+	if (tag == 0) return;
+	Locker lock(&gPlayerMutex);
+
+	AUPlayer* player = gAllPlayers;
+	while (player) {
+		AUPlayer* next = player->next;
+		if (player->tag == tag)
+			stopPlayer(player);
+		player = next;
+	}
+}
+
+int playingTags(int* tags, int max)
+{
+	int n = 0;
+	for (int i = 0; i < kMaxScopeTaps && n < max; ++i) {
+		ScopeTap& tap = gScopeTaps[i];
+		if (!tap.inUse.load(std::memory_order_acquire)) continue;
+		int tag = tap.tag.load(std::memory_order_acquire);
+		if (tag == 0 || std::find(tags, tags + n, tag) != tags + n) continue;
+		tags[n++] = tag;
+	}
+	return n;
 }
 
 void stopPlayingIfDone()

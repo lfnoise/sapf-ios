@@ -346,6 +346,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         }
         engine.openFileHandler = { [weak self] url in self?.open(url) }
         engine.start(withSampleRate: sampleRate, preludePath: DocumentStore.prelude.path)
+        watchPlayingTags()
         // Prelude loading happens on the interpreter queue; this runs after it and picks up its words.
         engine.evaluate("")
 
@@ -452,9 +453,10 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         let text = (try? String(contentsOf: url, encoding: .utf8))
             ?? (try? String(contentsOf: url, encoding: .isoLatin1))
             ?? ""
+        if let loaded = loadedDocument { blockRuns[loaded.lastPathComponent] = editor.blockRuns }
         currentDocument = url
         savedDocumentName = url.lastPathComponent
-        editor.setText(text)
+        editor.setText(text, runs: blockRuns[url.lastPathComponent] ?? [])
         loadedDocument = url
         if let position = positions[url.lastPathComponent] { editor.restore(position) }
         refreshDocuments()
@@ -551,6 +553,7 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     func showGuide() {
         // Put the keyboard away, but stay in editing mode (iPads edit all the time).
         editor.resignFirstResponder()
+        guideLoaded = true
         showsGuide = true
         UserDefaults.standard.set(true, forKey: "guideShown")
     }
@@ -562,7 +565,20 @@ final class AppModel: ObservableObject, CodeTextViewActions {
     private func guideAsked(_ message: [String: Any]) {
         switch message["action"] as? String {
         case "run":
-            if let code = message["code"] as? String { evaluate(code) }
+            guard let code = message["code"] as? String else { break }
+            // Tagged, so the example's own stop button stops just its sound.
+            let tag = Int(SapfEngine.shared.newPlayTag())
+            if let example = message["example"] as? Int { guideRuns[example, default: []].append(tag) }
+            evaluate(code, tag: tag)
+        case "stopExample":
+            // The latest run still playing: pressing Stop again and again stops them last in, first out.
+            guard let example = message["example"] as? Int, let runs = guideRuns[example] else { break }
+            let playing = Set(SapfEngine.shared.playingTags().map(\.intValue))
+            if let tag = runs.last(where: playing.contains) {
+                SapfEngine.shared.stopTag(Int32(tag))
+                // The guide hides its Stop button; have it shown again if earlier runs are still playing.
+                if runs.contains(where: { $0 != tag && playing.contains($0) }) { guidePlaying = [] }
+            }
         case "stop":
             stop()
         case "functions":
@@ -606,9 +622,35 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         editor.evaluate(wholeBlock: true)
     }
 
-    func evaluate(_ code: String) {
+    /// Runs code. The sounds it starts are tagged with `tag` (0 for none), so they can be stopped on their own.
+    func evaluate(_ code: String, tag: Int = 0) {
         console.echo(code)
-        SapfEngine.shared.evaluate(code)
+        SapfEngine.shared.evaluate(code, tag: Int32(tag))
+    }
+
+    /// Each document's blocks' latest runs, by file name, for their stop buttons.
+    private var blockRuns: [String: [CodeTextView.BlockRun]] = [:]
+    /// The tags of the runs of each of the guide's examples, oldest first, by the example's number.
+    private var guideRuns: [Int: [Int]] = [:]
+    private var guidePlaying: [Int] = []
+    private var guideLoaded = false
+
+    /// Shows and hides the stop buttons beside blocks, and beside the guide's examples, as their sounds
+    /// start and end.
+    private func watchPlayingTags() {
+        Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.playingTagsChanged() }
+        }
+    }
+
+    private func playingTagsChanged() {
+        let tags = Set(SapfEngine.shared.playingTags().map(\.intValue))
+        editor.setPlayingTags(tags)
+        let examples = guideRuns.filter { $0.value.contains(where: tags.contains) }.map(\.key).sorted()
+        guard examples != guidePlaying, guideLoaded else { return }
+        guidePlaying = examples
+        let list = examples.map(String.init).joined(separator: ",")
+        guide.webView.evaluateJavaScript("window.sapfSetPlaying && window.sapfSetPlaying([\(list)])")
     }
 
     func stop() {
@@ -635,7 +677,8 @@ final class AppModel: ObservableObject, CodeTextViewActions {
         console.append("stack cleared\n")
     }
 
-    func codeTextView(_ view: CodeTextView, evaluate code: String) { evaluate(code) }
+    func codeTextView(_ view: CodeTextView, evaluate code: String, tag: Int) { evaluate(code, tag: tag) }
+    func codeTextView(_ view: CodeTextView, stopTag tag: Int) { SapfEngine.shared.stopTag(Int32(tag)) }
     func codeTextViewStop(_ view: CodeTextView) { stop() }
     func codeTextViewDidChangeText(_ view: CodeTextView) { scheduleSave() }
     func codeTextViewDidEndEditing(_ view: CodeTextView) { isEditing = false }

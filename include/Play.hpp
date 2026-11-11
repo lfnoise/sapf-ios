@@ -16,6 +16,17 @@ void stopPlayingIfDone();
 // which stops them. They carry on from where they were.
 void restartPlaying();
 
+// Sounds can be tagged with the run of code that started them, so a front end can stop just those.
+// The interpreter thread sets the tag before evaluating (0, the default, is no tag), and the players
+// that play and record make take it.
+void setPlayTag(int tag);
+// Stops the players with this tag. Not for tag 0.
+void stopPlayingTag(int tag);
+// Fills tags with the tags of the players that are playing (each tag once, untagged ones left out),
+// up to max of them, and returns how many. Doesn't lock, so it's safe from any thread, including
+// the browser's main thread; a player that has just finished may still be counted for up to a second.
+int playingTags(int* tags, int max);
+
 // Size of the per-player ring buffers used for displaying output. Must be a power of two.
 const int kScopeBufferSize = 16384;
 

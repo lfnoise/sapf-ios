@@ -11,7 +11,7 @@
 import './style.css';
 import { SapfEngine } from './engine.ts';
 import { HelpTable } from './help.ts';
-import { CodeEditor, type Position } from './editor.ts';
+import { CodeEditor, type Position, type BlockRun } from './editor.ts';
 import { ConsoleBuffer } from './console.ts';
 import { AudioAnalyzer } from './analyzer.ts';
 import { WaveformView, SpectrumView, SpectrogramView, WaveformState, Plot } from './scopes.ts';
@@ -58,7 +58,8 @@ const icons = {
 
 /** what the guide page asks for, in messages posted to this window. */
 type GuideMessage =
-  | { action: 'run'; code: string }
+  | { action: 'run'; code: string; example?: number }
+  | { action: 'stopExample'; example: number }
   | { action: 'stop' | 'functions' | 'readme' | 'close' }
   | { action: 'open'; document: string };
 
@@ -82,6 +83,11 @@ class App {
   private saveTimer = 0;
   private savePending = false;
   private plotCount = 0;
+  /** each document's blocks' last runs, for their Stop buttons. */
+  private blockRuns = new Map<string, BlockRun[]>();
+  /** the tags of the runs of each of the guide's examples, oldest first, by the example's number. */
+  private guideRuns = new Map<number, number[]>();
+  private guidePlayingKey = '';
   private suppressPreviews = false;
   private params = new URLSearchParams(location.search);
 
@@ -135,6 +141,7 @@ class App {
     this.analyzer = new AudioAnalyzer(this.engine);
     this.buildUI();
     this.connectEngine();
+    this.watchPlayingTags();
     const hint = this.audioBufferFrames <= 256 ? 'interactive' : this.audioBufferFrames >= 2048 ? 'playback' : 'balanced';
     const started = this.engine.start(PRELUDE, hint);
     if (this.params.has('mute')) this.engine.muted = true;
@@ -158,7 +165,9 @@ class App {
     this.appEl.replaceChildren();
     this.preview = new PreviewDialog(this.documents, path => this.loadDocument(path));
     this.editor = new CodeEditor(this.help, {
-      evaluate: code => this.evaluate(code),
+      evaluate: (code, tag) => this.evaluate(code, tag),
+      newTag: () => this.engine.newPlayTag(),
+      stopTag: tag => this.engine.stopTag(tag),
       stop: () => this.stop(),
       plot: () => void this.plotTopOfStack(),
       describeWord: word => this.engine.describeWord(word),
@@ -366,9 +375,32 @@ class App {
     this.guidePane.hidden = true;
   }
 
+  /** tells the guide which of its examples are playing, so it shows their Stop buttons. */
+  private setGuidePlaying(examples: number[]): void {
+    const page = this.guideFrame.contentWindow as (Window & { sapfSetPlaying?: (examples: number[]) => void }) | null;
+    try { page?.sapfSetPlaying?.(examples); } catch { /* not loaded yet */ }
+  }
+
   private guideAsked(m: GuideMessage): void {
     switch (m.action) {
-      case 'run': if (typeof m.code === 'string') this.evaluate(m.code); break;
+      case 'run': {
+        if (typeof m.code !== 'string') break;
+        // tagged, so the example's own Stop button stops just its sound.
+        const tag = this.engine.newPlayTag();
+        if (typeof m.example === 'number') this.guideRuns.set(m.example, [...(this.guideRuns.get(m.example) ?? []), tag]);
+        this.evaluate(m.code, tag);
+        break;
+      }
+      case 'stopExample': {
+        // the latest run still playing: pressing Stop again and again stops them last in, first out.
+        const playing = this.engine.playingTags();
+        const tag = (this.guideRuns.get(m.example) ?? []).findLast(t => playing.has(t));
+        if (tag) this.engine.stopTag(tag);
+        // the guide hides its Stop button; show it again now if earlier runs are still playing.
+        const more = (this.guideRuns.get(m.example) ?? []).some(t => t !== tag && playing.has(t));
+        if (more) { this.guidePlayingKey = ''; }
+        break;
+      }
       case 'stop': this.stop(); break;
       case 'functions': showFunctionList(this.help.allHelpText()); break;
       case 'readme': this.preview.show(README); break;
@@ -621,9 +653,10 @@ class App {
     this.rememberPosition();
     let text = '';
     try { text = this.documents.readText(path); } catch { /* missing: empty */ }
+    this.blockRuns.set(this.currentDocument, this.editor.blockRuns);
     this.currentDocument = path;
     save('currentDocument', baseName(path));
-    this.editor.setText(text);
+    this.editor.setText(text, this.blockRuns.get(path));
     const position = this.positions[baseName(path)];
     if (position) this.editor.restore(position);
     this.refreshDocuments();
@@ -714,10 +747,25 @@ class App {
     };
   }
 
-  evaluate(code: string): void {
+  /** runs code. The sounds it starts are tagged with tag (0 for none), so they can be stopped on their own. */
+  evaluate(code: string, tag = 0): void {
     void this.engine.resumeAudio().catch(() => {});
     this.console.echo(code);
-    void this.engine.evaluate(code).then(() => this.documents.scheduleSync());
+    void this.engine.evaluate(code, tag).then(() => this.documents.scheduleSync());
+  }
+
+  /** shows and hides the Stop buttons beside blocks, and beside the guide's examples, as their sounds start and end. */
+  private watchPlayingTags(): void {
+    window.setInterval(() => {
+      const tags = this.engine.playingTags();
+      this.editor.setPlayingTags(tags);
+      const examples = [...this.guideRuns].filter(([, runs]) => runs.some(t => tags.has(t))).map(([example]) => example);
+      const key = examples.join(',');
+      if (key !== this.guidePlayingKey) {
+        this.guidePlayingKey = key;
+        this.setGuidePlaying(examples);
+      }
+    }, 250);
   }
 
   stop(): void {

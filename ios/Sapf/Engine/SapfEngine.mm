@@ -460,11 +460,17 @@ static void logCode(Thread& th, std::string const& source)
 
 - (void)evaluate:(NSString *)code
 {
+	[self evaluate:code tag:0];
+}
+
+- (void)evaluate:(NSString *)code tag:(int)tag
+{
 	std::string source = code.UTF8String ?: "";
 	dispatch_async(dispatch_get_main_queue(), ^{ if (self.busyHandler) self.busyHandler(YES); });
 	dispatch_async(_queue, ^{
 		Thread& th = *self->_thread;
 		logCode(th, source);
+		setPlayTag(tag);
 		// Same as one turn of Thread::repl, but reading from a string.
 		try {
 			P<Fun> compiledFun;
@@ -482,6 +488,7 @@ static void logCode(Thread& th, std::string const& source)
 		} catch (...) {
 			post("unknown error\n");
 		}
+		setPlayTag(0);
 
 		try {
 			if (th.stackDepth()) {
@@ -497,6 +504,27 @@ static void logCode(Thread& th, std::string const& source)
 		[self rebuildHelpTable];
 		dispatch_async(dispatch_get_main_queue(), ^{ if (self.busyHandler) self.busyHandler(NO); });
 	});
+}
+
+- (int)newPlayTag
+{
+	static int lastTag = 0;
+	return ++lastTag;
+}
+
+- (void)stopTag:(int)tag
+{
+	// Not on the interpreter queue, like stopAll.
+	stopPlayingTag(tag);
+}
+
+- (NSSet<NSNumber *> *)playingTags
+{
+	int tags[64];
+	int n = playingTags(tags, 64);
+	NSMutableSet<NSNumber *> *set = [NSMutableSet setWithCapacity:n];
+	for (int i = 0; i < n; ++i) [set addObject:@(tags[i])];
+	return set;
 }
 
 - (void)stopAll

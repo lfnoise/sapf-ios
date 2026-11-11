@@ -8,7 +8,10 @@
 import UIKit
 
 protocol CodeTextViewActions: AnyObject {
-    func codeTextView(_ view: CodeTextView, evaluate code: String)
+    /// Runs code. The sounds it starts are tagged with `tag` (0 for none), so they can be stopped on their own.
+    func codeTextView(_ view: CodeTextView, evaluate code: String, tag: Int)
+    /// Stops the sounds started by the run with this tag, and only those.
+    func codeTextView(_ view: CodeTextView, stopTag tag: Int)
     func codeTextViewStop(_ view: CodeTextView)
     func codeTextViewDidChangeText(_ view: CodeTextView)
     func codeTextViewDidEndEditing(_ view: CodeTextView)
@@ -29,7 +32,27 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
     /// Blocks and bracket pairs, kept in step with the highlighter's tokens.
     private(set) var structure = CodeStructure()
     private var runButtons: [UIButton] = []
+    private var stopButtons: [UIButton] = []
+    /// Tap for help, and double tap a bracket to select through its match.
+    private let tapRecognizer = UITapGestureRecognizer()
+    private let doubleTapRecognizer = UITapGestureRecognizer()
     private let blockBar = UIView()
+
+    /// A block's runs: where its code started, kept up to date through edits, and the tags its runs'
+    /// sounds were given, oldest first. While any are playing, a stop button under the block's run button
+    /// stops the latest one still playing, and only it, so pressing it again and again stops them last
+    /// in, first out.
+    struct BlockRun: Equatable {
+        var location: Int
+        var tags: [Int]
+
+        /// The tag of the latest run still playing, or nil.
+        func latestPlaying(in playing: Set<Int>) -> Int? { tags.last { playing.contains($0) } }
+    }
+    /// The blocks' runs, to give back to setText when this document is shown again.
+    private(set) var blockRuns: [BlockRun] = []
+    /// The tags of the sounds playing, from the engine.
+    private var playingTags: Set<Int> = []
     private static let gutterWidth: CGFloat = 30
 
     /// The key bar shows only while editing: reading has its own bar, from `makeReadingBar`, and
@@ -77,14 +100,14 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         typingAttributes = highlighter.baseAttributes
         inputAccessoryView = isEditable ? keyBar : nil
 
-        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        tap.delegate = self
-        addGestureRecognizer(tap)
+        tapRecognizer.addTarget(self, action: #selector(handleTap(_:)))
+        tapRecognizer.delegate = self
+        addGestureRecognizer(tapRecognizer)
 
-        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
-        doubleTap.numberOfTapsRequired = 2
-        doubleTap.delegate = self
-        addGestureRecognizer(doubleTap)
+        doubleTapRecognizer.addTarget(self, action: #selector(handleDoubleTap(_:)))
+        doubleTapRecognizer.numberOfTapsRequired = 2
+        doubleTapRecognizer.delegate = self
+        addGestureRecognizer(doubleTapRecognizer)
 
         blockBar.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.55)
         blockBar.layer.cornerRadius = 1.5
@@ -99,9 +122,12 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
 
     // MARK: Text
 
-    func setText(_ newText: String) {
+    /// Shows a document. `runs` are its blocks' latest runs, from `blockRuns` when it was last shown,
+    /// so its stop buttons work.
+    func setText(_ newText: String, runs: [BlockRun] = []) {
         tooltip.hide()
         text = newText
+        blockRuns = runs.filter { $0.location <= textStorage.length }
         pendingPosition = nil
         selectedRange = NSRange(location: 0, length: 0)
         rehighlight()
@@ -185,6 +211,13 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
                      range editedRange: NSRange, changeInLength delta: Int) {
         if editedMask.contains(.editedCharacters) {
             pendingEdit = (editedRange, delta)
+            // Keep the blocks' runs with their code: after the edit they move with it, inside it they're gone.
+            let oldEnd = editedRange.location + editedRange.length - delta
+            blockRuns = blockRuns.compactMap { run in
+                if run.location >= oldEnd { return BlockRun(location: run.location + delta, tags: run.tags) }
+                if run.location >= editedRange.location { return nil }
+                return run
+            }
         }
     }
 
@@ -236,8 +269,25 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
     private func evaluateBlock(codeStart: Int) {
         guard let block = structure.blocks.first(where: { $0.codeStart == codeStart }) else { return }
         tooltip.hide()
-        flash(block.range)
-        actions?.codeTextView(self, evaluate: (text as NSString).substring(with: block.range))
+        runBlock(range: block.range, codeStart: codeStart)
+    }
+
+    /// Runs a whole block, tagging its sounds so the stop button beside it can stop them.
+    private func runBlock(range: NSRange, codeStart: Int) {
+        let tag = Int(SapfEngine.shared.newPlayTag())
+        let inBlock = { (run: BlockRun) in NSLocationInRange(run.location, range) }
+        let earlier = blockRuns.filter(inBlock).flatMap(\.tags)
+        blockRuns.removeAll(where: inBlock)
+        blockRuns.append(BlockRun(location: codeStart, tags: earlier + [tag]))
+        flash(range)
+        actions?.codeTextView(self, evaluate: (text as NSString).substring(with: range), tag: tag)
+    }
+
+    /// The engine's tags of the sounds playing changed. Shows and hides the blocks' stop buttons.
+    func setPlayingTags(_ tags: Set<Int>) {
+        guard tags != playingTags else { return }
+        playingTags = tags
+        setNeedsLayout()
     }
 
     private func selectBlock(codeStart: Int) {
@@ -254,11 +304,16 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
     }
 
     func evaluate(wholeBlock: Bool = true) {
+        if wholeBlock, selectedRange.length == 0, let block = structure.block(at: selectedRange.location),
+           let codeStart = block.codeStart {
+            runBlock(range: block.range, codeStart: codeStart)
+            return
+        }
         let range = codeToEvaluate(wholeBlock: wholeBlock)
         let code = (text as NSString).substring(with: range)
         guard !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         flash(range)
-        actions?.codeTextView(self, evaluate: code)
+        actions?.codeTextView(self, evaluate: code, tag: 0)
     }
 
     private func flash(_ range: NSRange) {
@@ -274,6 +329,14 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
 
     func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
         true
+    }
+
+    /// The margin's run and stop buttons handle their own taps. Without this, pressing one twice quickly
+    /// would be taken as a double tap on the text, and the second press lost.
+    func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        // Only the taps added here: this view is also the delegate of its scroll view's own gestures.
+        guard g === tapRecognizer || g === doubleTapRecognizer else { return true }
+        return !(touch.view is UIButton)
     }
 
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
@@ -390,6 +453,7 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         let chars = lm.characterRange(forGlyphRange: glyphs, actualGlyphRange: nil)
 
         var used = 0
+        var stopsUsed = 0
         for block in structure.blocks {
             guard let start = block.codeStart else { continue }
             if start < chars.location { continue }
@@ -402,8 +466,18 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
             button.frame = CGRect(x: 2, y: line.midY + textContainerInset.top - size / 2, width: size, height: size)
             button.isHidden = false
             used += 1
+            // While any of this block's runs are playing, a stop button just below the run button, for the latest.
+            if let run = blockRuns.first(where: { NSLocationInRange($0.location, block.range) }),
+               let tag = run.latestPlaying(in: playingTags) {
+                let stop = stopButton(stopsUsed)
+                stop.tag = tag
+                stop.frame = button.frame.offsetBy(dx: 0, dy: size)
+                stop.isHidden = false
+                stopsUsed += 1
+            }
         }
         for i in used..<runButtons.count { runButtons[i].isHidden = true }
+        for i in stopsUsed..<stopButtons.count { stopButtons[i].isHidden = true }
 
         if selectedRange.length == 0, let block = structure.block(at: selectedRange.location), block.codeStart != nil {
             let range = structure.trimmed(block.range)
@@ -445,6 +519,30 @@ final class CodeTextView: UITextView, UITextViewDelegate, NSTextStorageDelegate,
         button.accessibilityHint = "Touch and hold for more options."
         addSubview(button)
         runButtons.append(button)
+        return button
+    }
+
+    /// Stops the sound from a block's latest run that's still playing; its tag is that run's.
+    private func stopButton(_ index: Int) -> UIButton {
+        if index < stopButtons.count { return stopButtons[index] }
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "stop.fill",
+                               withConfiguration: UIImage.SymbolConfiguration(pointSize: 11, weight: .semibold))
+        config.baseForegroundColor = .systemRed
+        config.contentInsets = .zero
+        let button = UIButton(configuration: config)
+        button.backgroundColor = EditorTheme.background
+        button.addAction(UIAction { [weak self, unowned button] _ in
+            guard let self else { return }
+            self.actions?.codeTextView(self, stopTag: button.tag)
+            // Hide it now, rather than when the engine next says what's playing.
+            self.playingTags.remove(button.tag)
+            self.setNeedsLayout()
+        }, for: .primaryActionTriggered)
+        button.accessibilityLabel = "Stop block"
+        button.accessibilityHint = "Stops the sound this block started."
+        addSubview(button)
+        stopButtons.append(button)
         return button
     }
 

@@ -107,6 +107,9 @@ try {
 
   const app = fn => page.evaluate(fn);
   const consoleText = () => app(() => document.querySelector('.console').textContent);
+  // a click in the page itself: the margin's buttons are redrawn as sounds start and stop, which can come between
+  // finding a button and clicking it with the mouse.
+  const clickIn = (selector, index = 0) => page.evaluate((s, i) => document.querySelectorAll(s)[i].click(), selector, index);
   const run = async code => {
     await page.evaluate(c => window.sapf.evaluate(c), code);
     await page.waitForFunction(() => !window.sapf.engine.isBusy, { timeout: 60000 });
@@ -129,6 +132,20 @@ try {
   await sleep(800);
   const guidePeak = await scopePeak();
   check("a Run button in the guide plays its example", guidePeak > 0.25 && guidePeak < 0.35, `peak ${guidePeak.toFixed(3)}`);
+  await sleep(400);
+  check("a Stop button appears under the example's Run button while it plays", await guide.$eval('.stop-button', b => !b.hidden));
+  await guide.click('.run-button');
+  await sleep(400);
+  await guide.click('.stop-button');
+  await sleep(500);
+  const oneLeft = await scopePeak();
+  check("run twice, the example's Stop stops the latest, and stays for the earlier one",
+    oneLeft > 0.25 && oneLeft < 0.35 && await guide.$eval('.stop-button', b => !b.hidden), `peak ${oneLeft.toFixed(3)}`);
+  await guide.click('.stop-button');
+  await sleep(400);
+  check("pressing it again stops the earlier one, and then it hides", (await scopePeak()) < 1e-6 && await guide.$eval('.stop-button', b => b.hidden));
+  await guide.click('.run-button');
+  await sleep(500);
   await page.click('.tool-button.stop');
   await sleep(300);
   check('Stop in the toolbar silences it, with the guide showing', (await scopePeak()) < 1e-6);
@@ -148,6 +165,38 @@ try {
   await page.click('.tool-button.stop');
   await sleep(300);
   check('Stop silences everything', (await scopePeak()) < 1e-6 && (await app(() => window.sapf.analyzer.playingCount)) === 0);
+
+  // each block's own Stop button stops the sound from its last run, and only that
+  await app(() => window.sapf.editor.setText('440 0 sinosc .1 * play\n\n660 0 sinosc .1 * play\n'));
+  await clickIn('.run-block', 0);
+  await sleep(100);
+  await clickIn('.run-block', 1);
+  await sleep(700);
+  check('a Stop button appears under each playing block', (await page.$$('.stop-block')).length === 2 && (await scopePeak()) > 0.15);
+  await clickIn('.stop-block');
+  await sleep(700);
+  const left = await scopePeak();
+  check("a block's Stop button stops only its own sound", (await page.$$('.stop-block')).length === 1 && left > 0.05 && left < 0.15, `peak ${left.toFixed(3)}`);
+  await page.click('.tool-button.stop');
+  await sleep(700);
+  check('Stop in the toolbar removes the blocks\' Stop buttons', (await page.$$('.stop-block')).length === 0);
+
+  // pressing a block's Stop again and again stops its runs last in, first out
+  await app(() => window.sapf.editor.setText('440 0 sinosc .1 * play\n'));
+  await clickIn('.run-block');
+  await sleep(100);
+  await clickIn('.run-block');
+  await sleep(700);
+  const twoRuns = await app(() => window.sapf.editor.blockRuns[0].tags);
+  await clickIn('.stop-block');
+  await sleep(100);
+  const afterOne = await app(() => [...window.sapf.engine.playingTags()]);
+  check("a block's Stop stops its latest run first, and stays for the earlier one",
+    twoRuns.length === 2 && afterOne.length === 1 && afterOne[0] === twoRuns[0] && (await page.$$('.stop-block')).length === 1,
+    JSON.stringify({ twoRuns, afterOne }));
+  await clickIn('.stop-block');
+  await sleep(700);
+  check('pressing it again stops the earlier run', (await app(() => window.sapf.engine.playingTags().size)) === 0 && (await page.$$('.stop-block')).length === 0);
 
   // help on a word
   const at = await app(() => {

@@ -27,6 +27,7 @@
     --rule: #dcdce0;
     --accent: #0a66d8;
     --run: #1f8f3a;
+    --stop: #d70015;
     --note-background: #eef4fd;
     color-scheme: light;
   }
@@ -41,6 +42,7 @@
       --rule: #3a3a3c;
       --accent: #5aa2ff;
       --run: #43c463;
+      --stop: #ff453a;
       --note-background: #1f2a3a;
       color-scheme: dark;
     }
@@ -55,6 +57,7 @@
     --rule: #3a3a3c;
     --accent: #5aa2ff;
     --run: #43c463;
+    --stop: #ff453a;
     --note-background: #1f2a3a;
     color-scheme: dark;
   }
@@ -96,7 +99,17 @@
     color: var(--run); background: var(--background);
     border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; cursor: pointer;
   }
-  .run-button:active { opacity: 0.6; }
+  .run-button:active, .stop-button:active { opacity: 0.6; }
+  /* while an example's sound plays, a Stop button under its Run button stops it, and only it. */
+  .stop-button {
+    position: absolute; top: 38px; right: 6px;
+    display: inline-flex; align-items: center; gap: 4px;
+    font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--stop); background: var(--background);
+    border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; cursor: pointer;
+  }
+  .stop-button[hidden] { display: none; }
+  pre.playing { min-height: 58px; }
   .note { background: var(--note-background); border-radius: 8px; padding: 10px 14px; margin: 1em 0; }
   .note p { margin: 0.3em 0; }
   nav.contents ol { padding-left: 1.4em; }
@@ -164,9 +177,18 @@ and then you listen to it. A short program can describe a rich, changing sound.<
 <h2 id="first-sound">2. Your first sound</h2>
 
 <p><span data-platform="ios">Tap</span><span data-platform="web">Click</span> <strong>Run</strong> beside this
-example to hear a sine wave, and <strong>Stop</strong> (■ in the toolbar) to stop it.</p>
+example to hear a sine wave.</p>
 
 <pre class="run">800 0 sinosc .3 * play</pre>
+
+<div class="note">
+  <p><strong>To stop a sound,</strong> use the <strong>■ Stop</strong> button that appears under its Run button while it
+  plays. That stops just that sound. If you ran the example more than once, each press stops one, the most recent
+  first.</p>
+  <p>The <strong>■ Stop</strong> button in the toolbar (or <kbd><span class="mod">⌘</span>.</kbd>) stops every sound at
+  once.</p>
+  <p>Sounds keep playing until you stop them, even when you go on to the next example.</p>
+</div>
 
 <p>Read it left to right:</p>
 <ol>
@@ -214,6 +236,9 @@ inside brackets don’t end a block, so a long expression in brackets can be spr
   <li>Or use the ▶ in the margin beside each block. <span data-platform="ios">Touch and hold</span><span data-platform="web">Right-click</span>
     it to select or copy the block instead.</li>
   <li>If text is selected, Run runs just the selection. <kbd>Shift-Return</kbd> runs the current line.</li>
+  <li>While a block’s sound is playing, a red ■ appears in the margin under its ▶. It stops the sound from that
+    block’s most recent run, and nothing else. If you ran the block several times, press it again to stop the run
+    before that, and so on: last started, first stopped.</li>
   <li><strong>Stop</strong> (■ in the toolbar), <kbd><span class="mod">⌘</span>.</kbd>, or the word <code>stop</code>
     stops every sound.</li>
 </ul>
@@ -374,7 +399,8 @@ loud ,freq loud ,amp   ; --> 440 0.5</pre>
 <h2 id="sound">5. Making sound</h2>
 
 <div class="note">
-  <p>Sounds play until you stop them, and each Run adds another, so press Stop between examples.</p>
+  <p>Sounds play until you stop them, and each Run adds another. Stop each with the ■ Stop under its Run button,
+  or everything with Stop in the toolbar.</p>
 </div>
 
 <h3>Oscillators, filters and effects</h3>
@@ -464,6 +490,7 @@ frequency and phase, and makes several oscillators when given a list.</p>
     for (var i = 0; i < mods.length; ++i) mods[i].textContent = mac ? '⌘' : 'Ctrl-';
 
     // grey out comments in the code.
+    var examples = []; // the runnable examples, numbered in page order: {pre, stop}
     var pres = document.querySelectorAll('pre');
     for (var j = 0; j < pres.length; ++j) {
       var pre = pres[j];
@@ -481,16 +508,43 @@ frequency and phase, and makes several oscillators when given a list.</p>
           pre.appendChild(span);
         }
       });
-      if (send && pre.classList.contains('run')) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'run-button';
-        b.textContent = '▶ Run';
-        b.setAttribute('aria-label', 'Run this example');
-        b.addEventListener('click', (function (c) { return function () { send({ action: 'run', code: c }); }; })(code));
-        pre.appendChild(b);
-      }
+      if (send && pre.classList.contains('run')) addButtons(pre, code, examples.length);
     }
+
+    // Run, and a Stop under it while the example's sound is playing. The app says which are playing.
+    function addButtons(pre, code, example) {
+      var run = document.createElement('button');
+      run.type = 'button';
+      run.className = 'run-button';
+      run.textContent = '▶ Run';
+      run.setAttribute('aria-label', 'Run this example');
+      run.addEventListener('click', function () { send({ action: 'run', code: code, example: example }); });
+      var stop = document.createElement('button');
+      stop.type = 'button';
+      stop.className = 'stop-button';
+      stop.textContent = '■ Stop';
+      stop.setAttribute('aria-label', 'Stop this example');
+      stop.hidden = true;
+      stop.addEventListener('click', function () {
+        send({ action: 'stopExample', example: example });
+        setStopShown(example, false);
+      });
+      pre.appendChild(run);
+      pre.appendChild(stop);
+      examples.push({ pre: pre, stop: stop });
+    }
+
+    function setStopShown(example, shown) {
+      var e = examples[example];
+      if (!e) return;
+      e.stop.hidden = !shown;
+      e.pre.classList.toggle('playing', shown);
+    }
+
+    // Called by the app with the numbers of the examples whose sounds are playing.
+    window.sapfSetPlaying = function (playing) {
+      for (var i = 0; i < examples.length; ++i) setStopShown(i, playing.indexOf(i) >= 0);
+    };
 
     document.addEventListener('click', function (e) {
       var a = e.target.closest && e.target.closest('[data-action]');

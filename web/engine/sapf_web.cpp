@@ -430,14 +430,16 @@ EMSCRIPTEN_KEEPALIVE int sapf_audio_context() { return (int)gAudioContext; }
 EMSCRIPTEN_KEEPALIVE int sapf_audio_state() { return gAudioState; }
 
 // Evaluate code at top level, logging it and printing the stack after. The result arrives through sapf_poll()
-// with the same id, with any new help lines.
-EMSCRIPTEN_KEEPALIVE void sapf_evaluate(const char* code, int id)
+// with the same id, with any new help lines. The sounds it starts are tagged with tag (0 for none), for
+// sapf_stop_tag.
+EMSCRIPTEN_KEEPALIVE void sapf_evaluate(const char* code, int id, int tag)
 {
 	std::string source = code;
-	enqueue([source, id] {
+	enqueue([source, id, tag] {
 		Thread& th = *gThread;
 		logCode(th, source);
 		bool ok = false;
+		setPlayTag(tag);
 		try {
 			P<Fun> compiledFun;
 			if (th.compile(source.c_str(), compiledFun, true)) {
@@ -455,6 +457,7 @@ EMSCRIPTEN_KEEPALIVE void sapf_evaluate(const char* code, int id)
 		} catch (...) {
 			post("unknown error\n");
 		}
+		setPlayTag(0);
 
 		try {
 			if (th.stackDepth()) {
@@ -514,6 +517,12 @@ EMSCRIPTEN_KEEPALIVE void sapf_clear_stack(int id)
 
 // Stop all sound. Runs on the calling thread so it works while an evaluation is running.
 EMSCRIPTEN_KEEPALIVE void sapf_stop() { stopPlaying(); }
+
+// Stop the sounds started by the evaluation with this tag, and only those. Also immediate.
+EMSCRIPTEN_KEEPALIVE void sapf_stop_tag(int tag) { stopPlayingTag(tag); }
+
+// The tags of the sounds playing, into tags (up to max). Returns how many. Doesn't lock.
+EMSCRIPTEN_KEEPALIVE int sapf_playing_tags(int* tags, int max) { return playingTags(tags, max); }
 
 EMSCRIPTEN_KEEPALIVE void sapf_restart() { restartPlaying(); }
 
