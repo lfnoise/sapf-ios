@@ -327,7 +327,8 @@ button { font: inherit; color: inherit; }
 
 /* MARK: editor */
 
-.editor { flex: 1 1 auto; min-height: 0; position: relative; }
+/* isolate: CodeMirror's own z-indexes (the find panel's is 300) stay inside the editor, under menus and the guide. */
+.editor { flex: 1 1 auto; min-height: 0; position: relative; isolation: isolate; }
 .editor .cm-editor { height: 100%; font-size: var(--editor-font-size, 15px); background: var(--background); color: var(--text); }
 .editor .cm-editor.cm-focused { outline: none; }
 .editor .cm-scroller { font-family: var(--mono); line-height: 1.45; position: relative; }
