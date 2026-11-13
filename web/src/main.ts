@@ -16,10 +16,10 @@ import { ConsoleBuffer } from './console.ts';
 import { AudioAnalyzer } from './analyzer.ts';
 import { WaveformView, SpectrumView, SpectrogramView, WaveformState, Plot } from './scopes.ts';
 import { DocumentStore, DIRECTORY, RECORDINGS, SPECTROGRAMS, SOUNDS, PRELUDE, LOG, README, TMPDIR, SCRATCH, BUNDLED, RENAMED, GUIDE, title, baseName, extensionOf } from './documents.ts';
-import { PreviewDialog } from './preview.ts';
+import { PreviewDialog, downloadFile } from './preview.ts';
 import { showFunctionList } from './functionList.ts';
 import { ExampleRunner } from './exampleRunner.ts';
-import { showMenu, confirmAction, closeMenu, type MenuEntry } from './menu.ts';
+import { showMenu, confirmAction, closeMenu, promptText, showMessage, type MenuEntry } from './menu.ts';
 import { WebMidi, type MidiRequest } from './midi.ts';
 import { importSound } from './soundImport.ts';
 
@@ -301,6 +301,10 @@ class App {
   private documentMenu(): MenuEntry[] {
     const entries: MenuEntry[] = [
       { label: 'New Document', action: () => this.newDocument() },
+      { label: 'Open…', action: () => this.chooseDocumentFiles() },
+      { label: 'Rename…', disabled: !this.documents.canRename(this.currentDocument), action: () => void this.renameDocument() },
+      { label: 'Download', action: () => this.downloadDocument() },
+      'separator',
       { label: 'Log', action: () => this.showLog() },
       { label: 'Import Sound Files…', action: () => this.chooseSoundFiles() },
     ];
@@ -743,6 +747,91 @@ class App {
     this.setEditing(true);
   }
 
+  /** renames the current document. Scratch and the built-in documents keep their names. */
+  private async renameDocument(): Promise<void> {
+    const from = this.currentDocument;
+    if (!this.documents.canRename(from)) return;
+    const typed = await promptText(`Rename “${title(from)}”`, title(from), 'Rename');
+    if (typed === null) return;
+    let name = typed.trim();
+    let extension = extensionOf(from) || 'sapf';
+    const typedExtension = /\.(sapf|txt)$/i.exec(name);
+    if (typedExtension) {
+      extension = typedExtension[1].toLowerCase();
+      name = name.slice(0, -typedExtension[0].length).trim();
+    }
+    if (!name || name.includes('/') || name.startsWith('.')) {
+      showMessage('Can\'t use that name', 'A name can\'t be empty, contain “/”, or start with “.”.');
+      return;
+    }
+    const to = `${DIRECTORY}/${name}.${extension}`;
+    if (to === from || this.currentDocument !== from) return;
+    if (this.documents.exists(to) || to === LOG) {
+      showMessage('That name is taken', `There's already a document called “${name}”.`);
+      return;
+    }
+    this.saveNow();
+    this.documents.rename(from, to);
+    const [oldKey, newKey] = [baseName(from), baseName(to)];
+    if (this.positions[oldKey]) {
+      this.positions[newKey] = this.positions[oldKey];
+      delete this.positions[oldKey];
+      save('documentPositions', this.positions);
+    }
+    const runs = this.blockRuns.get(from);
+    if (runs) { this.blockRuns.delete(from); this.blockRuns.set(to, runs); }
+    this.currentDocument = to;
+    save('currentDocument', newKey);
+    document.title = `${title(to)} – sapf`;
+    this.refreshDocuments();
+    this.layout();
+  }
+
+  /** saves the current document to the browser's downloads. */
+  private downloadDocument(): void {
+    this.saveNow();
+    downloadFile(this.documents, this.currentDocument);
+  }
+
+  /** asks for documents to open. */
+  private chooseDocumentFiles(): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '.sapf,.txt,text/plain';
+    input.addEventListener('change', () => void this.openDocumentFiles([...(input.files ?? [])]));
+    input.click();
+  }
+
+  /**
+   * copies documents from disk into the documents folder and opens the last. One with a name already taken gets a
+   * number added, unless it's the same text, when the one there is opened.
+   */
+  private async openDocumentFiles(files: File[]): Promise<void> {
+    let last: string | null = null;
+    for (const file of files) {
+      let text: string;
+      try { text = await file.text(); } catch {
+        this.console.append(`could not read ${file.name}\n`);
+        continue;
+      }
+      const name = title(file.name).replaceAll('/', '-') || 'Untitled';
+      const extension = extensionOf(file.name).toLowerCase() === 'txt' ? 'txt' : 'sapf';
+      const same = `${DIRECTORY}/${name}.${extension}`;
+      if (same !== LOG && this.documents.exists(same) && this.documents.readText(same) === text) {
+        last = same;
+        continue;
+      }
+      let path = this.documents.unusedPath(name, extension);
+      if (path === LOG) path = this.documents.unusedPath(`${name} 2`, extension);
+      this.documents.writeText(path, text);
+      last = path;
+    }
+    if (!last) return;
+    await this.documents.syncNow();
+    this.loadDocument(last);
+  }
+
   private scheduleSave(): void {
     this.savePending = true;
     window.clearTimeout(this.saveTimer);
@@ -812,7 +901,7 @@ class App {
     input.click();
   }
 
-  /** sound files dropped anywhere on the window are imported (rather than their bytes typed into the editor). */
+  /** sound files dropped anywhere on the window are imported, and documents opened (rather than typed into the editor). */
   private installSoundFileDrop(): void {
     const isSound = (f: File) => f.type.startsWith('audio/') || /\.(wave?|aiff?|aifc|caf|flac|mp3|m4a|aac|ogg|oga|opus)$/i.test(f.name);
     const hasFiles = (e: DragEvent) => !!e.dataTransfer && [...e.dataTransfer.types].includes('Files');
@@ -823,11 +912,14 @@ class App {
     }, true);
     document.addEventListener('drop', e => {
       if (!hasFiles(e)) return;
-      const sounds = [...e.dataTransfer!.files].filter(isSound);
+      const files = [...e.dataTransfer!.files];
+      const sounds = files.filter(isSound);
+      const docs = files.filter(f => /\.(sapf|txt)$/i.test(f.name));
       e.preventDefault();
       e.stopPropagation();
       if (sounds.length) void this.importSoundFiles(sounds);
-      else this.console.append('Only sound files can be dropped here. They are imported for sf>.\n');
+      if (docs.length) void this.openDocumentFiles(docs);
+      if (!sounds.length && !docs.length) this.console.append('Only sound files and .sapf or .txt documents can be dropped here.\n');
     }, true);
   }
 

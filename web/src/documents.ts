@@ -167,10 +167,25 @@ export class DocumentStore {
   }
 
   newDocumentPath(): string {
+    return this.unusedPath('Untitled', 'sapf');
+  }
+
+  /** a path in the documents folder for name.extension, numbered (“name 2”, “name 3”, …) if that's taken. */
+  unusedPath(name: string, extension: string): string {
     for (let n = 1; ; ++n) {
-      const path = `${DIRECTORY}/${n === 1 ? 'Untitled.sapf' : `Untitled ${n}.sapf`}`;
+      const path = `${DIRECTORY}/${n === 1 ? name : `${name} ${n}`}.${extension}`;
       if (!this.exists(path)) return path;
     }
+  }
+
+  /** whether a document can be renamed: not Scratch or a built-in one, which are made again if missing. */
+  canRename(path: string): boolean {
+    return path !== SCRATCH && !this.bundledResource(path) && this.isInDocuments(path);
+  }
+
+  rename(from: string, to: string): void {
+    this.fs.rename(from, to);
+    this.scheduleSync(0);
   }
 
   readText(path: string): string {

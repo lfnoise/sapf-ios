@@ -25,7 +25,9 @@ export function mimeType(path: string): string {
 
 export function downloadFile(workspace: DocumentStore, path: string): void {
   const bytes = workspace.readBytes(path);
-  const url = URL.createObjectURL(new Blob([bytes.slice()], { type: mimeType(path) }));
+  // a .sapf as text/plain gets .txt added by some browsers.
+  const type = extensionOf(path) === 'sapf' ? 'application/octet-stream' : mimeType(path);
+  const url = URL.createObjectURL(new Blob([bytes.slice()], { type }));
   const a = document.createElement('a');
   a.href = url;
   a.download = baseName(path);
