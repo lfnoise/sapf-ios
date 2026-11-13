@@ -336,6 +336,35 @@ final class SapfUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Revert All Built-in Files…"].exists, "nothing left to revert")
     }
 
+    func testRenameDocument() {
+        app.buttons["Documents"].firstMatch.tap()
+        XCTAssertFalse(app.buttons["Rename…"].exists, "Scratch keeps its name")
+        XCTAssertTrue(app.buttons["Save to Files…"].exists)
+        app.collectionViews.buttons["Scratch"].firstMatch.tap()
+
+        _ = newDocument(with: "440 0 sinosc .1 * play")
+        app.buttons["Documents"].firstMatch.tap()
+        app.buttons["Rename…"].firstMatch.tap()
+        let field = app.alerts.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20))
+        field.typeText("My Piece")
+        app.alerts.buttons["Rename"].tap()
+        XCTAssertTrue(app.navigationBars["My Piece"].waitForExistence(timeout: 5), "the title follows the new name")
+
+        app.buttons["Documents"].firstMatch.tap()
+        XCTAssertTrue(app.collectionViews.buttons["My Piece"].firstMatch.exists, "the menu lists the new name")
+        XCTAssertFalse(app.collectionViews.buttons["Untitled"].exists, "and not the old one")
+        app.buttons["Rename…"].firstMatch.tap()
+        let again = app.alerts.textFields.firstMatch
+        XCTAssertTrue(again.waitForExistence(timeout: 5))
+        again.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20))
+        again.typeText("Examples")
+        app.alerts.buttons["Rename"].tap()
+        XCTAssertTrue(app.alerts["Can’t rename"].waitForExistence(timeout: 5), "a name that's taken is refused")
+        app.alerts.buttons["OK"].tap()
+    }
+
     func testCodeIsWarmedAtStartup() {
         if app.buttons["Console"].exists { app.buttons["Console"].tap() }
         let console = app.textViews["Console"]

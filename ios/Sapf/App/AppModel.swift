@@ -112,6 +112,11 @@ struct DocumentStore {
         }
     }
 
+    /// Whether a document can be renamed: not Scratch or a built-in one, which are made again if missing.
+    static func canRename(_ url: URL) -> Bool {
+        url.lastPathComponent != scratch.lastPathComponent && bundledResource(for: url) == nil && isInDocuments(url)
+    }
+
     static func isInDocuments(_ url: URL) -> Bool {
         url.resolvingSymlinksInPath().path.hasPrefix(directory.resolvingSymlinksInPath().path + "/")
     }
@@ -514,6 +519,62 @@ final class AppModel: ObservableObject, CodeTextViewActions {
 
     func title(for url: URL) -> String {
         url.deletingPathExtension().lastPathComponent
+    }
+
+    var canRenameCurrent: Bool { DocumentStore.canRename(currentDocument) }
+
+    /// Renames the current document, keeping its extension unless the name ends in .sapf or .txt.
+    /// Returns why it couldn't, or nil when it's done.
+    func renameCurrent(to typed: String) -> String? {
+        let from = currentDocument
+        guard DocumentStore.canRename(from) else { return nil }
+        var name = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+        var ext = from.pathExtension.isEmpty ? "sapf" : from.pathExtension
+        for candidate in ["sapf", "txt"] where name.lowercased().hasSuffix("." + candidate) {
+            ext = candidate
+            name = String(name.dropLast(candidate.count + 1)).trimmingCharacters(in: .whitespaces)
+        }
+        guard !name.isEmpty, !name.contains("/"), !name.contains(":"), !name.hasPrefix(".") else {
+            return "A name can’t be empty, contain “/” or “:”, or start with “.”."
+        }
+        let to = DocumentStore.directory.appendingPathComponent(name).appendingPathExtension(ext)
+        if to.lastPathComponent == from.lastPathComponent { return nil }
+        // The file system ignores case, so a change of case only is a rename of the same file.
+        let caseOnly = to.lastPathComponent.lowercased() == from.lastPathComponent.lowercased()
+        if (!caseOnly && FileManager.default.fileExists(atPath: to.path)) || to.lastPathComponent == DocumentStore.log.lastPathComponent {
+            return "There’s already a document called “\(name)”."
+        }
+        saveNow()
+        rememberPosition()
+        do {
+            try FileManager.default.moveItem(at: from, to: to)
+        } catch {
+            return error.localizedDescription
+        }
+        let (oldKey, newKey) = (from.lastPathComponent, to.lastPathComponent)
+        if let position = positions.removeValue(forKey: oldKey) {
+            positions[newKey] = position
+            if let data = try? JSONEncoder().encode(positions) {
+                UserDefaults.standard.set(data, forKey: "documentPositions")
+            }
+        }
+        if let runs = blockRuns.removeValue(forKey: oldKey) { blockRuns[newKey] = runs }
+        currentDocument = to
+        loadedDocument = to
+        savedDocumentName = newKey
+        refreshDocuments()
+        return nil
+    }
+
+    /// Shows the Files picker to save a copy of the current document somewhere else.
+    func exportCurrent() {
+        saveNow()
+        let picker = UIDocumentPickerViewController(forExporting: [currentDocument], asCopy: true)
+        guard let root = UIApplication.shared.connectedScenes
+            .compactMap({ ($0 as? UIWindowScene)?.keyWindow?.rootViewController }).first else { return }
+        var top = root
+        while let presented = top.presentedViewController { top = presented }
+        top.present(picker, animated: true)
     }
 
     private func scheduleSave() {

@@ -168,6 +168,9 @@ struct ContentView: View {
         }
     }
     @State private var revertRequest: RevertRequest?
+    @State private var renaming = false
+    @State private var newName = ""
+    @State private var renameError: String?
     /// The bottom panel's share of the height, and the waveform's height while typing on a phone.
     @AppStorage("panelFraction") private var panelFraction = 0.4
     @AppStorage("typingScopeHeight") private var typingScopeHeight = 80.0
@@ -205,6 +208,18 @@ struct ContentView: View {
             }
         } message: { _ in
             Text("Your changes will be lost.")
+        }
+        .alert("Rename “\(model.title(for: model.currentDocument))”", isPresented: $renaming) {
+            TextField("Name", text: $newName)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+            Button("Cancel", role: .cancel) {}
+            Button("Rename") { renameError = model.renameCurrent(to: newName) }
+        }
+        .alert("Can’t rename", isPresented: Binding(get: { renameError != nil }, set: { if !$0 { renameError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(renameError ?? "")
         }
         .onAppear { model.start() }
         .onChange(of: scenePhase) { phase in
@@ -315,6 +330,13 @@ struct ContentView: View {
     private var documentMenu: some View {
         Section {
             Button { model.newDocument() } label: { Label("New Document", systemImage: "doc.badge.plus") }
+            if model.canRenameCurrent {
+                Button {
+                    newName = model.title(for: model.currentDocument)
+                    renaming = true
+                } label: { Label("Rename…", systemImage: "pencil") }
+            }
+            Button { model.exportCurrent() } label: { Label("Save to Files…", systemImage: "square.and.arrow.down") }
             Button { model.showLog() } label: { Label("Log", systemImage: "clock.arrow.circlepath") }
             if model.canRevertCurrent {
                 Button(role: .destructive) { revertRequest = .current(model.currentDocument) } label: {
